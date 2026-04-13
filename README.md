@@ -1,0 +1,302 @@
+<h1 align="center">TOTVS Conversational Intelligence</h1>
+<p align="center">Plataforma de IA para analise de transcricoes de reunioes comerciais, extraindo inteligencia acionavel para vendas e retencao de clientes</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" alt="Java 17">
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot">
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?logo=huggingface&logoColor=black" alt="HuggingFace">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/Oracle-Database-F80000?logo=oracle&logoColor=white" alt="Oracle">
+  <img src="https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white" alt="Vercel">
+  <img src="https://img.shields.io/badge/FIAP-Challenge%20TOTVS%202026-E4002B" alt="FIAP">
+</p>
+
+---
+
+### Sobre o Projeto
+
+O **TOTVS Conversational Intelligence** e uma solucao desenvolvida para o Challenge FIAP x TOTVS 2026, que transforma transcricoes brutas de reunioes de vendas e CS em inteligencia acionavel. A plataforma utiliza um **microsservico de IA local** com HuggingFace Transformers e processamento de linguagem natural para extrair automaticamente:
+
+- **Oportunidades de vendas** — Upsell, cross-sell e novos produtos
+- **Riscos de churn** — Sinais de insatisfacao e mencoes a concorrentes
+- **Mapeamento de produtos** — Produtos TOTVS em uso, oportunidades e concorrentes citados
+- **Analise de sentimento** — Classificacao do tom geral da conversa (modelo BERT multilingual)
+- **Alertas automaticos** — Notificacoes prioritarias para o Diretor Comercial
+
+O objetivo e que a TOTVS consiga analisar milhares de reunioes diarias e identificar, em tempo real, onde estao as oportunidades de receita e os riscos de perda de clientes.
+
+---
+
+### Funcionalidades
+
+- **Ingestao de transcricoes** — Envio de texto bruto de reunioes via API REST ou dashboard
+- **Analise com IA local** — Modelo BERT multilingual (HuggingFace) + regras de negocio especializadas
+- **Deteccao de oportunidades** — Identificacao de gatilhos de compra com score de probabilidade
+- **Sinalizacao de riscos** — Alertas de churn, concorrencia e insatisfacao com severidade
+- **Mapeamento de ecossistema** — Produtos TOTVS (Protheus, RM, Fluig) e concorrentes (SAP, Senior, Sankhya)
+- **Dashboard interativo** — Graficos de sentimento, riscos por tipo, cards de metricas e alertas
+- **Sistema de alertas** — Priorizacao automatica com acoes de marcar como visto/resolvido
+- **Identificacao de personas** — Cargo e papel do interlocutor na reuniao
+- **Deteccao de budget** — Captura de valores monetarios mencionados
+- **100% gratuito** — Sem dependencia de APIs pagas, roda inteiramente local
+
+---
+
+### Arquitetura
+
+```
+Reunioes → Audios → Transcricoes + Metadados
+                         |
+             [Microsservico Python - IA Local]
+              HuggingFace BERT (Sentimento)
+              Regras de negocio (Entidades)
+                         |
+                  [Java Spring Boot]
+                   API REST + JPA
+                         |
+                    [DB - Oracle]
+                   Dados Extraidos
+                         |
+                [Analytics + Regras]
+           Analise de Riscos e Oportunidades
+                    /         \
+            Oportunidades    Riscos
+                    \         /
+          Mensagens + Dashboards + Alertas
+               [Next.js - Vercel]
+```
+
+---
+
+### Estrutura do Projeto
+
+```
+challenge-totvs-conversational-intelligence/
+|
+|-- ai-service/                           # Microsservico Python (IA local)
+|   |-- app.py                            # FastAPI - endpoints /analisar e /health
+|   |-- analyzer.py                       # Motor de NLP (HuggingFace + regras)
+|   +-- requirements.txt                  # Dependencias Python
+|
+|-- backend/                              # Java Spring Boot (API REST)
+|   |-- pom.xml
+|   +-- src/main/java/br/com/fiap/challenge/
+|       |-- ChallengeApplication.java
+|       |-- config/
+|       |   |-- CorsConfig.java           # CORS para Vercel + localhost
+|       |   |-- DataLoader.java           # Dados de exemplo (profile: demo)
+|       |   +-- GlobalExceptionHandler.java
+|       |-- controller/
+|       |   |-- TranscricaoController.java # POST/GET/DELETE transcricoes
+|       |   |-- DashboardController.java   # GET dashboard consolidado
+|       |   +-- AlertaController.java      # GET/PATCH alertas
+|       |-- dto/                           # Request/Response objects
+|       |-- model/
+|       |   |-- Transcricao.java
+|       |   |-- AnaliseResultado.java
+|       |   |-- ProdutoIdentificado.java
+|       |   |-- Oportunidade.java
+|       |   |-- Risco.java
+|       |   +-- Alerta.java
+|       |-- repository/                    # Spring Data JPA
+|       |-- service/
+|       |   |-- ClaudeAIService.java       # Client HTTP para microsservico Python
+|       |   |-- TranscricaoService.java
+|       |   |-- AnaliseService.java
+|       |   |-- AlertaService.java
+|       |   +-- DashboardService.java
+|       +-- enums/
+|
++-- frontend/                             # Next.js + React + Tailwind (Vercel)
+    +-- src/
+        |-- app/
+        |   |-- page.tsx                   # Dashboard principal
+        |   |-- transcricoes/page.tsx      # Lista + formulario de transcricoes
+        |   |-- transcricoes/[id]/page.tsx # Detalhe da analise
+        |   +-- alertas/page.tsx           # Central de alertas
+        |-- components/
+        |   |-- Navbar.tsx
+        |   |-- StatsCard.tsx
+        |   |-- AlertList.tsx
+        |   |-- SentimentBadge.tsx
+        |   +-- SeveridadeBadge.tsx
+        +-- lib/
+            |-- api.ts                     # Client HTTP para o backend
+            +-- types.ts                   # Tipos TypeScript
+```
+
+---
+
+### Tecnologias Utilizadas
+
+| Tecnologia | Uso |
+| --- | --- |
+| **Java 17** | Linguagem principal do backend |
+| **Spring Boot 3.3** | Framework web, JPA, validacao |
+| **Oracle Database** | Banco de dados relacional (FIAP) |
+| **Python 3.11** | Microsservico de IA / NLP |
+| **FastAPI** | Framework web do microsservico Python |
+| **HuggingFace Transformers** | Modelo BERT multilingual para analise de sentimento |
+| **Lombok** | Reducao de boilerplate no Java |
+| **Next.js 15** | Framework React para o frontend |
+| **Tailwind CSS** | Estilizacao do dashboard |
+| **Recharts** | Graficos interativos (pizza, barras) |
+| **Vercel** | Deploy do frontend |
+| **Maven** | Build e gerenciamento de dependencias |
+
+---
+
+### Como Executar
+
+**Pre-requisitos:**
+- JDK 17+
+- Maven 3.9+
+- Python 3.10+
+- Node.js 18+
+- Oracle Database (ou Oracle XE local)
+
+**1. Clone o repositorio:**
+```bash
+git clone https://github.com/TLean07/challenge-totvs-conversational-intelligence.git
+cd challenge-totvs-conversational-intelligence
+```
+
+**2. Microsservico de IA (Python):**
+```bash
+cd ai-service
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Linux/Mac
+pip install -r requirements.txt
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+Na primeira execucao, o modelo BERT sera baixado automaticamente (~700MB). Acesse `http://localhost:8000/health` para verificar.
+
+**3. Backend (Java Spring Boot):**
+
+Configure o banco Oracle em `backend/src/main/resources/application.properties`:
+```properties
+spring.datasource.url=jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL
+spring.datasource.username=SEU_RM
+spring.datasource.password=SUA_SENHA
+```
+
+Execute:
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+Para carregar dados de exemplo automaticamente:
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=demo
+```
+
+**4. Frontend (Next.js):**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Acesse `http://localhost:3000`
+
+**Deploy no Vercel:**
+- Conecte o repositorio no Vercel apontando para a pasta `/frontend`
+- Configure a variavel de ambiente `NEXT_PUBLIC_API_URL` com a URL do backend
+
+---
+
+### Endpoints da API
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| `POST` | `/api/transcricoes` | Envia transcricao e processa com IA |
+| `GET` | `/api/transcricoes` | Lista todas as transcricoes |
+| `GET` | `/api/transcricoes/{id}` | Detalhe de uma transcricao + analise |
+| `GET` | `/api/transcricoes/cliente/{nome}` | Busca por cliente |
+| `DELETE` | `/api/transcricoes/{id}` | Remove uma transcricao |
+| `GET` | `/api/dashboard` | Dados consolidados do dashboard |
+| `GET` | `/api/alertas` | Lista todos os alertas |
+| `GET` | `/api/alertas/novos` | Lista alertas nao lidos |
+| `PATCH` | `/api/alertas/{id}/visto` | Marca alerta como visto |
+| `PATCH` | `/api/alertas/{id}/resolvido` | Marca alerta como resolvido |
+
+**Microsservico de IA:**
+
+| Metodo | Endpoint | Descricao |
+| --- | --- | --- |
+| `POST` | `/analisar` | Analisa uma transcricao e retorna insights |
+| `GET` | `/health` | Verifica se o modelo esta carregado |
+
+---
+
+### Exemplo de Uso
+
+**Enviando uma transcricao via API:**
+```json
+POST /api/transcricoes
+{
+  "textoOriginal": "Bom dia, Joao. O nosso Protheus esta atendendo o backoffice, mas o time de RH esta sofrendo com a folha manual. O pessoal viu uma demo da Senior e gostou...",
+  "cliente": "Empresa ABC Ltda",
+  "vendedor": "Joao Silva",
+  "participantes": "Joao Silva (TOTVS), Carlos Mendes (ABC)",
+  "duracaoMinutos": 45
+}
+```
+
+**Resposta com analise completa:**
+```json
+{
+  "id": 1,
+  "status": "PROCESSADA",
+  "analise": {
+    "sentimentoGeral": "MISTO",
+    "resumo": "Cliente utiliza TOTVS Protheus. Sentimento misto na conversa. 1 oportunidade(s) de venda identificada(s). ATENCAO: 1 risco(s) de alta severidade. Concorrentes mencionados: Senior.",
+    "personaIdentificada": "Gestor Operacional",
+    "budgetIdentificado": "R$ 50 mil",
+    "produtos": [...],
+    "oportunidades": [...],
+    "riscos": [...],
+    "alertas": [...]
+  }
+}
+```
+
+---
+
+### Como Funciona a IA Local
+
+O microsservico Python utiliza uma abordagem hibrida:
+
+1. **Analise de Sentimento** — Modelo `nlptown/bert-base-multilingual-uncased-sentiment` (HuggingFace), treinado em 6 idiomas incluindo portugues. Classifica o texto em uma escala de 1-5 estrelas, convertida para POSITIVO/NEGATIVO/NEUTRO/MISTO.
+
+2. **Extracao de Entidades** — Regras de negocio especializadas que identificam:
+   - 15+ produtos TOTVS (Protheus, RM, Fluig, Datasul, etc.)
+   - 12+ concorrentes (SAP, Senior, Sankhya, Linx, etc.)
+   - 30+ modulos/areas de produto (RH, Fiscal, Compras, etc.)
+   - Padroes de valor monetario (R$ X.XXX)
+   - Cargos e personas (Diretor, Gerente, CEO, etc.)
+
+3. **Deteccao de Oportunidades** — Analise de padroes linguisticos que indicam intencao de compra, com scoring de probabilidade (0.0 a 1.0).
+
+4. **Deteccao de Riscos** — Identificacao de sinais de insatisfacao, mencoes a concorrentes e indicadores de churn, com classificacao de severidade (ALTO/MEDIO/BAIXO).
+
+---
+
+### Autor
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/TLean07">
+        <img src="https://github.com/TLean07.png" width="100px;" alt="TLean07"/>
+        <br />
+        <sub><b>Leandro Afonso Silva Santos Junior</b></sub>
+      </a>
+      <br />
+      <sub>RM 561344</sub>
+    </td>
+  </tr>
+</table>
