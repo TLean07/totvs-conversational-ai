@@ -5,8 +5,8 @@ import SeveridadeBadge from "./SeveridadeBadge";
 
 interface AlertListProps {
   alertas: AlertaResponse[];
-  onMarcarVisto?: (id: number) => void;
-  onMarcarResolvido?: (id: number) => void;
+  onMarcarVisto?: (id: string) => void;
+  onMarcarResolvido?: (id: string) => void;
 }
 
 export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido }: AlertListProps) {

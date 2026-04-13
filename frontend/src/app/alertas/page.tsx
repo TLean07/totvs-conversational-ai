@@ -24,12 +24,12 @@ export default function AlertasPage() {
     loadData();
   }, [filter]);
 
-  const handleMarcarVisto = async (id: number) => {
+  const handleMarcarVisto = async (id: string) => {
     await api.alertas.marcarVisto(id);
     loadData();
   };
 
-  const handleMarcarResolvido = async (id: number) => {
+  const handleMarcarResolvido = async (id: string) => {
     await api.alertas.marcarResolvido(id);
     loadData();
   };
