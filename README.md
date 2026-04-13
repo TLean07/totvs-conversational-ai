@@ -202,9 +202,74 @@ npm run dev
 ```
 Acesse `http://localhost:3000`
 
-**Deploy no Vercel:**
-- Conecte o repositorio no Vercel apontando para a pasta `/frontend`
-- Configure a variavel de ambiente `NEXT_PUBLIC_API_URL` com a URL do backend
+---
+
+### Deploy em Producao (Gratuito)
+
+A aplicacao roda em 3 servicos na nuvem, todos com planos gratuitos:
+
+```
+[Vercel]                [Render]                 [HuggingFace Spaces]
+ Frontend   ──REST──►   Backend Java  ──REST──►   AI Service Python
+ Next.js                Spring Boot               FastAPI + BERT
+                            |
+                       [FIAP Oracle]
+```
+
+#### Passo 1 — AI Service no Hugging Face Spaces
+
+1. Crie uma conta em [huggingface.co](https://huggingface.co)
+2. Va em **New Space** → escolha **Docker** como SDK
+3. Clone o Space e copie os arquivos da pasta `ai-service/`:
+```bash
+git clone https://huggingface.co/spaces/SEU_USUARIO/totvs-ai-service
+cp ai-service/* totvs-ai-service/
+cd totvs-ai-service
+git add . && git commit -m "Deploy AI service" && git push
+```
+4. Aguarde o build (~5 min). A URL sera: `https://SEU_USUARIO-totvs-ai-service.hf.space`
+5. Teste: `https://SEU_USUARIO-totvs-ai-service.hf.space/health`
+
+#### Passo 2 — Backend no Render
+
+1. Crie uma conta em [render.com](https://render.com)
+2. Va em **New** → **Web Service** → conecte seu repositorio GitHub
+3. Configure:
+   - **Root Directory:** `backend`
+   - **Runtime:** Docker
+   - **Plan:** Free
+4. Adicione as **Environment Variables:**
+   | Variavel | Valor |
+   |---|---|
+   | `SPRING_DATASOURCE_URL` | `jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL` |
+   | `SPRING_DATASOURCE_USERNAME` | `SEU_RM` |
+   | `SPRING_DATASOURCE_PASSWORD` | `SUA_SENHA` |
+   | `AI_SERVICE_URL` | `https://SEU_USUARIO-totvs-ai-service.hf.space` |
+   | `CORS_ALLOWED_ORIGINS` | `https://SEU-APP.vercel.app` |
+5. Clique em **Create Web Service**. A URL sera: `https://SEU-APP.onrender.com`
+
+#### Passo 3 — Frontend no Vercel
+
+1. Crie uma conta em [vercel.com](https://vercel.com)
+2. Va em **New Project** → importe o repositorio GitHub
+3. Configure:
+   - **Root Directory:** `frontend`
+   - **Framework Preset:** Next.js
+4. Adicione a **Environment Variable:**
+   | Variavel | Valor |
+   |---|---|
+   | `NEXT_PUBLIC_API_URL` | `https://SEU-APP.onrender.com/api` |
+5. Clique em **Deploy**
+
+#### Resumo das URLs finais
+
+| Servico | URL |
+|---|---|
+| Frontend | `https://SEU-APP.vercel.app` |
+| Backend | `https://SEU-APP.onrender.com` |
+| AI Service | `https://SEU_USUARIO-totvs-ai-service.hf.space` |
+
+> **Nota:** No plano gratuito do Render, o servico "dorme" apos 15 min de inatividade. A primeira requisicao apos isso leva ~30s para acordar. O HuggingFace Spaces tambem pode dormir, mas acorda automaticamente.
 
 ---
 
