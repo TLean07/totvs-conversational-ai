@@ -7,8 +7,8 @@ import br.com.fiap.challenge.repository.AnaliseResultadoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,25 +28,24 @@ public class AnaliseService {
         this.alertaService = alertaService;
     }
 
-    @Transactional
     public AnaliseResultado processarAnalise(Transcricao transcricao) {
-        log.info("Iniciando análise da transcrição ID: {}", transcricao.getId());
+        log.info("Iniciando analise da transcricao ID: {}", transcricao.getId());
 
         ClaudeAnaliseDTO dto = claudeAIService.analisarTranscricao(transcricao.getTextoOriginal());
 
         AnaliseResultado analise = AnaliseResultado.builder()
-                .transcricao(transcricao)
+                .transcricaoId(transcricao.getId())
                 .sentimentoGeral(Sentimento.valueOf(dto.getSentimentoGeral()))
                 .resumo(dto.getResumo())
                 .personaIdentificada(dto.getPersonaIdentificada())
                 .budgetIdentificado(dto.getBudgetIdentificado())
                 .scoreConfiancaVendedor(dto.getScoreConfiancaVendedor())
+                .dataAnalise(LocalDateTime.now())
                 .build();
 
         if (dto.getProdutos() != null) {
             for (ClaudeAnaliseDTO.ProdutoDTO p : dto.getProdutos()) {
                 ProdutoIdentificado produto = ProdutoIdentificado.builder()
-                        .analiseResultado(analise)
                         .nomeProduto(p.getNomeProduto())
                         .tipo(TipoProduto.valueOf(p.getTipo()))
                         .contexto(p.getContexto())
@@ -58,7 +57,6 @@ public class AnaliseService {
         if (dto.getOportunidades() != null) {
             for (ClaudeAnaliseDTO.OportunidadeDTO o : dto.getOportunidades()) {
                 Oportunidade oportunidade = Oportunidade.builder()
-                        .analiseResultado(analise)
                         .tipo(TipoOportunidade.valueOf(o.getTipo()))
                         .descricao(o.getDescricao())
                         .produtoRelacionado(o.getProdutoRelacionado())
@@ -72,7 +70,6 @@ public class AnaliseService {
         if (dto.getRiscos() != null) {
             for (ClaudeAnaliseDTO.RiscoDTO r : dto.getRiscos()) {
                 Risco risco = Risco.builder()
-                        .analiseResultado(analise)
                         .tipo(TipoRisco.valueOf(r.getTipo()))
                         .descricao(r.getDescricao())
                         .severidade(Severidade.valueOf(r.getSeveridade()))
@@ -84,9 +81,11 @@ public class AnaliseService {
 
         analise = analiseRepository.save(analise);
 
-        alertaService.gerarAlertas(analise);
+        List<Alerta> alertas = alertaService.gerarAlertas(analise, transcricao);
+        analise.setAlertas(alertas);
+        analise = analiseRepository.save(analise);
 
-        log.info("Análise concluída para transcrição ID: {}", transcricao.getId());
+        log.info("Analise concluida para transcricao ID: {}", transcricao.getId());
         return analise;
     }
 
@@ -101,7 +100,6 @@ public class AnaliseService {
                 .dataAnalise(a.getDataAnalise())
                 .produtos(a.getProdutosIdentificados().stream()
                         .map(p -> ProdutoResponse.builder()
-                                .id(p.getId())
                                 .nomeProduto(p.getNomeProduto())
                                 .tipo(p.getTipo())
                                 .contexto(p.getContexto())
@@ -109,7 +107,6 @@ public class AnaliseService {
                         .toList())
                 .oportunidades(a.getOportunidades().stream()
                         .map(o -> OportunidadeResponse.builder()
-                                .id(o.getId())
                                 .tipo(o.getTipo())
                                 .descricao(o.getDescricao())
                                 .produtoRelacionado(o.getProdutoRelacionado())
@@ -119,7 +116,6 @@ public class AnaliseService {
                         .toList())
                 .riscos(a.getRiscos().stream()
                         .map(r -> RiscoResponse.builder()
-                                .id(r.getId())
                                 .tipo(r.getTipo())
                                 .descricao(r.getDescricao())
                                 .severidade(r.getSeveridade())

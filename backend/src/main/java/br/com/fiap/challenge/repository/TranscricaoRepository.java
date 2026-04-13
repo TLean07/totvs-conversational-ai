@@ -2,13 +2,13 @@ package br.com.fiap.challenge.repository;
 
 import br.com.fiap.challenge.enums.StatusTranscricao;
 import br.com.fiap.challenge.model.Transcricao;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface TranscricaoRepository extends JpaRepository<Transcricao, Long> {
+public interface TranscricaoRepository extends MongoRepository<Transcricao, String> {
     List<Transcricao> findByStatus(StatusTranscricao status);
     List<Transcricao> findByClienteContainingIgnoreCase(String cliente);
     List<Transcricao> findAllByOrderByDataCriacaoDesc();

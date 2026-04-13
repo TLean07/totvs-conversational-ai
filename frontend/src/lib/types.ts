@@ -7,14 +7,12 @@ export type StatusAlerta = "NOVO" | "VISTO" | "RESOLVIDO";
 export type TipoProduto = "ATUAL" | "OPORTUNIDADE" | "CONCORRENTE";
 
 export interface ProdutoResponse {
-  id: number;
   nomeProduto: string;
   tipo: TipoProduto;
   contexto: string;
 }
 
 export interface OportunidadeResponse {
-  id: number;
   tipo: TipoOportunidade;
   descricao: string;
   produtoRelacionado: string;
@@ -23,7 +21,6 @@ export interface OportunidadeResponse {
 }
 
 export interface RiscoResponse {
-  id: number;
   tipo: TipoRisco;
   descricao: string;
   severidade: Severidade;
@@ -31,7 +28,7 @@ export interface RiscoResponse {
 }
 
 export interface AlertaResponse {
-  id: number;
+  id: string;
   tipo: string;
   mensagem: string;
   prioridade: Severidade;
@@ -40,7 +37,7 @@ export interface AlertaResponse {
 }
 
 export interface AnaliseResponse {
-  id: number;
+  id: string;
   sentimentoGeral: Sentimento;
   resumo: string;
   personaIdentificada: string;
@@ -54,7 +51,7 @@ export interface AnaliseResponse {
 }
 
 export interface TranscricaoResponse {
-  id: number;
+  id: string;
   textoOriginal: string;
   participantes: string;
   dataReuniao: string;

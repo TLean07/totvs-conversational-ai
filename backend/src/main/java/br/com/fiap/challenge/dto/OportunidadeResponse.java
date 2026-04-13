@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class OportunidadeResponse {
-    private Long id;
     private TipoOportunidade tipo;
     private String descricao;
     private String produtoRelacionado;

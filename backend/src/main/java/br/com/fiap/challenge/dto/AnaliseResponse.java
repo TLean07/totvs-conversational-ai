@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class AnaliseResponse {
-    private Long id;
+    private String id;
     private Sentimento sentimentoGeral;
     private String resumo;
     private String personaIdentificada;

@@ -2,10 +2,11 @@ package br.com.fiap.challenge.service;
 
 import br.com.fiap.challenge.dto.*;
 import br.com.fiap.challenge.enums.StatusTranscricao;
+import br.com.fiap.challenge.model.AnaliseResultado;
 import br.com.fiap.challenge.model.Transcricao;
+import br.com.fiap.challenge.repository.AnaliseResultadoRepository;
 import br.com.fiap.challenge.repository.TranscricaoRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -15,14 +16,17 @@ import java.util.List;
 public class TranscricaoService {
 
     private final TranscricaoRepository transcricaoRepository;
+    private final AnaliseResultadoRepository analiseRepository;
     private final AnaliseService analiseService;
 
-    public TranscricaoService(TranscricaoRepository transcricaoRepository, AnaliseService analiseService) {
+    public TranscricaoService(TranscricaoRepository transcricaoRepository,
+                              AnaliseResultadoRepository analiseRepository,
+                              AnaliseService analiseService) {
         this.transcricaoRepository = transcricaoRepository;
+        this.analiseRepository = analiseRepository;
         this.analiseService = analiseService;
     }
 
-    @Transactional
     public TranscricaoResponse criarEAnalisar(TranscricaoRequest request) {
         Transcricao transcricao = Transcricao.builder()
                 .textoOriginal(request.getTextoOriginal())
@@ -31,6 +35,7 @@ public class TranscricaoService {
                 .cliente(request.getCliente())
                 .vendedor(request.getVendedor())
                 .status(StatusTranscricao.PENDENTE)
+                .dataCriacao(LocalDateTime.now())
                 .build();
 
         if (request.getDataReuniao() != null && !request.getDataReuniao().isBlank()) {
@@ -44,7 +49,8 @@ public class TranscricaoService {
         transcricao = transcricaoRepository.save(transcricao);
 
         try {
-            analiseService.processarAnalise(transcricao);
+            AnaliseResultado analise = analiseService.processarAnalise(transcricao);
+            transcricao.setAnaliseResultado(analise);
             transcricao.setStatus(StatusTranscricao.PROCESSADA);
             transcricao.setDataProcessamento(LocalDateTime.now());
         } catch (Exception e) {
@@ -62,9 +68,9 @@ public class TranscricaoService {
                 .toList();
     }
 
-    public TranscricaoResponse buscarPorId(Long id) {
+    public TranscricaoResponse buscarPorId(String id) {
         Transcricao transcricao = transcricaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transcrição não encontrada: " + id));
+                .orElseThrow(() -> new RuntimeException("Transcricao nao encontrada: " + id));
         return toResponse(transcricao);
     }
 
@@ -75,13 +81,12 @@ public class TranscricaoService {
                 .toList();
     }
 
-    @Transactional
-    public void deletar(Long id) {
+    public void deletar(String id) {
         transcricaoRepository.deleteById(id);
     }
 
     public TranscricaoResponse toResponse(Transcricao t) {
-        TranscricaoResponse response = TranscricaoResponse.builder()
+        TranscricaoResponse.TranscricaoResponseBuilder builder = TranscricaoResponse.builder()
                 .id(t.getId())
                 .textoOriginal(t.getTextoOriginal())
                 .participantes(t.getParticipantes())
@@ -91,13 +96,16 @@ public class TranscricaoService {
                 .vendedor(t.getVendedor())
                 .status(t.getStatus())
                 .dataCriacao(t.getDataCriacao())
-                .dataProcessamento(t.getDataProcessamento())
-                .build();
+                .dataProcessamento(t.getDataProcessamento());
 
+        // Buscar analise se existir
         if (t.getAnaliseResultado() != null) {
-            response.setAnalise(analiseService.toResponse(t.getAnaliseResultado()));
+            builder.analise(analiseService.toResponse(t.getAnaliseResultado()));
+        } else {
+            analiseRepository.findByTranscricaoId(t.getId())
+                    .ifPresent(a -> builder.analise(analiseService.toResponse(a)));
         }
 
-        return response;
+        return builder.build();
     }
 }

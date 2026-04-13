@@ -10,7 +10,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class RiscoResponse {
-    private Long id;
     private TipoRisco tipo;
     private String descricao;
     private Severidade severidade;

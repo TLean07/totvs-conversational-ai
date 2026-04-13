@@ -28,12 +28,12 @@ public class AlertaController {
     }
 
     @PatchMapping("/{id}/visto")
-    public ResponseEntity<AlertaResponse> marcarComoVisto(@PathVariable Long id) {
+    public ResponseEntity<AlertaResponse> marcarComoVisto(@PathVariable String id) {
         return ResponseEntity.ok(alertaService.marcarComoVisto(id));
     }
 
     @PatchMapping("/{id}/resolvido")
-    public ResponseEntity<AlertaResponse> marcarComoResolvido(@PathVariable Long id) {
+    public ResponseEntity<AlertaResponse> marcarComoResolvido(@PathVariable String id) {
         return ResponseEntity.ok(alertaService.marcarComoResolvido(id));
     }
 }

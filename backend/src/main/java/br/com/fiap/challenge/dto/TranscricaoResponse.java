@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class TranscricaoResponse {
-    private Long id;
+    private String id;
     private String textoOriginal;
     private String participantes;
     private LocalDateTime dataReuniao;

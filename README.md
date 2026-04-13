@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?logo=huggingface&logoColor=black" alt="HuggingFace">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white" alt="Next.js">
-  <img src="https://img.shields.io/badge/Oracle-Database-F80000?logo=oracle&logoColor=white" alt="Oracle">
+  <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white" alt="MongoDB">
   <img src="https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/FIAP-Challenge%20TOTVS%202026-E4002B" alt="FIAP">
 </p>
@@ -56,7 +56,7 @@ Reunioes → Audios → Transcricoes + Metadados
                   [Java Spring Boot]
                    API REST + JPA
                          |
-                    [DB - Oracle]
+                    [DB - MongoDB]
                    Dados Extraidos
                          |
                 [Analytics + Regras]
@@ -135,7 +135,7 @@ challenge-totvs-conversational-intelligence/
 | --- | --- |
 | **Java 17** | Linguagem principal do backend |
 | **Spring Boot 3.3** | Framework web, JPA, validacao |
-| **Oracle Database** | Banco de dados relacional (FIAP) |
+| **MongoDB Atlas** | Banco de dados NoSQL na nuvem (gratis) |
 | **Python 3.11** | Microsservico de IA / NLP |
 | **FastAPI** | Framework web do microsservico Python |
 | **HuggingFace Transformers** | Modelo BERT multilingual para analise de sentimento |
@@ -155,7 +155,7 @@ challenge-totvs-conversational-intelligence/
 - Maven 3.9+
 - Python 3.10+
 - Node.js 18+
-- Oracle Database (ou Oracle XE local)
+- MongoDB (local ou MongoDB Atlas gratuito)
 
 **1. Clone o repositorio:**
 ```bash
@@ -176,12 +176,13 @@ Na primeira execucao, o modelo BERT sera baixado automaticamente (~700MB). Acess
 
 **3. Backend (Java Spring Boot):**
 
-Configure o banco Oracle em `backend/src/main/resources/application.properties`:
+Configure o MongoDB em `backend/src/main/resources/application.properties`:
 ```properties
-spring.datasource.url=jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL
-spring.datasource.username=SEU_RM
-spring.datasource.password=SUA_SENHA
+spring.data.mongodb.uri=mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/challenge-totvs
 ```
+Ou via variavel de ambiente: `export MONGODB_URI=mongodb+srv://...`
+
+Para rodar local sem Atlas, basta ter o MongoDB rodando em `localhost:27017` (o padrao ja funciona).
 
 Execute:
 ```bash
@@ -213,8 +214,20 @@ A aplicacao roda em 3 servicos na nuvem, todos com planos gratuitos:
  Frontend   ──REST──►   Backend Java  ──REST──►   AI Service Python
  Next.js                Spring Boot               FastAPI + BERT
                             |
-                       [FIAP Oracle]
+                    [MongoDB Atlas]
 ```
+
+#### Passo 0 — MongoDB Atlas (Banco de dados gratuito)
+
+1. Crie uma conta em [mongodb.com/atlas](https://www.mongodb.com/atlas)
+2. Crie um **Free Cluster** (M0 - gratuito, 512MB)
+3. Em **Database Access**, crie um usuario com senha
+4. Em **Network Access**, adicione `0.0.0.0/0` (permite acesso de qualquer IP)
+5. Em **Connect** → **Drivers**, copie a connection string:
+   ```
+   mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/challenge-totvs
+   ```
+6. Guarde essa URI — voce usara no Render
 
 #### Passo 1 — AI Service no Hugging Face Spaces
 
@@ -241,9 +254,7 @@ git add . && git commit -m "Deploy AI service" && git push
 4. Adicione as **Environment Variables:**
    | Variavel | Valor |
    |---|---|
-   | `SPRING_DATASOURCE_URL` | `jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL` |
-   | `SPRING_DATASOURCE_USERNAME` | `SEU_RM` |
-   | `SPRING_DATASOURCE_PASSWORD` | `SUA_SENHA` |
+   | `MONGODB_URI` | `mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/challenge-totvs` |
    | `AI_SERVICE_URL` | `https://SEU_USUARIO-totvs-ai-service.hf.space` |
    | `CORS_ALLOWED_ORIGINS` | `https://SEU-APP.vercel.app` |
 5. Clique em **Create Web Service**. A URL sera: `https://SEU-APP.onrender.com`

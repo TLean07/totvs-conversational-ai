@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class AlertaResponse {
-    private Long id;
+    private String id;
     private String tipo;
     private String mensagem;
     private Severidade prioridade;

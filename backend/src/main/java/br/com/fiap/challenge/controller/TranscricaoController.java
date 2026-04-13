@@ -32,7 +32,7 @@ public class TranscricaoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TranscricaoResponse> buscarPorId(@PathVariable Long id) {
+    public ResponseEntity<TranscricaoResponse> buscarPorId(@PathVariable String id) {
         return ResponseEntity.ok(transcricaoService.buscarPorId(id));
     }
 
@@ -42,7 +42,7 @@ public class TranscricaoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable String id) {
         transcricaoService.deletar(id);
         return ResponseEntity.noContent().build();
     }

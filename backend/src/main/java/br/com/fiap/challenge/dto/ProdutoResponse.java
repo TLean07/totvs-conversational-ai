@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class ProdutoResponse {
-    private Long id;
     private String nomeProduto;
     private TipoProduto tipo;
     private String contexto;

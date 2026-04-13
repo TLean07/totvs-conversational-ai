@@ -17,7 +17,7 @@ export const api = {
 
   transcricoes: {
     listar: () => request<import("./types").TranscricaoResponse[]>("/transcricoes"),
-    buscar: (id: number) =>
+    buscar: (id: string) =>
       request<import("./types").TranscricaoResponse>(`/transcricoes/${id}`),
     criar: (data: {
       textoOriginal: string;
@@ -31,18 +31,18 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
-    deletar: (id: number) =>
+    deletar: (id: string) =>
       request<void>(`/transcricoes/${id}`, { method: "DELETE" }),
   },
 
   alertas: {
     listar: () => request<import("./types").AlertaResponse[]>("/alertas"),
     novos: () => request<import("./types").AlertaResponse[]>("/alertas/novos"),
-    marcarVisto: (id: number) =>
+    marcarVisto: (id: string) =>
       request<import("./types").AlertaResponse>(`/alertas/${id}/visto`, {
         method: "PATCH",
       }),
-    marcarResolvido: (id: number) =>
+    marcarResolvido: (id: string) =>
       request<import("./types").AlertaResponse>(`/alertas/${id}/resolvido`, {
         method: "PATCH",
       }),

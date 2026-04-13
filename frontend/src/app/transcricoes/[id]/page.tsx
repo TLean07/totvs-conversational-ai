@@ -24,7 +24,7 @@ export default function TranscricaoDetailPage() {
   useEffect(() => {
     if (params.id) {
       api.transcricoes
-        .buscar(Number(params.id))
+        .buscar(params.id as string)
         .then(setData)
         .catch(() => {})
         .finally(() => setLoading(false));
