@@ -15,7 +15,7 @@ Pre-requisitos:
 
 Abra um terminal e execute:
 
-cd C:\Programming\Java\FIAP\Challenge\ai-service
+cd ai-service
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
@@ -31,17 +31,15 @@ OBS: Na primeira vez, o modelo BERT sera baixado (~700MB).
 
 Abra OUTRO terminal e execute:
 
-cd C:\Programming\Java\FIAP\Challenge\backend
-mvn spring-boot:run
+cd backend
+.\mvnw.cmd spring-boot:run
 
-Ou com dados de exemplo:
-mvn spring-boot:run -Dspring-boot.run.profiles=demo
-
-Se nao tiver o Maven instalado, use o do IntelliJ:
-"C:\Program Files\JetBrains\IntelliJ IDEA 2025.3\plugins\maven\lib\maven3\bin\mvn.cmd" spring-boot:run
+Ou com dados de exemplo pre-carregados:
+.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=demo
 
 OBS: Aguarde ate aparecer "Started ChallengeApplication"
      O backend roda em http://localhost:8080
+     Na primeira vez o Maven vai baixar as dependencias (~5min)
 
 ============================================
   PASSO 3 - FRONTEND (Next.js)
@@ -49,7 +47,7 @@ OBS: Aguarde ate aparecer "Started ChallengeApplication"
 
 Abra OUTRO terminal e execute:
 
-cd C:\Programming\Java\FIAP\Challenge\frontend
+cd frontend
 npm install
 npm run dev
 
