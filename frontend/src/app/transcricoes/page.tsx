@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import type { TranscricaoResponse, Sentimento } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SentimentBadge from "@/components/SentimentBadge";
+import VoiceRecorder from "@/components/VoiceRecorder";
 
 export default function TranscricoesPage() {
   const [transcricoes, setTranscricoes] = useState<TranscricaoResponse[]>([]);
@@ -135,16 +136,22 @@ export default function TranscricoesPage() {
               </div>
             </div>
             <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">
-                Transcricao da Reuniao <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-slate-600">
+                  Transcricao da Reuniao <span className="text-rose-500">*</span>
+                </label>
+                <VoiceRecorder
+                  currentText={form.textoOriginal}
+                  onTranscript={(text) => setForm({ ...form, textoOriginal: text })}
+                />
+              </div>
               <textarea
                 value={form.textoOriginal}
                 required
-                rows={6}
+                rows={8}
                 onChange={(e) => setForm({ ...form, textoOriginal: e.target.value })}
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all resize-none"
-                placeholder="Cole aqui o texto da transcricao da reuniao..."
+                placeholder="Cole aqui o texto da transcricao ou clique em 'Gravar Reuniao' para transcrever em tempo real..."
               />
             </div>
             <div className="flex items-center gap-4">
