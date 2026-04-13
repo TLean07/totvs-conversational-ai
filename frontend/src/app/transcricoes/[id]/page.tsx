@@ -121,8 +121,8 @@ export default function TranscricaoDetailPage() {
               <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">Produtos Identificados</h2>
                 <div className="space-y-3">
-                  {analise.produtos.map((p) => (
-                    <div key={p.id} className="border rounded-lg p-3 flex items-start gap-3">
+                  {analise.produtos.map((p, i) => (
+                    <div key={i} className="border rounded-lg p-3 flex items-start gap-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         TIPO_PRODUTO_COLOR[p.tipo]
                       }`}>
@@ -143,8 +143,8 @@ export default function TranscricaoDetailPage() {
               <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">Oportunidades</h2>
                 <div className="space-y-3">
-                  {analise.oportunidades.map((o) => (
-                    <div key={o.id} className="border-l-4 border-green-400 bg-green-50 rounded-r-lg p-4">
+                  {analise.oportunidades.map((o, i) => (
+                    <div key={i} className="border-l-4 border-green-400 bg-green-50 rounded-r-lg p-4">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium text-green-700 bg-green-200 px-2 py-0.5 rounded">
                           {o.tipo}
@@ -171,8 +171,8 @@ export default function TranscricaoDetailPage() {
               <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">Riscos</h2>
                 <div className="space-y-3">
-                  {analise.riscos.map((r) => (
-                    <div key={r.id} className="border-l-4 border-red-400 bg-red-50 rounded-r-lg p-4">
+                  {analise.riscos.map((r, i) => (
+                    <div key={i} className="border-l-4 border-red-400 bg-red-50 rounded-r-lg p-4">
                       <div className="flex items-center gap-2 mb-1">
                         <SeveridadeBadge severidade={r.severidade} />
                         <span className="text-xs font-mono text-gray-500">{r.tipo}</span>
