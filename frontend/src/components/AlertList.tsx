@@ -42,9 +42,9 @@ export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido }:
               : "bg-emerald-50/50 border-emerald-200"
           }`}
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex-1 min-w-0 w-full">
+              <div className="flex flex-wrap items-center gap-2 mb-2">
                 <SeveridadeBadge severidade={alerta.prioridade} />
                 <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                   {TIPO_LABELS[alerta.tipo] || alerta.tipo}
@@ -55,13 +55,13 @@ export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido }:
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed">{alerta.mensagem}</p>
+              <p className="text-sm text-slate-700 leading-relaxed break-words">{alerta.mensagem}</p>
               <p className="text-xs text-slate-400 mt-2">
                 {new Date(alerta.dataCriacao).toLocaleString("pt-BR")}
               </p>
             </div>
             {alerta.status === "NOVO" && (
-              <div className="flex gap-2 shrink-0">
+              <div className="flex gap-2 shrink-0 sm:mt-0 mt-2 w-full sm:w-auto justify-end">
                 {onMarcarVisto && (
                   <button
                     onClick={() => onMarcarVisto(alerta.id)}

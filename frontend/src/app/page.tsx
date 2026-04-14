@@ -66,6 +66,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filtroCliente, setFiltroCliente] = useState("");
 
   useEffect(() => {
     api
@@ -258,25 +259,41 @@ export default function DashboardPage() {
             <AlertList alertas={data.alertasRecentes} />
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-base font-semibold text-slate-700">Ultimas Transcricoes</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Reunioes recentes analisadas</p>
+                <h2 className="text-base font-semibold text-slate-700">Transcricoes</h2>
+                <p className="text-xs text-slate-400 mt-0.5">Filtre as reunioes recentes analisadas</p>
               </div>
-              <a href="/transcricoes" className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">
-                Ver todas
-              </a>
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="relative w-full">
+                  <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Nome do cliente..."
+                    value={filtroCliente}
+                    onChange={(e) => setFiltroCliente(e.target.value)}
+                    className="w-full sm:w-48 border border-slate-200 bg-slate-50 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all shadow-sm"
+                  />
+                </div>
+                <a href="/transcricoes" className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline shrink-0 hidden sm:block">
+                  Ver todas
+                </a>
+              </div>
             </div>
             {data.ultimasTranscricoes.length > 0 ? (
-              <div className="space-y-3">
-                {data.ultimasTranscricoes.map((t) => (
+              <div className="space-y-3 overflow-y-auto max-h-[420px] pr-1">
+                {data.ultimasTranscricoes
+                  .filter(t => !filtroCliente || t.cliente?.toLowerCase().includes(filtroCliente.toLowerCase()))
+                  .map((t) => (
                   <a
                     key={t.id}
                     href={`/transcricoes/${t.id}`}
                     className="block rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all duration-200 group"
                   >
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm text-slate-700 group-hover:text-blue-700 transition-colors">
                           {t.cliente || `Transcricao #${t.id}`}
@@ -292,6 +309,11 @@ export default function DashboardPage() {
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{t.textoOriginal}</p>
                   </a>
                 ))}
+                {data.ultimasTranscricoes.filter(t => !filtroCliente || t.cliente?.toLowerCase().includes(filtroCliente.toLowerCase())).length === 0 && (
+                  <div className="text-center py-6 text-slate-400 text-sm">
+                    Nenhuma reuniao encontrada para este filtro.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-12">

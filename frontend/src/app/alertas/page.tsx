@@ -38,12 +38,12 @@ export default function AlertasPage() {
     <>
       <Navbar />
       <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Alertas</h1>
             <p className="text-sm text-slate-500 mt-1">Notificacoes geradas pela analise de IA</p>
           </div>
-          <div className="flex bg-slate-100 rounded-xl p-1">
+          <div className="flex flex-wrap bg-slate-100 rounded-xl p-1 shrink-0">
             <button
               onClick={() => setFilter("novos")}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
