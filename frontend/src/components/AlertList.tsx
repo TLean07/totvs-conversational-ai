@@ -60,9 +60,9 @@ export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido }:
                 {new Date(alerta.dataCriacao).toLocaleString("pt-BR")}
               </p>
             </div>
-            {alerta.status === "NOVO" && (
+            {(alerta.status === "NOVO" || alerta.status === "VISTO") && (
               <div className="flex gap-2 shrink-0 sm:mt-0 mt-2 w-full sm:w-auto justify-end">
-                {onMarcarVisto && (
+                {alerta.status === "NOVO" && onMarcarVisto && (
                   <button
                     onClick={() => onMarcarVisto(alerta.id)}
                     className="text-xs px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 font-medium transition-colors"

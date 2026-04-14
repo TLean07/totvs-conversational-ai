@@ -68,13 +68,28 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [filtroCliente, setFiltroCliente] = useState("");
 
-  useEffect(() => {
+  const loadData = (showLoading = true) => {
+    if (showLoading) setLoading(true);
     api
       .dashboard()
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  const handleMarcarVisto = async (id: string) => {
+    await api.alertas.marcarVisto(id);
+    loadData(false);
+  };
+
+  const handleMarcarResolvido = async (id: string) => {
+    await api.alertas.marcarResolvido(id);
+    loadData(false);
+  };
 
   if (loading) return <LoadingScreen />;
 
@@ -256,7 +271,11 @@ export default function DashboardPage() {
                 Ver todos
               </a>
             </div>
-            <AlertList alertas={data.alertasRecentes} />
+            <AlertList 
+              alertas={data.alertasRecentes} 
+              onMarcarVisto={handleMarcarVisto}
+              onMarcarResolvido={handleMarcarResolvido}
+            />
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
