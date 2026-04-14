@@ -9,7 +9,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     const error = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(error.error || "Erro na requisição");
   }
-  return res.json();
+  
+  if (res.status === 204) {
+    return undefined as unknown as T;
+  }
+  
+  const text = await res.text();
+  return text ? JSON.parse(text) : (undefined as unknown as T);
 }
 
 export const api = {
