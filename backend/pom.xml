@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.tlean07.fiap</groupId>
+    <groupId>com.tlean07.fiap.challenge</groupId>
     <artifactId>challenge-totvs-conversational-intelligence</artifactId>
     <version>1.0.0</version>
     <name>Challenge TOTVS Conversational Intelligence</name>
