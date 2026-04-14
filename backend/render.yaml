@@ -3,7 +3,7 @@ services:
     name: challenge-totvs-backend
     runtime: docker
     rootDir: backend
-    dockerfilePath: backend/Dockerfile
+    dockerfilePath: Dockerfile
     region: oregon
     plan: free
     envVars:
