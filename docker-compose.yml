@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    # O HuggingFace e o Dockerfile atualmente expoem a porta 7860
+    ports:
+      - "8000:7860"
+    restart: unless-stopped
+    networks:
+      - totvs-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Conecta ao Mongo externo (Atlas) usando a variavel do .env
+      - MONGODB_URI=${MONGODB_URI}
+      # Conecta ao ai-service atraves do nome do container na rede interna (totvs-net)
+      - AI_SERVICE_URL=http://ai-service:7860
+      # Permite CORS tanto local quanto pro IP publico da maquina
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost,http://${SERVER_IP},http://${SERVER_IP}:3000
+    restart: unless-stopped
+    depends_on:
+      - ai-service
+    networks:
+      - totvs-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Passa o endereco publico da API pro cache do Next.js
+        - NEXT_PUBLIC_API_URL=http://${SERVER_IP}:8080/api
+    ports:
+      # Mapeia a porta 80 do host (padrao HTTP) para a 3000 do container
+      - "80:3000"
+      # Extra: Opcionalmente deixa disponivel na 3000
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - totvs-net
+
+networks:
+  totvs-net:
+    driver: bridge
