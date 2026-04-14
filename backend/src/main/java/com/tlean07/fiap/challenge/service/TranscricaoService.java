@@ -1,6 +1,6 @@
 package com.tlean07.fiap.challenge.service;
 
-import br.com.fiap.challenge.dto.*;
+import com.tlean07.fiap.challenge.dto.*;
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
 import com.tlean07.fiap.challenge.dto.TranscricaoResponse;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;

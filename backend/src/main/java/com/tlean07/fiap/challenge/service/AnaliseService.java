@@ -1,8 +1,8 @@
 package com.tlean07.fiap.challenge.service;
 
-import br.com.fiap.challenge.dto.*;
-import br.com.fiap.challenge.enums.*;
-import br.com.fiap.challenge.model.*;
+import com.tlean07.fiap.challenge.dto.*;
+import com.tlean07.fiap.challenge.enums.*;
+import com.tlean07.fiap.challenge.model.*;
 import com.tlean07.fiap.challenge.dto.*;
 import com.tlean07.fiap.challenge.enums.*;
 import com.tlean07.fiap.challenge.model.*;

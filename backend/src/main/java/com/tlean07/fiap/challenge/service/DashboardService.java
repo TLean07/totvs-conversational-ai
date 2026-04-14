@@ -4,7 +4,7 @@ import com.tlean07.fiap.challenge.dto.DashboardResponse;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
-import br.com.fiap.challenge.repository.*;
+import com.tlean07.fiap.challenge.repository.*;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
