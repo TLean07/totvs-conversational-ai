@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
+
 interface StatsCardProps {
   title: string;
   value: number | string;
   icon: React.ReactNode;
   color: "blue" | "green" | "red" | "yellow" | "purple";
   subtitle?: string;
+  href?: string;
 }
 
 const colorMap = {
@@ -31,20 +34,32 @@ const colorMap = {
   },
 };
 
-export default function StatsCard({ title, value, icon, color, subtitle }: StatsCardProps) {
+export default function StatsCard({ title, value, icon, color, subtitle, href }: StatsCardProps) {
   const colors = colorMap[color];
+  const inner = (
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-sm font-medium text-white/80">{title}</p>
+        <p className="text-3xl font-bold mt-1 tracking-tight">{value}</p>
+        {subtitle && <p className="text-xs text-white/60 mt-1">{subtitle}</p>}
+      </div>
+      <div className={`w-12 h-12 ${colors.icon} rounded-xl flex items-center justify-center`}>
+        {icon}
+      </div>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={`${colors.bg} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer block`}>
+        {inner}
+      </Link>
+    );
+  }
+
   return (
     <div className={`${colors.bg} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-white/80">{title}</p>
-          <p className="text-3xl font-bold mt-1 tracking-tight">{value}</p>
-          {subtitle && <p className="text-xs text-white/60 mt-1">{subtitle}</p>}
-        </div>
-        <div className={`w-12 h-12 ${colors.icon} rounded-xl flex items-center justify-center`}>
-          {icon}
-        </div>
-      </div>
+      {inner}
     </div>
   );
 }

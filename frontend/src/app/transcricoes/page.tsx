@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { TranscricaoResponse, Sentimento, StatusTranscricao } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SentimentBadge from "@/components/SentimentBadge";
 import VoiceRecorder from "@/components/VoiceRecorder";
 
-export default function TranscricoesPage() {
+function TranscricoesPageInner() {
+  const searchParams = useSearchParams();
   const [transcricoes, setTranscricoes] = useState<TranscricaoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -15,7 +17,7 @@ export default function TranscricoesPage() {
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
   const [filtroSentimento, setFiltroSentimento] = useState<Sentimento | "">("");
-  const [filtroStatus, setFiltroStatus] = useState<StatusTranscricao | "">("");
+  const [filtroStatus, setFiltroStatus] = useState<StatusTranscricao | "">((searchParams.get("status") as StatusTranscricao) || "");
   const [form, setForm] = useState({
     textoOriginal: "",
     cliente: "",
@@ -377,5 +379,13 @@ export default function TranscricoesPage() {
         })()}
       </main>
     </>
+  );
+}
+
+export default function TranscricoesPage() {
+  return (
+    <Suspense fallback={null}>
+      <TranscricoesPageInner />
+    </Suspense>
   );
 }
