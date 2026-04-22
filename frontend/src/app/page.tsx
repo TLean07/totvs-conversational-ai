@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { DashboardResponse, Sentimento } from "@/lib/types";
+import type { DashboardResponse, Sentimento, StatusTranscricao } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import StatsCard from "@/components/StatsCard";
 import AlertList from "@/components/AlertList";
@@ -47,6 +47,33 @@ const RISK_LABELS: Record<string, string> = {
   PERDA_CONFIANCA: "Confianca",
 };
 
+const OPORTUNIDADE_COLORS: Record<string, string> = {
+  UPSELL: "#8b5cf6",
+  CROSS_SELL: "#3b82f6",
+  NOVO_PRODUTO: "#10b981",
+};
+
+const OPORTUNIDADE_LABELS: Record<string, string> = {
+  UPSELL: "Upsell",
+  CROSS_SELL: "Cross-sell",
+  NOVO_PRODUTO: "Novo Produto",
+};
+
+const SENTIMENTO_FILTER: Array<{ value: Sentimento | ""; label: string; color: string }> = [
+  { value: "", label: "Todos", color: "bg-slate-100 text-slate-600" },
+  { value: "POSITIVO", label: "Positivo", color: "bg-emerald-500 text-white" },
+  { value: "NEGATIVO", label: "Negativo", color: "bg-rose-500 text-white" },
+  { value: "NEUTRO", label: "Neutro", color: "bg-slate-500 text-white" },
+  { value: "MISTO", label: "Misto", color: "bg-amber-500 text-white" },
+];
+
+const STATUS_FILTER: Array<{ value: StatusTranscricao | ""; label: string; color: string }> = [
+  { value: "", label: "Todos", color: "bg-slate-100 text-slate-600" },
+  { value: "PROCESSADA", label: "Processada", color: "bg-emerald-500 text-white" },
+  { value: "PENDENTE", label: "Pendente", color: "bg-amber-500 text-white" },
+  { value: "ERRO", label: "Erro", color: "bg-rose-500 text-white" },
+];
+
 function LoadingScreen() {
   return (
     <>
@@ -67,6 +94,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtroCliente, setFiltroCliente] = useState("");
+  const [filtroSentimento, setFiltroSentimento] = useState<Sentimento | "">("");
+  const [filtroStatus, setFiltroStatus] = useState<StatusTranscricao | "">("");
 
   const loadData = (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -124,6 +153,19 @@ export default function DashboardPage() {
     value,
     key: name,
   }));
+
+  const oportunidadeData = Object.entries(data.oportunidadePorTipo).map(([name, value]) => ({
+    name: OPORTUNIDADE_LABELS[name] || name,
+    value,
+    key: name,
+  }));
+
+  const transcricoesFiltradas = data.ultimasTranscricoes.filter((t) => {
+    if (filtroCliente && !t.cliente?.toLowerCase().includes(filtroCliente.toLowerCase())) return false;
+    if (filtroSentimento && t.analise?.sentimentoGeral !== filtroSentimento) return false;
+    if (filtroStatus && t.status !== filtroStatus) return false;
+    return true;
+  });
 
   return (
     <>
@@ -260,6 +302,53 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+          <h2 className="text-base font-semibold text-slate-700 mb-1">Oportunidades por Tipo</h2>
+          <p className="text-xs text-slate-400 mb-4">Distribuicao das oportunidades identificadas</p>
+          {oportunidadeData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={oportunidadeData} layout="vertical" barCategoryGap="30%">
+                <XAxis
+                  type="number"
+                  allowDecimals={false}
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={90}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "12px",
+                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    fontSize: "13px",
+                  }}
+                />
+                <Bar dataKey="value" name="Quantidade" radius={[0, 6, 6, 0]}>
+                  {oportunidadeData.map((entry) => (
+                    <Cell key={entry.key} fill={OPORTUNIDADE_COLORS[entry.key] || "#6b7280"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-slate-300">
+              <svg className="w-10 h-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+              </svg>
+              <p className="text-sm">Sem dados para exibir</p>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -302,11 +391,35 @@ export default function DashboardPage() {
                 </a>
               </div>
             </div>
+            <div className="flex flex-wrap gap-1 mb-2">
+              {SENTIMENTO_FILTER.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFiltroSentimento(opt.value)}
+                  className={`px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
+                    filtroSentimento === opt.value ? opt.color : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-1 mb-3">
+              {STATUS_FILTER.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setFiltroStatus(opt.value)}
+                  className={`px-2 py-0.5 rounded-lg text-xs font-medium transition-all ${
+                    filtroStatus === opt.value ? opt.color : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             {data.ultimasTranscricoes.length > 0 ? (
               <div className="space-y-3 overflow-y-auto max-h-[420px] pr-1">
-                {data.ultimasTranscricoes
-                  .filter(t => !filtroCliente || t.cliente?.toLowerCase().includes(filtroCliente.toLowerCase()))
-                  .map((t) => (
+                {transcricoesFiltradas.map((t) => (
                   <a
                     key={t.id}
                     href={`/transcricoes/${t.id}`}
@@ -328,7 +441,7 @@ export default function DashboardPage() {
                     <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{t.textoOriginal}</p>
                   </a>
                 ))}
-                {data.ultimasTranscricoes.filter(t => !filtroCliente || t.cliente?.toLowerCase().includes(filtroCliente.toLowerCase())).length === 0 && (
+                {transcricoesFiltradas.length === 0 && (
                   <div className="text-center py-6 text-slate-400 text-sm">
                     Nenhuma reuniao encontrada para este filtro.
                   </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { AlertaResponse } from "@/lib/types";
+import type { AlertaResponse, Severidade } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import AlertList from "@/components/AlertList";
 
@@ -10,6 +10,7 @@ export default function AlertasPage() {
   const [alertas, setAlertas] = useState<AlertaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"todos" | "novos">("novos");
+  const [filtroSeveridade, setFiltroSeveridade] = useState<Severidade | "">("");
 
   const loadData = () => {
     setLoading(true);
@@ -43,6 +44,21 @@ export default function AlertasPage() {
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Alertas</h1>
             <p className="text-sm text-slate-500 mt-1">Notificacoes geradas pela analise de IA</p>
           </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-slate-400">Severidade:</span>
+              {(["", "ALTO", "MEDIO", "BAIXO"] as const).map((s) => {
+                const labels: Record<string, string> = { "": "Todas", ALTO: "Alta", MEDIO: "Media", BAIXO: "Baixa" };
+                const activeColors: Record<string, string> = { "": "bg-slate-700 text-white", ALTO: "bg-rose-500 text-white", MEDIO: "bg-amber-500 text-white", BAIXO: "bg-sky-500 text-white" };
+                const active = filtroSeveridade === s;
+                return (
+                  <button key={s} onClick={() => setFiltroSeveridade(s)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${active ? activeColors[s] : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
+                    {labels[s]}
+                  </button>
+                );
+              })}
+            </div>
           <div className="flex flex-wrap bg-slate-100 rounded-xl p-1 shrink-0">
             <button
               onClick={() => setFilter("novos")}
@@ -71,6 +87,7 @@ export default function AlertasPage() {
               Todos
             </button>
           </div>
+          </div>
         </div>
 
         {loading ? (
@@ -81,15 +98,26 @@ export default function AlertasPage() {
             </div>
             <p className="text-slate-400 text-sm">Carregando alertas...</p>
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <AlertList
-              alertas={alertas}
-              onMarcarVisto={handleMarcarVisto}
-              onMarcarResolvido={handleMarcarResolvido}
-            />
-          </div>
-        )}
+        ) : (() => {
+          const filtrados = filtroSeveridade
+            ? alertas.filter((a) => a.prioridade === filtroSeveridade)
+            : alertas;
+          return (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              {filtrados.length !== alertas.length && (
+                <p className="text-xs text-slate-400 mb-3">
+                  Mostrando <span className="font-semibold text-slate-600">{filtrados.length}</span> de{" "}
+                  <span className="font-semibold text-slate-600">{alertas.length}</span> alertas
+                </p>
+              )}
+              <AlertList
+                alertas={filtrados}
+                onMarcarVisto={handleMarcarVisto}
+                onMarcarResolvido={handleMarcarResolvido}
+              />
+            </div>
+          );
+        })()}
       </main>
     </>
   );
