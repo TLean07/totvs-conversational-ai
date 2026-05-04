@@ -68,6 +68,11 @@ public class TranscricaoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(transcricaoService.registrarFeedback(id, request));
     }
 
+    @GetMapping("/{id}/feedback")
+    public ResponseEntity<List<AnaliseFeedbackResponse>> listarFeedbacks(@PathVariable String id) {
+        return ResponseEntity.ok(transcricaoService.listarFeedbacks(id));
+    }
+
     @GetMapping("/cliente/{cliente}")
     public ResponseEntity<List<TranscricaoResponse>> buscarPorCliente(@PathVariable String cliente) {
         return ResponseEntity.ok(transcricaoService.buscarPorCliente(cliente));

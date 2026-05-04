@@ -5,6 +5,7 @@ import com.tlean07.fiap.challenge.dto.AiAnalysisDTO;
 import com.tlean07.fiap.challenge.dto.LeanIAContextDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
@@ -65,6 +66,10 @@ public class LeanIAService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         if (aiServiceToken != null && !aiServiceToken.isBlank()) {
             headers.set("X-Internal-Token", aiServiceToken);
+        }
+        String requestId = MDC.get("requestId");
+        if (requestId != null && !requestId.isBlank()) {
+            headers.set("X-Request-ID", requestId);
         }
 
         Map<String, Object> body = new java.util.HashMap<>();

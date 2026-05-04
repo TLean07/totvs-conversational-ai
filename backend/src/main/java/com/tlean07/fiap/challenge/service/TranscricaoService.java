@@ -175,12 +175,35 @@ public class TranscricaoService {
                 .build();
     }
 
+    public List<AnaliseFeedbackResponse> listarFeedbacks(String id) {
+        Transcricao transcricao = findVisibleTranscricao(id);
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        List<AnaliseFeedback> feedbacks = user.isAdmin()
+                ? feedbackRepository.findByTranscricaoIdOrderByCreatedAtDesc(transcricao.getId())
+                : feedbackRepository.findByTranscricaoIdAndOwnerIdOrderByCreatedAtDesc(transcricao.getId(), user.id());
+
+        return feedbacks.stream()
+                .map(this::toFeedbackResponse)
+                .toList();
+    }
+
     private Transcricao findVisibleTranscricao(String id) {
         AuthenticatedUser user = SecurityUtils.currentUser();
         return (user.isAdmin()
                 ? transcricaoRepository.findById(id)
                 : transcricaoRepository.findByIdAndOwnerId(id, user.id()))
                 .orElseThrow(() -> new AccessDeniedException("Transcricao nao encontrada"));
+    }
+
+    private AnaliseFeedbackResponse toFeedbackResponse(AnaliseFeedback feedback) {
+        return AnaliseFeedbackResponse.builder()
+                .id(feedback.getId())
+                .transcricaoId(feedback.getTranscricaoId())
+                .analiseId(feedback.getAnaliseId())
+                .util(feedback.isUtil())
+                .ajuste(feedback.getAjuste())
+                .createdAt(feedback.getCreatedAt())
+                .build();
     }
 
     private void limparAnaliseEAlertas(Transcricao transcricao) {

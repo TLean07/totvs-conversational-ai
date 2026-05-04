@@ -9,5 +9,7 @@ import java.util.List;
 @Repository
 public interface AnaliseFeedbackRepository extends MongoRepository<AnaliseFeedback, String> {
     List<AnaliseFeedback> findByOwnerIdOrderByCreatedAtDesc(String ownerId);
+    List<AnaliseFeedback> findByTranscricaoIdOrderByCreatedAtDesc(String transcricaoId);
+    List<AnaliseFeedback> findByTranscricaoIdAndOwnerIdOrderByCreatedAtDesc(String transcricaoId, String ownerId);
     void deleteByTranscricaoId(String transcricaoId);
 }

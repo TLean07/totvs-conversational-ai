@@ -15,11 +15,21 @@ function redirectToLogin() {
   }
 }
 
+function createRequestId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `req-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 async function refreshSession() {
   if (!refreshing) {
     refreshing = fetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include",
+      headers: {
+        "X-Request-ID": createRequestId(),
+      },
     })
       .then(async (res) => {
         if (!res.ok) return null;
@@ -48,6 +58,7 @@ async function request<T>(path: string, options?: RequestInit, retry = true): Pr
 
   const headers = new Headers(options?.headers);
   headers.set("Content-Type", "application/json");
+  headers.set("X-Request-ID", createRequestId());
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
   }
@@ -150,6 +161,8 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+    listarFeedbacks: (id: string) =>
+      request<import("./types").AnaliseFeedbackResponse[]>(`/transcricoes/${id}/feedback`),
   },
 
   alertas: {

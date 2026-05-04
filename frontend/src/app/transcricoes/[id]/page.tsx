@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
-import type { TranscricaoResponse } from "@/lib/types";
+import type { AnaliseFeedbackResponse, TranscricaoResponse } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SentimentBadge from "@/components/SentimentBadge";
 import SeveridadeBadge from "@/components/SeveridadeBadge";
@@ -17,6 +17,73 @@ const TIPO_PRODUTO_CONFIG = {
   CONCORRENTE: { bg: "bg-rose-50", text: "text-rose-700", ring: "ring-rose-200", icon: "M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" },
 };
 
+function escapeCsv(value: unknown) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function escapeHtml(value: unknown) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function downloadFile(filename: string, content: string, type: string) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function analysisRows(data: TranscricaoResponse) {
+  const rows: Array<[string, string, string]> = [
+    ["Transcricao", "Cliente", data.cliente || "Nao informado"],
+    ["Transcricao", "Vendedor", data.vendedor || "Nao informado"],
+    ["Transcricao", "Status", data.status],
+    ["Transcricao", "Data", new Date(data.dataCriacao).toLocaleString("pt-BR")],
+    ["Transcricao", "Texto", data.textoOriginal],
+  ];
+
+  if (!data.analise) return rows;
+
+  rows.push(["Analise", "Sentimento", data.analise.sentimentoGeral]);
+  rows.push(["Analise", "Resumo", data.analise.resumo]);
+  rows.push(["Analise", "Persona", data.analise.personaIdentificada]);
+  rows.push(["Analise", "Budget", data.analise.budgetIdentificado]);
+  rows.push(["Analise", "Confianca", `${Math.round(data.analise.scoreConfiancaVendedor * 100)}%`]);
+
+  data.analise.produtos.forEach((produto) => {
+    rows.push(["Produto", produto.tipo, `${produto.nomeProduto} - ${produto.contexto}`]);
+  });
+  data.analise.oportunidades.forEach((oportunidade) => {
+    rows.push([
+      "Oportunidade",
+      oportunidade.tipo,
+      `${oportunidade.descricao} | Produto: ${oportunidade.produtoRelacionado} | Score: ${Math.round(oportunidade.score * 100)}% | Valor: ${oportunidade.valorEstimado}`,
+    ]);
+  });
+  data.analise.riscos.forEach((risco) => {
+    rows.push([
+      "Risco",
+      risco.tipo,
+      `${risco.descricao} | Severidade: ${risco.severidade} | Concorrente: ${risco.concorrenteMencionado || "Nao informado"}`,
+    ]);
+  });
+  data.analise.alertas.forEach((alerta) => {
+    rows.push(["Alerta", alerta.prioridade, `${alerta.tipo} - ${alerta.mensagem}`]);
+  });
+
+  return rows;
+}
+
 export default function TranscricaoDetailPage() {
   const params = useParams();
   const [data, setData] = useState<TranscricaoResponse | null>(null);
@@ -24,12 +91,18 @@ export default function TranscricaoDetailPage() {
   const [feedbackText, setFeedbackText] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [feedbacks, setFeedbacks] = useState<AnaliseFeedbackResponse[]>([]);
 
   useEffect(() => {
     if (params.id) {
-      api.transcricoes
-        .buscar(params.id as string)
-        .then(setData)
+      Promise.all([
+        api.transcricoes.buscar(params.id as string),
+        api.transcricoes.listarFeedbacks(params.id as string).catch(() => []),
+      ])
+        .then(([transcricao, historico]) => {
+          setData(transcricao);
+          setFeedbacks(historico);
+        })
         .catch(() => {})
         .finally(() => setLoading(false));
     }
@@ -47,6 +120,8 @@ export default function TranscricaoDetailPage() {
     setFeedbackMessage("");
     try {
       await api.transcricoes.feedback(data.id, { util, ajuste: feedbackText });
+      const historico = await api.transcricoes.listarFeedbacks(data.id);
+      setFeedbacks(historico);
       setFeedbackText("");
       setFeedbackMessage("Feedback registrado. A LeanIA usara esse contexto nas proximas analises.");
     } catch (error) {
@@ -54,6 +129,63 @@ export default function TranscricaoDetailPage() {
     } finally {
       setFeedbackLoading(false);
     }
+  };
+
+  const exportCsv = () => {
+    if (!data) return;
+    const csv = [
+      ["Categoria", "Campo", "Valor"].map(escapeCsv).join(";"),
+      ...analysisRows(data).map((row) => row.map(escapeCsv).join(";")),
+    ].join("\n");
+    downloadFile(`analise-${data.id}.csv`, `\uFEFF${csv}`, "text/csv;charset=utf-8");
+  };
+
+  const exportPdf = () => {
+    if (!data) return;
+    const rows = analysisRows(data)
+      .map(([categoria, campo, valor]) => `
+        <tr>
+          <td>${escapeHtml(categoria)}</td>
+          <td>${escapeHtml(campo)}</td>
+          <td>${escapeHtml(valor)}</td>
+        </tr>
+      `)
+      .join("");
+    const html = `
+      <!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>Analise ${escapeHtml(data.cliente || data.id)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
+            h1 { color: #1a365d; margin-bottom: 4px; }
+            p { color: #475569; }
+            table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 12px; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: top; }
+            th { background: #e2e8f0; text-align: left; }
+            .meta { font-size: 12px; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <h1>TOTVS Conversational Intelligence</h1>
+          <p>Analise gerada pela LeanIA para ${escapeHtml(data.cliente || `Transcricao ${data.id}`)}</p>
+          <p class="meta">Exportado em ${new Date().toLocaleString("pt-BR")}</p>
+          <table>
+            <thead><tr><th>Categoria</th><th>Campo</th><th>Valor</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <script>window.print();</script>
+        </body>
+      </html>
+    `;
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) {
+      downloadFile(`analise-${data.id}.html`, html, "text/html;charset=utf-8");
+      return;
+    }
+    printWindow.document.write(html);
+    printWindow.document.close();
   };
 
   if (loading) {
@@ -119,7 +251,21 @@ export default function TranscricaoDetailPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={exportCsv}
+                className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+              >
+                CSV
+              </button>
+              <button
+                type="button"
+                onClick={exportPdf}
+                className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"
+              >
+                PDF
+              </button>
               {data.status === "ERRO" && (
                 <button
                   type="button"
@@ -228,6 +374,34 @@ export default function TranscricaoDetailPage() {
                 {feedbackMessage && (
                   <p className="mt-2 text-xs font-medium text-slate-500">{feedbackMessage}</p>
                 )}
+                <div className="mt-4 border-t border-slate-200 pt-4">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Historico de feedback
+                  </h4>
+                  {feedbacks.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {feedbacks.map((feedback) => (
+                        <div key={feedback.id} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className={`text-xs font-semibold ${feedback.util ? "text-emerald-700" : "text-amber-700"}`}>
+                              {feedback.util ? "Marcado como util" : "Marcado para ajuste"}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {new Date(feedback.createdAt).toLocaleString("pt-BR")}
+                            </span>
+                          </div>
+                          {feedback.ajuste && (
+                            <p className="mt-1 text-sm text-slate-600">{feedback.ajuste}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-400">
+                      Nenhum feedback registrado para esta analise.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -1,9 +1,11 @@
 import hmac
 import logging
 import re
+import uuid
+from contextvars import ContextVar
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -11,7 +13,21 @@ from cache import TTLCache
 from config import load_settings
 from providers.free_ai_provider import FreeAiProvider
 
-logging.basicConfig(level=logging.INFO)
+request_id_var: ContextVar[str] = ContextVar("request_id", default="none")
+
+
+class RequestIdFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.request_id = request_id_var.get()
+        return True
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s requestId=%(request_id)s %(name)s - %(message)s",
+)
+for handler in logging.getLogger().handlers:
+    handler.addFilter(RequestIdFilter())
 logger = logging.getLogger(__name__)
 
 settings = load_settings()
@@ -29,11 +45,24 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins or ["http://localhost:8080"],
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "X-Internal-Token"],
+    allow_headers=["Content-Type", "X-Internal-Token", "X-Request-ID"],
+    expose_headers=["X-Request-ID"],
 )
 
 provider = FreeAiProvider(settings)
 cache = TTLCache(settings.cache_ttl_seconds, settings.cache_max_entries)
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    token = request_id_var.set(request_id[:80])
+    try:
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = request_id[:80]
+        return response
+    finally:
+        request_id_var.reset(token)
 
 
 class LeanIAContext(BaseModel):

@@ -68,6 +68,11 @@ Reunioes → Audios → Transcricoes + Metadados
                [Next.js - Vercel]
 ```
 
+Documentacao tecnica adicional:
+
+- [Arquitetura com diagrama](docs/architecture.md)
+- [Politica de retencao de dados](docs/data-retention-policy.md)
+
 ---
 
 ### Estrutura do Projeto
