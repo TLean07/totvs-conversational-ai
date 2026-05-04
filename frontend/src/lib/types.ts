@@ -20,6 +20,15 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export interface UserResponse {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: string;
+}
+
 export interface ProdutoResponse {
   nomeProduto: string;
   tipo: TipoProduto;

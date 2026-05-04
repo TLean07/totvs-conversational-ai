@@ -38,7 +38,12 @@ async function refreshSession() {
 
 async function request<T>(path: string, options?: RequestInit, retry = true): Promise<T> {
   if (!path.startsWith("/auth/") && !accessToken) {
-    await refreshSession();
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+      setSession(null);
+      redirectToLogin();
+      throw new Error("Sessao expirada. Faca login novamente.");
+    }
   }
 
   const headers = new Headers(options?.headers);
@@ -92,6 +97,24 @@ export const api = {
       redirectToLogin();
     },
     user: () => currentUser,
+  },
+
+  users: {
+    listar: () => request<import("./types").UserResponse[]>("/users"),
+    criar: (data: {
+      email: string;
+      name: string;
+      password: string;
+      role: import("./types").UserRole;
+    }) =>
+      request<import("./types").UserResponse>("/users", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    desativar: (id: string) =>
+      request<import("./types").UserResponse>(`/users/${id}/deactivate`, {
+        method: "PATCH",
+      }),
   },
 
   dashboard: () => request<import("./types").DashboardResponse>("/dashboard"),
