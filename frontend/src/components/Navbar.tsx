@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import type { AuthUser } from "@/lib/types";
 
 const links = [
   { href: "/", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
@@ -13,6 +16,17 @@ const links = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [user, setUser] = useState<AuthUser | null>(() => api.auth.user());
+
+  useEffect(() => {
+    let active = true;
+    api.auth.refresh().then((session) => {
+      if (active && session) setUser(session.user);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <nav className="bg-gradient-to-r from-[#1a365d] to-[#2b6cb0] text-white shadow-xl">
@@ -20,9 +34,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="flex items-center justify-center transition-all">
-              <img 
+              <Image 
                 src="/totvs-logo.png" 
                 alt="TOTVS" 
+                width={130}
+                height={32}
                 className="h-8 w-auto object-contain drop-shadow-sm group-hover:brightness-110 transition-all" 
               />
             </div>
@@ -33,7 +49,9 @@ export default function Navbar() {
             </div>
           </Link>
           <div className="flex gap-1">
-            {links.map((link) => {
+            {links
+              .filter((link) => link.href !== "/usuarios" || user?.role === "ADMIN")
+              .map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
               return (
                 <Link

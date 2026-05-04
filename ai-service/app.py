@@ -41,6 +41,7 @@ class LeanIAContext(BaseModel):
     concorrentesFrequentes: list[str] = Field(default_factory=list)
     riscosFrequentes: list[str] = Field(default_factory=list)
     oportunidadesFrequentes: list[str] = Field(default_factory=list)
+    ajustesRecentes: list[str] = Field(default_factory=list)
 
 
 class TranscricaoRequest(BaseModel):

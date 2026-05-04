@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { api } from "@/lib/api";
 
 export default function LoginPage() {
@@ -36,9 +37,11 @@ export default function LoginPage() {
       <header className="bg-gradient-to-r from-[#173a64] to-[#2868a8] text-white shadow-lg">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-6">
           <div className="flex items-center gap-3">
-            <img
+            <Image
               src="/totvs-logo.png"
               alt="TOTVS"
+              width={130}
+              height={32}
               className="h-8 w-auto object-contain drop-shadow-sm"
             />
             <div className="hidden border-l border-white/30 py-1 pl-3 sm:block">
@@ -82,7 +85,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="w-full rounded-lg border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70">
           <div className="mb-7">
-            <img src="/totvs-logo.png" alt="TOTVS" className="h-9 w-auto object-contain" />
+            <Image src="/totvs-logo.png" alt="TOTVS" width={146} height={36} className="h-9 w-auto object-contain" />
             <h2 className="mt-6 text-2xl font-bold text-[#10294a]">Entrar na plataforma</h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
               Use suas credenciais para acessar o painel de inteligencia conversacional.

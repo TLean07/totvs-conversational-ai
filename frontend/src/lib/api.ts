@@ -121,6 +121,10 @@ export const api = {
 
   transcricoes: {
     listar: () => request<import("./types").TranscricaoResponse[]>("/transcricoes"),
+    listarPaginado: (page = 0, size = 10) =>
+      request<import("./types").PageResponse<import("./types").TranscricaoResponse>>(
+        `/transcricoes/paged?page=${page}&size=${size}`
+      ),
     buscar: (id: string) =>
       request<import("./types").TranscricaoResponse>(`/transcricoes/${id}`),
     criar: (data: {
@@ -137,6 +141,15 @@ export const api = {
       }),
     deletar: (id: string) =>
       request<void>(`/transcricoes/${id}`, { method: "DELETE" }),
+    reprocessar: (id: string) =>
+      request<import("./types").TranscricaoResponse>(`/transcricoes/${id}/reprocessar`, {
+        method: "POST",
+      }),
+    feedback: (id: string, data: { util: boolean; ajuste?: string }) =>
+      request<import("./types").AnaliseFeedbackResponse>(`/transcricoes/${id}/feedback`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
   },
 
   alertas: {

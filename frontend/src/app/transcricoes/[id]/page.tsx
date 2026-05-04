@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { api } from "@/lib/api";
 import type { TranscricaoResponse } from "@/lib/types";
@@ -20,6 +21,9 @@ export default function TranscricaoDetailPage() {
   const params = useParams();
   const [data, setData] = useState<TranscricaoResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -30,6 +34,27 @@ export default function TranscricaoDetailPage() {
         .finally(() => setLoading(false));
     }
   }, [params.id]);
+
+  const handleReprocessar = async () => {
+    if (!data) return;
+    const updated = await api.transcricoes.reprocessar(data.id);
+    setData(updated);
+  };
+
+  const handleFeedback = async (util: boolean) => {
+    if (!data) return;
+    setFeedbackLoading(true);
+    setFeedbackMessage("");
+    try {
+      await api.transcricoes.feedback(data.id, { util, ajuste: feedbackText });
+      setFeedbackText("");
+      setFeedbackMessage("Feedback registrado. A LeanIA usara esse contexto nas proximas analises.");
+    } catch (error) {
+      setFeedbackMessage(error instanceof Error ? error.message : "Nao foi possivel registrar o feedback.");
+    } finally {
+      setFeedbackLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -55,9 +80,9 @@ export default function TranscricaoDetailPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p className="text-slate-500 font-medium">Transcricao nao encontrada</p>
-          <a href="/transcricoes" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
+          <Link href="/transcricoes" className="text-sm text-blue-600 hover:underline mt-2 inline-block">
             Voltar para Transcricoes
-          </a>
+          </Link>
         </div>
       </>
     );
@@ -69,12 +94,12 @@ export default function TranscricaoDetailPage() {
     <>
       <Navbar />
       <main className="max-w-5xl mx-auto px-6 py-8">
-        <a href="/transcricoes" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 group transition-colors">
+        <Link href="/transcricoes" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 group transition-colors">
           <svg className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
           Voltar para Transcricoes
-        </a>
+        </Link>
 
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
@@ -94,7 +119,18 @@ export default function TranscricaoDetailPage() {
                 </div>
               </div>
             </div>
-            {analise && <SentimentBadge sentimento={analise.sentimentoGeral} />}
+            <div className="flex items-center gap-2">
+              {data.status === "ERRO" && (
+                <button
+                  type="button"
+                  onClick={handleReprocessar}
+                  className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100"
+                >
+                  Reprocessar
+                </button>
+              )}
+              {analise && <SentimentBadge sentimento={analise.sentimentoGeral} />}
+            </div>
           </div>
 
           {data.participantes && (
@@ -153,6 +189,45 @@ export default function TranscricaoDetailPage() {
                       : "N/A"}
                   </p>
                 </div>
+              </div>
+              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-700">Feedback para a LeanIA</h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Esse retorno entra no contexto das proximas analises gratuitas.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={feedbackLoading}
+                      onClick={() => handleFeedback(true)}
+                      className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      Util
+                    </button>
+                    <button
+                      type="button"
+                      disabled={feedbackLoading}
+                      onClick={() => handleFeedback(false)}
+                      className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-60"
+                    >
+                      Precisa ajuste
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  className="mt-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+                  placeholder="Ex.: o risco era menor, o produto correto era RM, o concorrente citado foi SAP..."
+                />
+                {feedbackMessage && (
+                  <p className="mt-2 text-xs font-medium text-slate-500">{feedbackMessage}</p>
+                )}
               </div>
             </div>
 

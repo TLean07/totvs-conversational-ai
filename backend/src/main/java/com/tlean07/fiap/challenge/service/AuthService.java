@@ -61,9 +61,16 @@ public class AuthService {
 
     public AuthSession refresh(String rawRefreshToken) {
         RefreshToken current = refreshTokenRepository.findByTokenHash(hash(rawRefreshToken))
-                .filter(token -> !token.isRevoked())
-                .filter(token -> token.getExpiresAt().isAfter(LocalDateTime.now()))
                 .orElseThrow(() -> new BadCredentialsException("Refresh token invalido"));
+
+        if (current.isRevoked()) {
+            revokeActiveTokens(current.getUserId());
+            throw new BadCredentialsException("Refresh token invalido");
+        }
+
+        if (!current.getExpiresAt().isAfter(LocalDateTime.now())) {
+            throw new BadCredentialsException("Refresh token expirado");
+        }
 
         AppUser user = userRepository.findById(current.getUserId())
                 .filter(AppUser::isActive)
@@ -83,6 +90,14 @@ public class AuthService {
                     token.setRevokedAt(LocalDateTime.now());
                     refreshTokenRepository.save(token);
                 });
+    }
+
+    private void revokeActiveTokens(String userId) {
+        LocalDateTime now = LocalDateTime.now();
+        refreshTokenRepository.findByUserIdAndRevokedAtIsNull(userId).forEach(token -> {
+            token.setRevokedAt(now);
+            refreshTokenRepository.save(token);
+        });
     }
 
     public ResponseCookie clearRefreshCookie() {

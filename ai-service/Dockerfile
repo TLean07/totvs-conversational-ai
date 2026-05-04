@@ -6,6 +6,7 @@ ENV HF_HOME=/app/.cache/huggingface
 
 # Instalar dependencias
 COPY requirements.txt .
+RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Baixar modelo gratuito na build quando possivel (evita download no startup)

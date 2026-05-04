@@ -3,6 +3,7 @@ package com.tlean07.fiap.challenge.model;
 import com.tlean07.fiap.challenge.enums.Sentimento;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -20,13 +21,16 @@ public class AnaliseResultado {
     @Id
     private String id;
 
+    @Indexed
     private String ownerId;
+    @Indexed
     private String transcricaoId;
     private Sentimento sentimentoGeral;
     private String resumo;
     private String personaIdentificada;
     private String budgetIdentificado;
     private Double scoreConfiancaVendedor;
+    @Indexed
     private LocalDateTime dataAnalise;
 
     @Builder.Default

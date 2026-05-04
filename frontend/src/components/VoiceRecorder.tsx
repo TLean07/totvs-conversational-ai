@@ -9,16 +9,39 @@ interface VoiceRecorderProps {
 
 export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
+  const [isSupported] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  });
   const [interim, setInterim] = useState("");
   const [seconds, setSeconds] = useState(0);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingRef = useRef(false);
+
+  const stopRecording = useCallback(() => {
+    setIsRecording(false);
+    setInterim("");
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {
+        // ignore
+      }
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    recordingRef.current = isRecording;
+  }, [isRecording]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setIsSupported(false);
       return;
     }
 
@@ -27,24 +50,7 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = "";
-      let interimTranscript = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript + " ";
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      if (finalTranscript) {
-        onTranscript(currentText + finalTranscript);
-      }
-      setInterim(interimTranscript);
-    };
+    recognition.onresult = () => {};
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       if (event.error !== "no-speech") {
@@ -54,7 +60,7 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
     };
 
     recognition.onend = () => {
-      if (isRecording) {
+      if (recordingRef.current) {
         try {
           recognition.start();
         } catch {
@@ -69,7 +75,7 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
       recognition.abort();
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [stopRecording]);
 
   // Update the onresult handler when currentText changes
   useEffect(() => {
@@ -109,22 +115,6 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
     timerRef.current = setInterval(() => {
       setSeconds((s) => s + 1);
     }, 1000);
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    setIsRecording(false);
-    setInterim("");
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-    }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
   }, []);
 
   const formatTime = (s: number) => {

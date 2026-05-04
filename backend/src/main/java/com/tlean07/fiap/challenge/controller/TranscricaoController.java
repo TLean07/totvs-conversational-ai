@@ -1,13 +1,20 @@
 package com.tlean07.fiap.challenge.controller;
 
+import com.tlean07.fiap.challenge.dto.AnaliseFeedbackRequest;
+import com.tlean07.fiap.challenge.dto.AnaliseFeedbackResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
 import com.tlean07.fiap.challenge.dto.TranscricaoResponse;
+import com.tlean07.fiap.challenge.dto.PageResponse;
+import com.tlean07.fiap.challenge.service.RateLimitService;
 import com.tlean07.fiap.challenge.service.TranscricaoService;
+import com.tlean07.fiap.challenge.security.SecurityUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 
 @RestController
@@ -15,13 +22,19 @@ import java.util.List;
 public class TranscricaoController {
 
     private final TranscricaoService transcricaoService;
+    private final RateLimitService rateLimitService;
 
-    public TranscricaoController(TranscricaoService transcricaoService) {
+    public TranscricaoController(TranscricaoService transcricaoService,
+                                 RateLimitService rateLimitService) {
         this.transcricaoService = transcricaoService;
+        this.rateLimitService = rateLimitService;
     }
 
     @PostMapping
-    public ResponseEntity<TranscricaoResponse> criar(@Valid @RequestBody TranscricaoRequest request) {
+    public ResponseEntity<TranscricaoResponse> criar(@Valid @RequestBody TranscricaoRequest request,
+                                                     HttpServletRequest httpRequest) {
+        rateLimitService.check("transcricao:create:user:" + SecurityUtils.currentUser().id(), 20, Duration.ofHours(1));
+        rateLimitService.check("transcricao:create:ip:" + clientKey(httpRequest), 40, Duration.ofHours(1));
         TranscricaoResponse response = transcricaoService.criarEAnalisar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -31,9 +44,28 @@ public class TranscricaoController {
         return ResponseEntity.ok(transcricaoService.listarTodas());
     }
 
+    @GetMapping("/paged")
+    public ResponseEntity<PageResponse<TranscricaoResponse>> listarPaginado(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(transcricaoService.listarPaginado(page, size));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<TranscricaoResponse> buscarPorId(@PathVariable String id) {
         return ResponseEntity.ok(transcricaoService.buscarPorId(id));
+    }
+
+    @PostMapping("/{id}/reprocessar")
+    public ResponseEntity<TranscricaoResponse> reprocessar(@PathVariable String id) {
+        return ResponseEntity.accepted().body(transcricaoService.reprocessar(id));
+    }
+
+    @PostMapping("/{id}/feedback")
+    public ResponseEntity<AnaliseFeedbackResponse> registrarFeedback(
+            @PathVariable String id,
+            @Valid @RequestBody AnaliseFeedbackRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(transcricaoService.registrarFeedback(id, request));
     }
 
     @GetMapping("/cliente/{cliente}")
@@ -45,5 +77,13 @@ public class TranscricaoController {
     public ResponseEntity<Void> deletar(@PathVariable String id) {
         transcricaoService.deletar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private String clientKey(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() == null ? "unknown" : request.getRemoteAddr();
     }
 }

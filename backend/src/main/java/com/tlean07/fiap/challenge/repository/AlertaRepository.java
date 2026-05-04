@@ -13,6 +13,8 @@ public interface AlertaRepository extends MongoRepository<Alerta, String> {
     List<Alerta> findByStatus(StatusAlerta status);
     List<Alerta> findByPrioridade(Severidade prioridade);
     List<Alerta> findByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta status);
+    List<Alerta> findByAnaliseId(String analiseId);
+    void deleteByAnaliseId(String analiseId);
     long countByStatus(StatusAlerta status);
     List<Alerta> findByOwnerId(String ownerId);
     List<Alerta> findByOwnerIdAndStatusOrderByPrioridadeAscDataCriacaoDesc(String ownerId, StatusAlerta status);

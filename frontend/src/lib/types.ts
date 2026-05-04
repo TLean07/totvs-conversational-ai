@@ -20,6 +20,15 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
 export interface UserResponse {
   id: string;
   email: string;
@@ -85,6 +94,15 @@ export interface TranscricaoResponse {
   dataCriacao: string;
   dataProcessamento: string;
   analise: AnaliseResponse | null;
+}
+
+export interface AnaliseFeedbackResponse {
+  id: string;
+  transcricaoId: string;
+  analiseId: string;
+  util: boolean;
+  ajuste: string;
+  createdAt: string;
 }
 
 export interface DashboardResponse {

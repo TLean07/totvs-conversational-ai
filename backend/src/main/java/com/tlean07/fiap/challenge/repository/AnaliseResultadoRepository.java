@@ -12,6 +12,7 @@ import java.util.Optional;
 public interface AnaliseResultadoRepository extends MongoRepository<AnaliseResultado, String> {
     Optional<AnaliseResultado> findByTranscricaoId(String transcricaoId);
     Optional<AnaliseResultado> findByTranscricaoIdAndOwnerId(String transcricaoId, String ownerId);
+    void deleteByTranscricaoId(String transcricaoId);
     List<AnaliseResultado> findBySentimentoGeral(Sentimento sentimento);
     List<AnaliseResultado> findAllByOrderByDataAnaliseDesc();
     List<AnaliseResultado> findAllByOwnerIdOrderByDataAnaliseDesc(String ownerId);

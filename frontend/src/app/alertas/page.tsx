@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { AlertaResponse, Severidade } from "@/lib/types";
 import Navbar from "@/components/Navbar";
@@ -12,17 +12,21 @@ export default function AlertasPage() {
   const [filter, setFilter] = useState<"todos" | "novos">("novos");
   const [filtroSeveridade, setFiltroSeveridade] = useState<Severidade | "">("");
 
-  const loadData = () => {
-    setLoading(true);
+  const loadData = useCallback((showLoading = true) => {
+    if (showLoading) setLoading(true);
     const fetcher = filter === "novos" ? api.alertas.novos() : api.alertas.listar();
     fetcher
       .then(setAlertas)
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
+  }, [filter]);
 
   useEffect(() => {
-    loadData();
+    const fetcher = filter === "novos" ? api.alertas.novos() : api.alertas.listar();
+    fetcher
+      .then(setAlertas)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [filter]);
 
   const handleMarcarVisto = async (id: string) => {
@@ -61,7 +65,10 @@ export default function AlertasPage() {
             </div>
           <div className="flex flex-wrap bg-slate-100 rounded-xl p-1 shrink-0">
             <button
-              onClick={() => setFilter("novos")}
+              onClick={() => {
+                setLoading(true);
+                setFilter("novos");
+              }}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 filter === "novos"
                   ? "bg-white text-slate-800 shadow-sm"
@@ -74,7 +81,10 @@ export default function AlertasPage() {
               Novos
             </button>
             <button
-              onClick={() => setFilter("todos")}
+              onClick={() => {
+                setLoading(true);
+                setFilter("todos");
+              }}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                 filter === "todos"
                   ? "bg-white text-slate-800 shadow-sm"

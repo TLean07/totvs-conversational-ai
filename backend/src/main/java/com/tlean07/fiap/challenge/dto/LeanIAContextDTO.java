@@ -14,4 +14,5 @@ public class LeanIAContextDTO {
     private List<String> concorrentesFrequentes;
     private List<String> riscosFrequentes;
     private List<String> oportunidadesFrequentes;
+    private List<String> ajustesRecentes;
 }

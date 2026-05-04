@@ -7,6 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -28,6 +29,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({IllegalArgumentException.class, java.time.format.DateTimeParseException.class})
     public ResponseEntity<Map<String, Object>> handleBadRequest() {
         return error(HttpStatus.BAD_REQUEST, "Requisicao invalida");
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(ResponseStatusException ex) {
+        HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        String message = ex.getReason() == null ? status.getReasonPhrase() : ex.getReason();
+        return error(status, message);
     }
 
     @ExceptionHandler(RuntimeException.class)

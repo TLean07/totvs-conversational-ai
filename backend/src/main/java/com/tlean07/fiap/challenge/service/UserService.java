@@ -4,6 +4,7 @@ import com.tlean07.fiap.challenge.dto.CreateUserRequest;
 import com.tlean07.fiap.challenge.dto.UserResponse;
 import com.tlean07.fiap.challenge.model.AppUser;
 import com.tlean07.fiap.challenge.repository.AppUserRepository;
+import com.tlean07.fiap.challenge.security.SecurityUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,10 +17,14 @@ public class UserService {
 
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
-    public UserService(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(AppUserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       AuditService auditService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     public List<UserResponse> listarTodos() {
@@ -43,14 +48,22 @@ public class UserService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        return toResponse(userRepository.save(user));
+        AppUser saved = userRepository.save(user);
+        auditService.record("user.create", SecurityUtils.currentUser().id(), saved.getId(), "success");
+        return toResponse(saved);
     }
 
     public UserResponse desativar(String id) {
+        String actorId = SecurityUtils.currentUser().id();
+        if (actorId.equals(id)) {
+            throw new AccessDeniedException("Nao e permitido desativar o proprio usuario");
+        }
         AppUser user = userRepository.findById(id)
                 .orElseThrow(() -> new AccessDeniedException("Usuario nao encontrado"));
         user.setActive(false);
-        return toResponse(userRepository.save(user));
+        AppUser saved = userRepository.save(user);
+        auditService.record("user.deactivate", actorId, id, "success");
+        return toResponse(saved);
     }
 
     private UserResponse toResponse(AppUser user) {

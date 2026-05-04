@@ -2,9 +2,11 @@ package com.tlean07.fiap.challenge.service;
 
 import com.tlean07.fiap.challenge.dto.LeanIAContextDTO;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
+import com.tlean07.fiap.challenge.model.AnaliseFeedback;
 import com.tlean07.fiap.challenge.model.Oportunidade;
 import com.tlean07.fiap.challenge.model.ProdutoIdentificado;
 import com.tlean07.fiap.challenge.model.Risco;
+import com.tlean07.fiap.challenge.repository.AnaliseFeedbackRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +22,12 @@ public class LeanIALearningService {
     private static final int MAX_ANALYSES = 100;
 
     private final AnaliseResultadoRepository analiseRepository;
+    private final AnaliseFeedbackRepository feedbackRepository;
 
-    public LeanIALearningService(AnaliseResultadoRepository analiseRepository) {
+    public LeanIALearningService(AnaliseResultadoRepository analiseRepository,
+                                 AnaliseFeedbackRepository feedbackRepository) {
         this.analiseRepository = analiseRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     public LeanIAContextDTO buildContext(String ownerId) {
@@ -55,6 +60,13 @@ public class LeanIALearningService {
                 .concorrentesFrequentes(top(concorrentes))
                 .riscosFrequentes(top(riscos))
                 .oportunidadesFrequentes(top(oportunidades))
+                .ajustesRecentes(feedbackRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId)
+                        .stream()
+                        .filter(feedback -> !feedback.isUtil())
+                        .map(AnaliseFeedback::getAjuste)
+                        .filter(ajuste -> ajuste != null && !ajuste.isBlank())
+                        .limit(MAX_CONTEXT_ITEMS)
+                        .toList())
                 .build();
     }
 

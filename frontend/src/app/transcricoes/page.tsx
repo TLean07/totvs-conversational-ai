@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
-import type { TranscricaoResponse, Sentimento, StatusTranscricao } from "@/lib/types";
+import type { PageResponse, TranscricaoResponse, Sentimento, StatusTranscricao } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SentimentBadge from "@/components/SentimentBadge";
 import VoiceRecorder from "@/components/VoiceRecorder";
@@ -11,6 +11,8 @@ import VoiceRecorder from "@/components/VoiceRecorder";
 function TranscricoesPageInner() {
   const searchParams = useSearchParams();
   const [transcricoes, setTranscricoes] = useState<TranscricaoResponse[]>([]);
+  const [pageData, setPageData] = useState<PageResponse<TranscricaoResponse> | null>(null);
+  const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -27,18 +29,23 @@ function TranscricoesPageInner() {
     duracaoMinutos: "",
   });
 
-  const loadData = () => {
-    setLoading(true);
+  const loadData = useCallback((page = pageIndex, showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     api.transcricoes
-      .listar()
-      .then(setTranscricoes)
+      .listarPaginado(page, 10)
+      .then((result) => {
+        setPageData(result);
+        setTranscricoes(result.content);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
+  }, [pageIndex]);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(pageIndex, false);
+  }, [loadData, pageIndex]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -50,6 +57,17 @@ function TranscricoesPageInner() {
       } catch {
         alert("Erro ao excluir transcricao. Tente novamente.");
       }
+    }
+  };
+
+  const handleReprocessar = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await api.transcricoes.reprocessar(id);
+      loadData();
+    } catch {
+      alert("Nao foi possivel reprocessar esta transcricao agora.");
     }
   };
 
@@ -67,7 +85,8 @@ function TranscricoesPageInner() {
       });
       setForm({ textoOriginal: "", cliente: "", vendedor: "", participantes: "", duracaoMinutos: "" });
       setShowForm(false);
-      loadData();
+      setPageIndex(0);
+      loadData(0);
     } catch (error) {
       setSubmitError(
         error instanceof Error
@@ -368,6 +387,14 @@ function TranscricoesPageInner() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                       </svg>
                     </button>
+                    {t.status === "ERRO" && (
+                      <button
+                        onClick={(e) => handleReprocessar(e, t.id)}
+                        className="text-xs px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 font-semibold transition-colors"
+                      >
+                        Reprocessar
+                      </button>
+                    )}
                     <div className="text-slate-300 group-hover:text-blue-500 transition-colors p-1.5 shrink-0 hidden lg:block">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -395,6 +422,31 @@ function TranscricoesPageInner() {
               </a>
             ))}
           </div>
+          {pageData && pageData.totalPages > 1 && (
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+              <span className="text-slate-500">
+                Pagina {pageData.page + 1} de {pageData.totalPages} - {pageData.totalElements} transcricoes
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={pageIndex === 0}
+                  onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  disabled={pageData.last}
+                  onClick={() => setPageIndex((p) => p + 1)}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 disabled:opacity-50"
+                >
+                  Proxima
+                </button>
+              </div>
+            </div>
+          )}
           </>
           );
         })()}

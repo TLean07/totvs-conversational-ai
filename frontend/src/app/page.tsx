@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { DashboardResponse, Sentimento, StatusTranscricao } from "@/lib/types";
 import Navbar from "@/components/Navbar";
@@ -97,17 +98,21 @@ export default function DashboardPage() {
   const [filtroSentimento, setFiltroSentimento] = useState<Sentimento | "">("");
   const [filtroStatus, setFiltroStatus] = useState<StatusTranscricao | "">("");
 
-  const loadData = (showLoading = true) => {
+  const loadData = useCallback((showLoading = true) => {
     if (showLoading) setLoading(true);
     api
       .dashboard()
       .then(setData)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
-    loadData();
+    api
+      .dashboard()
+      .then(setData)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleMarcarVisto = async (id: string) => {
@@ -391,9 +396,9 @@ export default function DashboardPage() {
                     className="w-full sm:w-48 border border-slate-200 bg-slate-50 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white outline-none transition-all shadow-sm"
                   />
                 </div>
-                <a href="/transcricoes" className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline shrink-0 hidden sm:block">
-                  Ver todas
-                </a>
+              <Link href="/transcricoes" className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline shrink-0 hidden sm:block">
+                Ver todas
+              </Link>
               </div>
             </div>
             <div className="flex flex-wrap gap-1 mb-2">

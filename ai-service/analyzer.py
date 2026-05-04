@@ -504,7 +504,8 @@ class TranscricaoAnalyzer:
     def _resumir_contexto_adaptativo(self, contexto: dict | None) -> str:
         produtos = self._context_list(contexto, "produtosFrequentes")[:3]
         riscos = self._context_list(contexto, "riscosFrequentes")[:3]
-        if not produtos and not riscos:
+        ajustes = self._context_list(contexto, "ajustesRecentes")[:2]
+        if not produtos and not riscos and not ajustes:
             return ""
 
         partes = []
@@ -512,6 +513,8 @@ class TranscricaoAnalyzer:
             partes.append(f"LeanIA considerou historico recorrente de produtos: {', '.join(produtos)}")
         if riscos:
             partes.append(f"padroes de risco frequentes: {', '.join(riscos)}")
+        if ajustes:
+            partes.append(f"feedbacks recentes para calibracao: {', '.join(ajustes)}")
         return "; ".join(partes)
 
     def _sugerir_proxima_acao(self, sentimento: str, oportunidades: list,
