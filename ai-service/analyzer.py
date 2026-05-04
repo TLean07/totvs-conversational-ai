@@ -2,8 +2,10 @@
 Motor de analise de transcricoes usando HuggingFace (sentimento) + regras (entidades).
 """
 
+import logging
 import re
-from transformers import pipeline
+
+logger = logging.getLogger(__name__)
 
 
 # Produtos TOTVS e seus modulos conhecidos
@@ -110,32 +112,49 @@ CARGOS = [
 
 
 class TranscricaoAnalyzer:
-    def __init__(self):
-        print("Carregando modelo de sentimento...")
-        self.sentiment_pipeline = pipeline(
-            "sentiment-analysis",
-            model="nlptown/bert-base-multilingual-uncased-sentiment",
-            truncation=True,
-            max_length=512,
-        )
-        self._ready = True
-        print("Modelo carregado com sucesso!")
+    def __init__(
+        self,
+        model_name: str = "nlptown/bert-base-multilingual-uncased-sentiment",
+        enable_transformers: bool = True,
+        max_sentiment_chunks: int = 8,
+    ):
+        self.sentiment_pipeline = None
+        self.max_sentiment_chunks = max(1, max_sentiment_chunks)
+
+        if enable_transformers:
+            try:
+                logger.info("Carregando modelo local gratuito de sentimento: %s", model_name)
+                from transformers import pipeline
+
+                self.sentiment_pipeline = pipeline(
+                    "sentiment-analysis",
+                    model=model_name,
+                    truncation=True,
+                    max_length=512,
+                )
+                logger.info("Modelo local carregado com sucesso")
+            except Exception as exc:
+                logger.warning(
+                    "Modelo local indisponivel; analise seguira por fallback de regras: %s",
+                    exc.__class__.__name__,
+                )
 
     def is_ready(self) -> bool:
-        return self._ready
+        return self.sentiment_pipeline is not None
 
-    def analisar(self, texto: str) -> dict:
+    def analisar(self, texto: str, contexto: dict | None = None) -> dict:
         texto_lower = texto.lower()
+        contexto = contexto or {}
 
         sentimento = self._analisar_sentimento(texto)
-        produtos = self._extrair_produtos(texto, texto_lower)
-        concorrentes = self._extrair_concorrentes(texto_lower)
+        produtos = self._extrair_produtos(texto, texto_lower, contexto)
+        concorrentes = self._extrair_concorrentes(texto_lower, contexto)
         oportunidades = self._extrair_oportunidades(texto, texto_lower, produtos)
         riscos = self._extrair_riscos(texto, texto_lower, concorrentes)
         persona = self._identificar_persona(texto_lower)
         budget = self._extrair_budget(texto)
         score_confianca = self._calcular_confianca(texto_lower)
-        resumo = self._gerar_resumo(texto, sentimento, produtos, oportunidades, riscos)
+        resumo = self._gerar_resumo(texto, sentimento, produtos, oportunidades, riscos, contexto)
 
         return {
             "sentimentoGeral": sentimento,
@@ -149,15 +168,25 @@ class TranscricaoAnalyzer:
         }
 
     def _analisar_sentimento(self, texto: str) -> str:
+        if self.sentiment_pipeline is None:
+            return self._analisar_sentimento_por_regras(texto.lower())
+
         # Divide texto em chunks se for muito grande
         chunks = [texto[i:i+500] for i in range(0, len(texto), 500)]
+        chunks = chunks[:self.max_sentiment_chunks]
         scores = []
 
         for chunk in chunks:
-            result = self.sentiment_pipeline(chunk)[0]
-            # Modelo retorna 1-5 estrelas
-            star = int(result["label"][0])
-            scores.append(star)
+            try:
+                result = self.sentiment_pipeline(chunk)[0]
+                # Modelo retorna 1-5 estrelas
+                star = int(result["label"][0])
+                scores.append(star)
+            except Exception as exc:
+                logger.warning("Falha ao classificar chunk de sentimento: %s", exc.__class__.__name__)
+
+        if not scores:
+            return self._analisar_sentimento_por_regras(texto.lower())
 
         avg = sum(scores) / len(scores)
 
@@ -179,44 +208,70 @@ class TranscricaoAnalyzer:
         else:
             return "NEUTRO"
 
-    def _extrair_produtos(self, texto: str, texto_lower: str) -> list:
+    def _analisar_sentimento_por_regras(self, texto_lower: str) -> str:
+        tem_positivo = any(s in texto_lower for s in SINAIS_SATISFACAO)
+        tem_negativo = any(s in texto_lower for s in SINAIS_INSATISFACAO)
+        tem_churn = any(s in texto_lower for s in SINAIS_CHURN)
+
+        if tem_positivo and (tem_negativo or tem_churn):
+            return "MISTO"
+        if tem_churn or tem_negativo:
+            return "NEGATIVO"
+        if tem_positivo:
+            return "POSITIVO"
+        return "NEUTRO"
+
+    def _extrair_produtos(self, texto: str, texto_lower: str, contexto: dict | None = None) -> list:
         produtos = []
         encontrados = set()
 
         for chave, nome in PRODUTOS_TOTVS.items():
             if chave in texto_lower and nome not in encontrados:
                 encontrados.add(nome)
-                contexto = self._extrair_contexto(texto, chave)
+                contexto_texto = self._extrair_contexto(texto, chave)
 
                 # Determinar se e produto atual ou oportunidade
                 tipo = "ATUAL"
-                ctx_lower = contexto.lower()
+                ctx_lower = contexto_texto.lower()
                 if any(s in ctx_lower for s in ["precisamos", "queremos", "implantar", "interesse", "novo"]):
                     tipo = "OPORTUNIDADE"
 
                 produtos.append({
                     "nomeProduto": nome,
                     "tipo": tipo,
-                    "contexto": contexto,
+                    "contexto": contexto_texto,
+                })
+
+        for nome in self._context_list(contexto, "produtosFrequentes"):
+            chave = nome.lower()
+            if chave in texto_lower and nome not in encontrados:
+                encontrados.add(nome)
+                produtos.append({
+                    "nomeProduto": nome,
+                    "tipo": "ATUAL",
+                    "contexto": self._extrair_contexto(texto, chave),
                 })
 
         # Adicionar concorrentes como produtos tipo CONCORRENTE
         for chave, nome in CONCORRENTES.items():
             if chave in texto_lower and nome not in encontrados:
                 encontrados.add(nome)
-                contexto = self._extrair_contexto(texto, chave)
+                contexto_texto = self._extrair_contexto(texto, chave)
                 produtos.append({
                     "nomeProduto": nome,
                     "tipo": "CONCORRENTE",
-                    "contexto": contexto,
+                    "contexto": contexto_texto,
                 })
 
         return produtos
 
-    def _extrair_concorrentes(self, texto_lower: str) -> list:
+    def _extrair_concorrentes(self, texto_lower: str, contexto: dict | None = None) -> list:
         encontrados = []
         for chave, nome in CONCORRENTES.items():
             if chave in texto_lower and nome not in encontrados:
+                encontrados.append(nome)
+        for nome in self._context_list(contexto, "concorrentesFrequentes"):
+            if nome.lower() in texto_lower and nome not in encontrados:
                 encontrados.append(nome)
         return encontrados
 
@@ -400,7 +455,7 @@ class TranscricaoAnalyzer:
         return mapa.get(modulo, "TOTVS Protheus")
 
     def _gerar_resumo(self, texto: str, sentimento: str, produtos: list,
-                      oportunidades: list, riscos: list) -> str:
+                      oportunidades: list, riscos: list, contexto: dict | None = None) -> str:
         partes = []
 
         prod_atuais = [p["nomeProduto"] for p in produtos if p["tipo"] == "ATUAL"]
@@ -428,4 +483,54 @@ class TranscricaoAnalyzer:
         if prod_conc:
             partes.append(f"Concorrentes mencionados: {', '.join(prod_conc)}")
 
+        contexto_partes = self._resumir_contexto_adaptativo(contexto)
+        if contexto_partes:
+            partes.append(contexto_partes)
+
+        proxima_acao = self._sugerir_proxima_acao(sentimento, oportunidades, riscos, prod_conc)
+        if proxima_acao:
+            partes.append(f"Proxima acao sugerida: {proxima_acao}")
+
         return ". ".join(p for p in partes if p) + "."
+
+    def _context_list(self, contexto: dict | None, key: str) -> list:
+        if not contexto:
+            return []
+        values = contexto.get(key) or []
+        if not isinstance(values, list):
+            return []
+        return [str(value).strip() for value in values if str(value).strip()][:8]
+
+    def _resumir_contexto_adaptativo(self, contexto: dict | None) -> str:
+        produtos = self._context_list(contexto, "produtosFrequentes")[:3]
+        riscos = self._context_list(contexto, "riscosFrequentes")[:3]
+        if not produtos and not riscos:
+            return ""
+
+        partes = []
+        if produtos:
+            partes.append(f"LeanIA considerou historico recorrente de produtos: {', '.join(produtos)}")
+        if riscos:
+            partes.append(f"padroes de risco frequentes: {', '.join(riscos)}")
+        return "; ".join(partes)
+
+    def _sugerir_proxima_acao(self, sentimento: str, oportunidades: list,
+                              riscos: list, concorrentes: list) -> str:
+        if any(r.get("severidade") == "ALTO" for r in riscos):
+            if concorrentes:
+                return "acionar lideranca comercial e preparar comparativo contra concorrente"
+            return "priorizar contato de recuperacao com plano de acao objetivo"
+
+        if oportunidades:
+            alta = any(o.get("score", 0) >= 0.75 for o in oportunidades)
+            if alta:
+                return "enviar proposta ou agendar demonstracao com decisores"
+            return "qualificar necessidade, budget e prazo antes da proposta"
+
+        if sentimento == "NEGATIVO":
+            return "registrar dores principais e confirmar responsavel pelo retorno"
+
+        if sentimento == "POSITIVO":
+            return "explorar expansao de uso e pedir indicacoes internas"
+
+        return "coletar mais contexto sobre dor, budget e decisores"

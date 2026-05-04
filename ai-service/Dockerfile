@@ -8,8 +8,9 @@ ENV HF_HOME=/app/.cache/huggingface
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Baixar modelo BERT na build (evita download no startup)
-RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='nlptown/bert-base-multilingual-uncased-sentiment')"
+# Baixar modelo gratuito na build quando possivel (evita download no startup)
+ARG AI_MODEL_NAME=nlptown/bert-base-multilingual-uncased-sentiment
+RUN python -c "from transformers import pipeline; pipeline('sentiment-analysis', model='${AI_MODEL_NAME}')"
 
 COPY . .
 RUN chown -R app:app /app

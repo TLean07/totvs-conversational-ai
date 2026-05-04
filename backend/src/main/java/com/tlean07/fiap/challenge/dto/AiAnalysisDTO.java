@@ -9,7 +9,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ClaudeAnaliseDTO {
+public class AiAnalysisDTO {
     private String sentimentoGeral;
     private String resumo;
     private String personaIdentificada;
@@ -23,6 +23,7 @@ public class ClaudeAnaliseDTO {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class ProdutoDTO {
         private String nomeProduto;
         private String tipo;
@@ -33,6 +34,7 @@ public class ClaudeAnaliseDTO {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class OportunidadeDTO {
         private String tipo;
         private String descricao;
@@ -45,6 +47,7 @@ public class ClaudeAnaliseDTO {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class RiscoDTO {
         private String tipo;
         private String descricao;

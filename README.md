@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" alt="Java 17">
   <img src="https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot">
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?logo=huggingface&logoColor=black" alt="HuggingFace">
+  <img src="https://img.shields.io/badge/LeanIA-Adaptive%20AI-FFD21E" alt="LeanIA">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white" alt="Next.js">
   <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white" alt="MongoDB">
@@ -17,7 +17,7 @@
 
 ### Sobre o Projeto
 
-O **TOTVS Conversational Intelligence** e uma solucao desenvolvida para o Challenge FIAP x TOTVS 2026, que transforma transcricoes brutas de reunioes de vendas e CS em inteligencia acionavel. A plataforma utiliza um **microsservico de IA local** com HuggingFace Transformers e processamento de linguagem natural para extrair automaticamente:
+O **TOTVS Conversational Intelligence** e uma solucao desenvolvida para o Challenge FIAP x TOTVS 2026, que transforma transcricoes brutas de reunioes de vendas e CS em inteligencia acionavel. A plataforma utiliza a **LeanIA**, um microsservico de IA gratuito e adaptativo com HuggingFace Transformers, fallback local e processamento de linguagem natural para extrair automaticamente:
 
 - **Oportunidades de vendas** — Upsell, cross-sell e novos produtos
 - **Riscos de churn** — Sinais de insatisfacao e mencoes a concorrentes
@@ -32,7 +32,7 @@ O objetivo e que a TOTVS consiga analisar milhares de reunioes diarias e identif
 ### Funcionalidades
 
 - **Ingestao de transcricoes** — Envio de texto bruto de reunioes via API REST ou dashboard
-- **Analise com IA local** — Modelo BERT multilingual (HuggingFace) + regras de negocio especializadas
+- **Analise com LeanIA** — Modelo BERT multilingual gratuito, regras de negocio especializadas e contexto adaptativo por historico
 - **Deteccao de oportunidades** — Identificacao de gatilhos de compra com score de probabilidade
 - **Sinalizacao de riscos** — Alertas de churn, concorrencia e insatisfacao com severidade
 - **Mapeamento de ecossistema** — Produtos TOTVS (Protheus, RM, Fluig) e concorrentes (SAP, Senior, Sankhya)
@@ -49,7 +49,7 @@ O objetivo e que a TOTVS consiga analisar milhares de reunioes diarias e identif
 ```
 Reunioes → Audios → Transcricoes + Metadados
                          |
-             [Microsservico Python - IA Local]
+             [LeanIA - Microsservico Python Gratuito]
               HuggingFace BERT (Sentimento)
               Regras de negocio (Entidades)
                          |
@@ -102,7 +102,7 @@ challenge-totvs-conversational-intelligence/
 |       |   +-- Alerta.java
 |       |-- repository/                    # Spring Data JPA
 |       |-- service/
-|       |   |-- ClaudeAIService.java       # Client HTTP para microsservico Python
+|       |   |-- LeanIAService.java         # Client HTTP gratuito com retry, fallback e contexto adaptativo
 |       |   |-- TranscricaoService.java
 |       |   |-- AnaliseService.java
 |       |   |-- AlertaService.java

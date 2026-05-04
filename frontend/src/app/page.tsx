@@ -359,7 +359,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-base font-semibold text-slate-700">Alertas Recentes</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Ultimos alertas gerados pela IA</p>
+                <p className="text-xs text-slate-400 mt-0.5">Ultimos alertas gerados pela LeanIA</p>
               </div>
               <a href="/alertas" className="text-xs text-blue-600 hover:text-blue-700 font-medium hover:underline">
                 Ver todos

@@ -13,6 +13,7 @@ function TranscricoesPageInner() {
   const [transcricoes, setTranscricoes] = useState<TranscricaoResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
@@ -55,6 +56,7 @@ function TranscricoesPageInner() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError("");
     try {
       await api.transcricoes.criar({
         textoOriginal: form.textoOriginal,
@@ -66,8 +68,12 @@ function TranscricoesPageInner() {
       setForm({ textoOriginal: "", cliente: "", vendedor: "", participantes: "", duracaoMinutos: "" });
       setShowForm(false);
       loadData();
-    } catch {
-      alert("Erro ao enviar transcricao. Verifique se o backend esta rodando.");
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel analisar agora. A LeanIA pode estar iniciando; tente novamente em instantes."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -244,7 +250,7 @@ function TranscricoesPageInner() {
                 {submitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Analisando com IA...
+                    Analisando com LeanIA...
                   </>
                 ) : (
                   <>
@@ -256,9 +262,24 @@ function TranscricoesPageInner() {
                 )}
               </button>
               {submitting && (
-                <p className="text-sm text-slate-400">A IA esta processando a transcricao...</p>
+                <p className="text-sm text-slate-400">
+                  A LeanIA esta processando. Se o modelo gratuito estiver frio, o fallback local assume automaticamente.
+                </p>
               )}
             </div>
+            {submitError && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <p className="font-semibold">Nao foi possivel concluir a analise.</p>
+                <p className="mt-1">{submitError}</p>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="mt-3 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            )}
           </form>
         )}
 
