@@ -182,6 +182,14 @@ spring.data.mongodb.uri=mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/challeng
 ```
 Ou via variavel de ambiente: `export MONGODB_URI=mongodb+srv://...`
 
+Variaveis de seguranca obrigatorias para o backend:
+```bash
+export APP_JWT_SECRET="string-aleatoria-com-32-caracteres-ou-mais"
+export APP_ADMIN_EMAIL="admin@example.com"
+export APP_ADMIN_PASSWORD="senha-forte-com-12-caracteres-ou-mais"
+export AI_SERVICE_TOKEN="token-interno-com-32-caracteres-ou-mais"
+```
+
 Para rodar local sem Atlas, basta ter o MongoDB rodando em `localhost:27017` (o padrao ja funciona).
 
 Execute:
@@ -257,6 +265,12 @@ git add . && git commit -m "Deploy AI service" && git push
    | `MONGODB_URI` | `mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/challenge-totvs` |
    | `AI_SERVICE_URL` | `https://SEU_USUARIO-totvs-ai-service.hf.space` |
    | `CORS_ALLOWED_ORIGINS` | `https://SEU-APP.vercel.app` |
+   | `AI_SERVICE_TOKEN` | Token interno forte compartilhado com o servico de IA |
+   | `APP_JWT_SECRET` | Segredo forte para assinatura dos access tokens |
+   | `APP_ADMIN_EMAIL` | E-mail do admin inicial |
+   | `APP_ADMIN_PASSWORD` | Senha forte do admin inicial |
+   | `APP_COOKIE_SECURE` | `true` em producao |
+   | `APP_COOKIE_SAME_SITE` | `None` quando frontend e backend usam dominios diferentes |
 5. Clique em **Create Web Service**. A URL sera: `https://SEU-APP.onrender.com`
 
 #### Passo 3 — Frontend no Vercel

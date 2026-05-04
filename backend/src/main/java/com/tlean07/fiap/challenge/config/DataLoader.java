@@ -1,6 +1,8 @@
 package com.tlean07.fiap.challenge.config;
 
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
+import com.tlean07.fiap.challenge.model.AppUser;
+import com.tlean07.fiap.challenge.repository.AppUserRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import com.tlean07.fiap.challenge.service.TranscricaoService;
 import org.slf4j.Logger;
@@ -17,10 +19,21 @@ public class DataLoader {
 
     @Bean
     @Profile("demo")
-    public CommandLineRunner loadDemoData(TranscricaoRepository repo, TranscricaoService service) {
+    public CommandLineRunner loadDemoData(TranscricaoRepository repo,
+                                          TranscricaoService service,
+                                          AppUserRepository userRepository) {
         return args -> {
             if (repo.count() > 0) {
                 log.info("Dados de exemplo ja existem, pulando carga.");
+                return;
+            }
+
+            String ownerId = userRepository.findAll().stream()
+                    .findFirst()
+                    .map(AppUser::getId)
+                    .orElse(null);
+            if (ownerId == null) {
+                log.warn("Perfil demo ativo, mas nenhum usuario existe. Pulando carga de exemplo.");
                 return;
             }
 
@@ -36,7 +49,7 @@ public class DataLoader {
                     .vendedor("João Silva")
                     .participantes("João Silva (TOTVS), Carlos Mendes (ABC)")
                     .duracaoMinutos(45)
-                    .build());
+                    .build(), ownerId);
 
             service.criarEAnalisar(TranscricaoRequest.builder()
                     .textoOriginal("Olá, Maria. Estamos muito satisfeitos com o Protheus, ele atendeu todas as nossas "
@@ -48,7 +61,7 @@ public class DataLoader {
                     .vendedor("Maria Oliveira")
                     .participantes("Maria Oliveira (TOTVS), Ana Costa (Tech Solutions)")
                     .duracaoMinutos(30)
-                    .build());
+                    .build(), ownerId);
 
             service.criarEAnalisar(TranscricaoRequest.builder()
                     .textoOriginal("Sinceramente, estou frustrado com o suporte. Já abri três chamados sobre o erro no "
@@ -59,7 +72,7 @@ public class DataLoader {
                     .vendedor("Pedro Santos")
                     .participantes("Pedro Santos (TOTVS), Roberto Lima (Delta)")
                     .duracaoMinutos(20)
-                    .build());
+                    .build(), ownerId);
 
             log.info("Dados de exemplo carregados com sucesso!");
         };

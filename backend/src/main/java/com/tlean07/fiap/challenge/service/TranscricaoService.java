@@ -8,6 +8,9 @@ import com.tlean07.fiap.challenge.model.AnaliseResultado;
 import com.tlean07.fiap.challenge.model.Transcricao;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
+import com.tlean07.fiap.challenge.security.AuthenticatedUser;
+import com.tlean07.fiap.challenge.security.SecurityUtils;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -30,7 +33,12 @@ public class TranscricaoService {
     }
 
     public TranscricaoResponse criarEAnalisar(TranscricaoRequest request) {
+        return criarEAnalisar(request, SecurityUtils.currentUser().id());
+    }
+
+    public TranscricaoResponse criarEAnalisar(TranscricaoRequest request, String ownerId) {
         Transcricao transcricao = Transcricao.builder()
+                .ownerId(ownerId)
                 .textoOriginal(request.getTextoOriginal())
                 .participantes(request.getParticipantes())
                 .duracaoMinutos(request.getDuracaoMinutos())
@@ -64,27 +72,45 @@ public class TranscricaoService {
     }
 
     public List<TranscricaoResponse> listarTodas() {
-        return transcricaoRepository.findAllByOrderByDataCriacaoDesc()
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        List<Transcricao> transcricoes = user.isAdmin()
+                ? transcricaoRepository.findAllByOrderByDataCriacaoDesc()
+                : transcricaoRepository.findByOwnerIdOrderByDataCriacaoDesc(user.id());
+
+        return transcricoes
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public TranscricaoResponse buscarPorId(String id) {
-        Transcricao transcricao = transcricaoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transcricao nao encontrada: " + id));
+        Transcricao transcricao = findVisibleTranscricao(id);
         return toResponse(transcricao);
     }
 
     public List<TranscricaoResponse> buscarPorCliente(String cliente) {
-        return transcricaoRepository.findByClienteContainingIgnoreCase(cliente)
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        List<Transcricao> transcricoes = user.isAdmin()
+                ? transcricaoRepository.findByClienteContainingIgnoreCase(cliente)
+                : transcricaoRepository.findByOwnerIdAndClienteContainingIgnoreCase(user.id(), cliente);
+
+        return transcricoes
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public void deletar(String id) {
-        transcricaoRepository.deleteById(id);
+        Transcricao transcricao = findVisibleTranscricao(id);
+        transcricaoRepository.delete(transcricao);
+    }
+
+    private Transcricao findVisibleTranscricao(String id) {
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        return (user.isAdmin()
+                ? transcricaoRepository.findById(id)
+                : transcricaoRepository.findByIdAndOwnerId(id, user.id()))
+                .orElseThrow(() -> new AccessDeniedException("Transcricao nao encontrada"));
     }
 
     public TranscricaoResponse toResponse(Transcricao t) {
@@ -104,7 +130,10 @@ public class TranscricaoService {
         if (t.getAnaliseResultado() != null) {
             builder.analise(analiseService.toResponse(t.getAnaliseResultado()));
         } else {
-            analiseRepository.findByTranscricaoId(t.getId())
+            AuthenticatedUser user = SecurityUtils.currentUser();
+            (user.isAdmin()
+                    ? analiseRepository.findByTranscricaoId(t.getId())
+                    : analiseRepository.findByTranscricaoIdAndOwnerId(t.getId(), user.id()))
                     .ifPresent(a -> builder.analise(analiseService.toResponse(a)));
         }
 

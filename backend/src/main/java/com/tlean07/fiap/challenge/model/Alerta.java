@@ -19,6 +19,7 @@ public class Alerta {
     @Id
     private String id;
 
+    private String ownerId;
     private String analiseId;
     private String tipo;
     private String mensagem;

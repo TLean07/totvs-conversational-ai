@@ -8,6 +8,10 @@ services:
     # O HuggingFace e o Dockerfile atualmente expoem a porta 7860
     ports:
       - "8000:7860"
+    environment:
+      - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN}
+      - AI_SERVICE_REQUIRE_TOKEN=true
+      - AI_CORS_ALLOWED_ORIGINS=http://backend:8080,http://localhost:8080
     restart: unless-stopped
     networks:
       - totvs-net
@@ -23,6 +27,12 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       # Conecta ao ai-service atraves do nome do container na rede interna (totvs-net)
       - AI_SERVICE_URL=http://ai-service:7860
+      - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN}
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - APP_ADMIN_EMAIL=${APP_ADMIN_EMAIL}
+      - APP_ADMIN_PASSWORD=${APP_ADMIN_PASSWORD}
+      - APP_COOKIE_SECURE=${APP_COOKIE_SECURE:-false}
+      - APP_COOKIE_SAME_SITE=${APP_COOKIE_SAME_SITE:-Lax}
       # Permite CORS tanto local quanto pro IP publico da maquina
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost,http://${SERVER_IP},http://${SERVER_IP}:3000
     restart: unless-stopped

@@ -37,6 +37,7 @@ public class AnaliseService {
         ClaudeAnaliseDTO dto = claudeAIService.analisarTranscricao(transcricao.getTextoOriginal());
 
         AnaliseResultado analise = AnaliseResultado.builder()
+                .ownerId(transcricao.getOwnerId())
                 .transcricaoId(transcricao.getId())
                 .sentimentoGeral(Sentimento.valueOf(dto.getSentimentoGeral()))
                 .resumo(dto.getResumo())

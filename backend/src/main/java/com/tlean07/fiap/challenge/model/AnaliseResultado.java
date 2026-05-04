@@ -20,6 +20,7 @@ public class AnaliseResultado {
     @Id
     private String id;
 
+    private String ownerId;
     private String transcricaoId;
     private Sentimento sentimentoGeral;
     private String resumo;

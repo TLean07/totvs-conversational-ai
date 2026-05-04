@@ -6,8 +6,18 @@
 Pre-requisitos:
 - JDK 17+
 - Python 3.10+
-- Node.js 18+
-- MongoDB Atlas (ja configurado) ou MongoDB local
+- Node.js 20+
+- MongoDB Atlas ou MongoDB local
+- Variaveis de ambiente configuradas a partir do .env.example
+
+Variaveis minimas para ambiente local:
+- MONGODB_URI=mongodb://localhost:27017/challenge-totvs
+- APP_JWT_SECRET=uma-string-aleatoria-com-32-caracteres-ou-mais
+- APP_ADMIN_EMAIL=admin@example.com
+- APP_ADMIN_PASSWORD=uma-senha-forte-com-12-caracteres-ou-mais
+- APP_COOKIE_SECURE=false
+- APP_COOKIE_SAME_SITE=Lax
+- AI_SERVICE_TOKEN=outro-token-aleatorio-com-32-caracteres-ou-mais
 
 ============================================
   PASSO 1 - MICROSSERVICO DE IA (Python)
@@ -19,6 +29,7 @@ cd ai-service
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
+$env:AI_SERVICE_TOKEN="outro-token-aleatorio-com-32-caracteres-ou-mais"
 uvicorn app:app --host 0.0.0.0 --port 8000
 
 OBS: Na primeira vez, o modelo BERT sera baixado (~700MB).
@@ -32,6 +43,13 @@ OBS: Na primeira vez, o modelo BERT sera baixado (~700MB).
 Abra OUTRO terminal e execute:
 
 cd backend
+$env:MONGODB_URI="mongodb://localhost:27017/challenge-totvs"
+$env:APP_JWT_SECRET="uma-string-aleatoria-com-32-caracteres-ou-mais"
+$env:APP_ADMIN_EMAIL="admin@example.com"
+$env:APP_ADMIN_PASSWORD="uma-senha-forte-com-12-caracteres-ou-mais"
+$env:APP_COOKIE_SECURE="false"
+$env:APP_COOKIE_SAME_SITE="Lax"
+$env:AI_SERVICE_TOKEN="outro-token-aleatorio-com-32-caracteres-ou-mais"
 .\mvnw.cmd spring-boot:run
 
 Ou com dados de exemplo pre-carregados:

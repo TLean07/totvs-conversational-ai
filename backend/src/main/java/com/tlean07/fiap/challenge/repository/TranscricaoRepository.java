@@ -12,4 +12,9 @@ public interface TranscricaoRepository extends MongoRepository<Transcricao, Stri
     List<Transcricao> findByStatus(StatusTranscricao status);
     List<Transcricao> findByClienteContainingIgnoreCase(String cliente);
     List<Transcricao> findAllByOrderByDataCriacaoDesc();
+    List<Transcricao> findByOwnerIdOrderByDataCriacaoDesc(String ownerId);
+    List<Transcricao> findByOwnerIdAndStatus(String ownerId, StatusTranscricao status);
+    List<Transcricao> findByOwnerIdAndClienteContainingIgnoreCase(String ownerId, String cliente);
+    java.util.Optional<Transcricao> findByIdAndOwnerId(String id, String ownerId);
+    long countByOwnerId(String ownerId);
 }

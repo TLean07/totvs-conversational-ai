@@ -8,6 +8,8 @@ import com.tlean07.fiap.challenge.repository.*;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
+import com.tlean07.fiap.challenge.security.AuthenticatedUser;
+import com.tlean07.fiap.challenge.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,7 +38,10 @@ public class DashboardService {
     }
 
     public DashboardResponse getDashboard() {
-        List<AnaliseResultado> analises = analiseRepository.findAll();
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        List<AnaliseResultado> analises = user.isAdmin()
+                ? analiseRepository.findAll()
+                : analiseRepository.findAllByOwnerIdOrderByDataAnaliseDesc(user.id());
 
         Map<String, Long> sentimentoDistribuicao = analises.stream()
                 .collect(Collectors.groupingBy(
@@ -67,11 +72,17 @@ public class DashboardService {
                 .sum();
 
         return DashboardResponse.builder()
-                .totalTranscricoes(transcricaoRepository.count())
-                .transcricoesProcessadas(transcricaoRepository.findByStatus(StatusTranscricao.PROCESSADA).size())
+                .totalTranscricoes(user.isAdmin()
+                        ? transcricaoRepository.count()
+                        : transcricaoRepository.countByOwnerId(user.id()))
+                .transcricoesProcessadas(user.isAdmin()
+                        ? transcricaoRepository.findByStatus(StatusTranscricao.PROCESSADA).size()
+                        : transcricaoRepository.findByOwnerIdAndStatus(user.id(), StatusTranscricao.PROCESSADA).size())
                 .totalOportunidades(totalOportunidades)
                 .totalRiscos(totalRiscos)
-                .alertasNovos(alertaRepository.countByStatus(StatusAlerta.NOVO))
+                .alertasNovos(user.isAdmin()
+                        ? alertaRepository.countByStatus(StatusAlerta.NOVO)
+                        : alertaRepository.countByOwnerIdAndStatus(user.id(), StatusAlerta.NOVO))
                 .sentimentoDistribuicao(sentimentoDistribuicao)
                 .riscoPorTipo(riscoPorTipo)
                 .oportunidadePorTipo(oportunidadePorTipo)

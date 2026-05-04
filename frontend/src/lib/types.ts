@@ -5,6 +5,20 @@ export type TipoOportunidade = "UPSELL" | "CROSS_SELL" | "NOVO_PRODUTO";
 export type Severidade = "ALTO" | "MEDIO" | "BAIXO";
 export type StatusAlerta = "NOVO" | "VISTO" | "RESOLVIDO";
 export type TipoProduto = "ATUAL" | "OPORTUNIDADE" | "CONCORRENTE";
+export type UserRole = "ADMIN" | "USER";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  expiresInSeconds: number;
+  user: AuthUser;
+}
 
 export interface ProdutoResponse {
   nomeProduto: string;

@@ -4,11 +4,13 @@ import com.tlean07.fiap.challenge.dto.ClaudeAnaliseDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Service
@@ -19,12 +21,19 @@ public class ClaudeAIService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final String aiServiceUrl;
+    private final String aiServiceToken;
 
     public ClaudeAIService(ObjectMapper objectMapper,
-                           @Value("${ai.service.url:http://localhost:8000}") String aiServiceUrl) {
-        this.restTemplate = new RestTemplate();
+                           RestTemplateBuilder restTemplateBuilder,
+                           @Value("${ai.service.url:http://localhost:8000}") String aiServiceUrl,
+                           @Value("${ai.service.token:}") String aiServiceToken) {
+        this.restTemplate = restTemplateBuilder
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(30))
+                .build();
         this.objectMapper = objectMapper;
         this.aiServiceUrl = aiServiceUrl;
+        this.aiServiceToken = aiServiceToken;
     }
 
     public ClaudeAnaliseDTO analisarTranscricao(String textoTranscricao) {
@@ -33,6 +42,9 @@ public class ClaudeAIService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            if (aiServiceToken != null && !aiServiceToken.isBlank()) {
+                headers.set("X-Internal-Token", aiServiceToken);
+            }
 
             Map<String, String> body = Map.of("texto", textoTranscricao);
             HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);

@@ -19,6 +19,7 @@ public class Transcricao {
     @Id
     private String id;
 
+    private String ownerId;
     private String textoOriginal;
     private String participantes;
     private LocalDateTime dataReuniao;
