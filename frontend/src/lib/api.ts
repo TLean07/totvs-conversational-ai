@@ -126,6 +126,10 @@ export const api = {
       request<import("./types").UserResponse>(`/users/${id}/deactivate`, {
         method: "PATCH",
       }),
+    ativar: (id: string) =>
+      request<import("./types").UserResponse>(`/users/${id}/activate`, {
+        method: "PATCH",
+      }),
   },
 
   dashboard: () => request<import("./types").DashboardResponse>("/dashboard"),

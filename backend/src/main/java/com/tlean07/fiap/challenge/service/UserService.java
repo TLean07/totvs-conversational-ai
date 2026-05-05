@@ -66,6 +66,16 @@ public class UserService {
         return toResponse(saved);
     }
 
+    public UserResponse ativar(String id) {
+        String actorId = SecurityUtils.currentUser().id();
+        AppUser user = userRepository.findById(id)
+                .orElseThrow(() -> new AccessDeniedException("Usuario nao encontrado"));
+        user.setActive(true);
+        AppUser saved = userRepository.save(user);
+        auditService.record("user.activate", actorId, id, "success");
+        return toResponse(saved);
+    }
+
     private UserResponse toResponse(AppUser user) {
         return UserResponse.builder()
                 .id(user.getId())

@@ -36,4 +36,9 @@ public class UserController {
     public ResponseEntity<UserResponse> desativar(@PathVariable String id) {
         return ResponseEntity.ok(userService.desativar(id));
     }
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<UserResponse> ativar(@PathVariable String id) {
+        return ResponseEntity.ok(userService.ativar(id));
+    }
 }
