@@ -7,6 +7,7 @@ interface AlertListProps {
   alertas: AlertaResponse[];
   onMarcarVisto?: (id: string) => void;
   onMarcarResolvido?: (id: string) => void;
+  processingId?: string | null;
 }
 
 const TIPO_LABELS: Record<string, string> = {
@@ -17,26 +18,30 @@ const TIPO_LABELS: Record<string, string> = {
   OPORTUNIDADE: "Oportunidade",
 };
 
-export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido }: AlertListProps) {
+export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido, processingId }: AlertListProps) {
   if (alertas.length === 0) {
     return (
-      <div className="text-center py-12">
-        <svg className="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center">
+        <svg aria-hidden="true" className="mx-auto mb-3 h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
-        <p className="text-slate-400 font-medium">Nenhum alerta encontrado</p>
+        <p className="font-semibold text-slate-700">Nenhum alerta encontrado</p>
+        <p className="mt-1 text-sm text-slate-500">Quando a LeanIA identificar riscos ou oportunidades, eles aparecem aqui.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {alertas.map((alerta) => (
+      {alertas.map((alerta) => {
+        const isProcessing = processingId === alerta.id;
+
+        return (
         <div
           key={alerta.id}
-          className={`rounded-xl p-4 border transition-all duration-200 hover:shadow-md ${
+          className={`rounded-2xl border p-4 transition-all duration-200 hover:shadow-md ${
             alerta.status === "NOVO"
-              ? "bg-white border-l-4 border-l-amber-400 border-t-slate-200 border-r-slate-200 border-b-slate-200"
+              ? "border-amber-200 bg-amber-50/40"
               : alerta.status === "VISTO"
               ? "bg-slate-50 border-slate-200"
               : "bg-emerald-50/50 border-emerald-200"
@@ -65,24 +70,27 @@ export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido }:
                 {alerta.status === "NOVO" && onMarcarVisto && (
                   <button
                     onClick={() => onMarcarVisto(alerta.id)}
-                    className="text-xs px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 font-medium transition-colors"
+                    disabled={isProcessing}
+                    className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Visto
+                    {isProcessing ? "Salvando..." : "Visto"}
                   </button>
                 )}
                 {onMarcarResolvido && (
                   <button
                     onClick={() => onMarcarResolvido(alerta.id)}
-                    className="text-xs px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 font-medium transition-colors"
+                    disabled={isProcessing}
+                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Resolver
+                    {isProcessing ? "Salvando..." : "Resolver"}
                   </button>
                 )}
               </div>
             )}
           </div>
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 }

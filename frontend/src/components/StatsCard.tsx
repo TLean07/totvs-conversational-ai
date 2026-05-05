@@ -13,52 +13,69 @@ interface StatsCardProps {
 
 const colorMap = {
   blue: {
-    bg: "bg-gradient-to-br from-blue-500 to-blue-600",
-    icon: "bg-blue-400/30",
+    accent: "bg-blue-500",
+    icon: "bg-blue-50 text-blue-600 ring-blue-100",
+    value: "text-blue-700",
+    hover: "hover:border-blue-200",
   },
   green: {
-    bg: "bg-gradient-to-br from-emerald-500 to-emerald-600",
-    icon: "bg-emerald-400/30",
+    accent: "bg-emerald-500",
+    icon: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+    value: "text-emerald-700",
+    hover: "hover:border-emerald-200",
   },
   red: {
-    bg: "bg-gradient-to-br from-rose-500 to-rose-600",
-    icon: "bg-rose-400/30",
+    accent: "bg-rose-500",
+    icon: "bg-rose-50 text-rose-600 ring-rose-100",
+    value: "text-rose-700",
+    hover: "hover:border-rose-200",
   },
   yellow: {
-    bg: "bg-gradient-to-br from-amber-500 to-amber-600",
-    icon: "bg-amber-400/30",
+    accent: "bg-amber-500",
+    icon: "bg-amber-50 text-amber-600 ring-amber-100",
+    value: "text-amber-700",
+    hover: "hover:border-amber-200",
   },
   purple: {
-    bg: "bg-gradient-to-br from-violet-500 to-violet-600",
-    icon: "bg-violet-400/30",
+    accent: "bg-violet-500",
+    icon: "bg-violet-50 text-violet-600 ring-violet-100",
+    value: "text-violet-700",
+    hover: "hover:border-violet-200",
   },
 };
 
 export default function StatsCard({ title, value, icon, color, subtitle, href }: StatsCardProps) {
   const colors = colorMap[color];
   const inner = (
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-white/80">{title}</p>
-        <p className="text-3xl font-bold mt-1 tracking-tight">{value}</p>
-        {subtitle && <p className="text-xs text-white/60 mt-1">{subtitle}</p>}
+    <>
+      <div className={`absolute left-0 top-0 h-full w-1.5 ${colors.accent}`} />
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <p className={`mt-2 text-3xl font-bold tracking-tight ${colors.value}`}>{value}</p>
+          {subtitle && <p className="mt-2 text-xs font-medium text-slate-500">{subtitle}</p>}
+        </div>
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ${colors.icon}`}>
+          {icon}
+        </div>
       </div>
-      <div className={`w-12 h-12 ${colors.icon} rounded-xl flex items-center justify-center`}>
-        {icon}
-      </div>
-    </div>
+    </>
   );
 
   if (href) {
     return (
-      <Link href={href} className={`${colors.bg} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer block`}>
+      <Link
+        href={href}
+        aria-label={`Abrir ${title}`}
+        className={`group relative block overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 transition-all duration-200 ${colors.hover} hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2`}
+      >
         {inner}
       </Link>
     );
   }
 
   return (
-    <div className={`${colors.bg} rounded-2xl p-5 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5`}>
+    <div className={`relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60 transition-all duration-200 ${colors.hover}`}>
       {inner}
     </div>
   );

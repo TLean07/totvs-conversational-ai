@@ -17,19 +17,24 @@ const links = [
 export default function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(() => api.auth.user());
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
-    api.auth.refresh().then((session) => {
-      if (active && session) setUser(session.user);
-    });
+    api.auth.refresh()
+      .then((session) => {
+        if (active && session) setUser(session.user);
+      })
+      .catch(() => {
+        if (active) setUser(null);
+      });
     return () => {
       active = false;
     };
   }, []);
 
   return (
-    <nav className="bg-gradient-to-r from-[#1a365d] to-[#2b6cb0] text-white shadow-xl">
+    <nav className="sticky top-0 z-40 bg-gradient-to-r from-[#16355f] to-[#2b6cb0] text-white shadow-xl shadow-slate-900/10">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-3 group">
@@ -48,7 +53,7 @@ export default function Navbar() {
               </span>
             </div>
           </Link>
-          <div className="flex gap-1">
+          <div className="hidden gap-1 md:flex">
             {links
               .filter((link) => link.href !== "/usuarios" || user?.role === "ADMIN")
               .map((link) => {
@@ -57,32 +62,85 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive
                       ? "bg-white/20 shadow-inner backdrop-blur-sm"
-                      : "hover:bg-white/10"
+                      : "hover:bg-white/10 focus-visible:bg-white/10"
                   }`}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d={link.icon} />
                   </svg>
-                  <span className="hidden md:inline">{link.label}</span>
+                  <span>{link.label}</span>
                 </Link>
               );
             })}
             <button
               type="button"
               onClick={() => api.auth.logout()}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-white/10 focus-visible:bg-white/10"
               title="Sair"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
               </svg>
-              <span className="hidden md:inline">Sair</span>
+              <span>Sair</span>
             </button>
           </div>
+          <button
+            type="button"
+            aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((value) => !value)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white md:hidden"
+          >
+            <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+              )}
+            </svg>
+          </button>
         </div>
+        {menuOpen && (
+          <div className="border-t border-white/15 py-3 md:hidden">
+            <div className="grid gap-1">
+              {links
+                .filter((link) => link.href !== "/usuarios" || user?.role === "ADMIN")
+                .map((link) => {
+                  const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      aria-current={isActive ? "page" : undefined}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                        isActive ? "bg-white/20" : "hover:bg-white/10"
+                      }`}
+                    >
+                      <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d={link.icon} />
+                      </svg>
+                      {link.label}
+                    </Link>
+                  );
+                })}
+              <button
+                type="button"
+                onClick={() => api.auth.logout()}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-white/10"
+              >
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                </svg>
+                Sair
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
