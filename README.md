@@ -476,7 +476,7 @@ O microsservico Python utiliza uma abordagem hibrida:
       <a href="https://github.com/TLean07">
         <img src="https://github.com/TLean07.png" width="100px;" alt="TLean07"/>
         <br />
-        <sub><b>Leandro Afonso Silva Santos Junior</b></sub>
+        <sub><b>TLean07</b></sub>
       </a>
       <br />
       <sub>RM 561344</sub>
