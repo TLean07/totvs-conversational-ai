@@ -117,3 +117,10 @@ export interface DashboardResponse {
   alertasRecentes: AlertaResponse[];
   ultimasTranscricoes: TranscricaoResponse[];
 }
+
+export interface TranscricaoImportResponse {
+  totalRegistros: number;
+  importados: number;
+  ignorados: number;
+  avisos: string[];
+}

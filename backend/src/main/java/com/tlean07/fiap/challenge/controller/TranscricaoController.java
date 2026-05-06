@@ -3,6 +3,7 @@ package com.tlean07.fiap.challenge.controller;
 import com.tlean07.fiap.challenge.dto.AnaliseFeedbackRequest;
 import com.tlean07.fiap.challenge.dto.AnaliseFeedbackResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
+import com.tlean07.fiap.challenge.dto.TranscricaoImportResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoResponse;
 import com.tlean07.fiap.challenge.dto.PageResponse;
 import com.tlean07.fiap.challenge.service.RateLimitService;
@@ -11,8 +12,10 @@ import com.tlean07.fiap.challenge.security.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
 import java.util.List;
@@ -37,6 +40,17 @@ public class TranscricaoController {
         rateLimitService.check("transcricao:create:ip:" + clientKey(httpRequest), 40, Duration.ofHours(1));
         TranscricaoResponse response = transcricaoService.criarEAnalisar(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping(value = "/import/totvs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TranscricaoImportResponse> importarTotvs(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(defaultValue = "25") int limit,
+            @RequestParam(defaultValue = "0") int offset,
+            HttpServletRequest httpRequest) {
+        rateLimitService.check("transcricao:import:user:" + SecurityUtils.currentUser().id(), 5, Duration.ofHours(1));
+        rateLimitService.check("transcricao:import:ip:" + clientKey(httpRequest), 10, Duration.ofHours(1));
+        return ResponseEntity.status(HttpStatus.CREATED).body(transcricaoService.importarTotvsCsv(file, limit, offset));
     }
 
     @GetMapping

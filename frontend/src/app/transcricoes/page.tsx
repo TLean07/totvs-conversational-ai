@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
-import type { PageResponse, TranscricaoResponse, Sentimento, StatusTranscricao } from "@/lib/types";
+import type { PageResponse, TranscricaoImportResponse, TranscricaoResponse, Sentimento, StatusTranscricao } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SentimentBadge from "@/components/SentimentBadge";
 import VoiceRecorder from "@/components/VoiceRecorder";
@@ -17,6 +17,13 @@ function TranscricoesPageInner() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importLimit, setImportLimit] = useState(25);
+  const [importOffset, setImportOffset] = useState(0);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importResult, setImportResult] = useState<TranscricaoImportResponse | null>(null);
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
   const [filtroSentimento, setFiltroSentimento] = useState<Sentimento | "">("");
@@ -98,6 +105,28 @@ function TranscricoesPageInner() {
     }
   };
 
+  const handleImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) {
+      setImportError("Selecione um arquivo CSV da TOTVS.");
+      return;
+    }
+    setImportLoading(true);
+    setImportError("");
+    setImportResult(null);
+    try {
+      const result = await api.transcricoes.importarTotvs(importFile, importLimit, importOffset);
+      setImportResult(result);
+      setImportFile(null);
+      setPageIndex(0);
+      loadData(0);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : "Nao foi possivel importar o CSV.");
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -108,30 +137,53 @@ function TranscricoesPageInner() {
               <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Transcricoes</h1>
               <p className="text-sm text-slate-500 mt-1">Gerencie e analise transcricoes de reunioes</p>
             </div>
-            <button
-              onClick={() => setShowForm(!showForm)}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl w-full sm:w-auto text-sm font-semibold transition-all duration-200 shadow-sm shrink-0 ${
-                showForm
-                  ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                  : "bg-gradient-to-r from-[#1a365d] to-[#2b6cb0] text-white hover:shadow-md hover:-translate-y-0.5"
-              }`}
-            >
-              {showForm ? (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Cancelar
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
-                  Nova Transcricao
-                </>
-              )}
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowImport(!showImport);
+                  if (!showImport) setShowForm(false);
+                }}
+                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl w-full sm:w-auto text-sm font-semibold transition-all duration-200 shadow-sm shrink-0 ${
+                  showImport
+                    ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    : "bg-white text-[#1a365d] border border-slate-200 hover:border-blue-300 hover:bg-blue-50"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5h10.5A2.25 2.25 0 0019.5 17.25V6.75A2.25 2.25 0 0017.25 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5z" />
+                </svg>
+                {showImport ? "Fechar Importacao" : "Importar CSV TOTVS"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(!showForm);
+                  if (!showForm) setShowImport(false);
+                }}
+                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl w-full sm:w-auto text-sm font-semibold transition-all duration-200 shadow-sm shrink-0 ${
+                  showForm
+                    ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    : "bg-gradient-to-r from-[#1a365d] to-[#2b6cb0] text-white hover:shadow-md hover:-translate-y-0.5"
+                }`}
+              >
+                {showForm ? (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Cancelar
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Nova Transcricao
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Barra de filtros */}
@@ -194,6 +246,118 @@ function TranscricoesPageInner() {
             </div>
           </div>
         </div>
+
+        {showImport && (
+          <form onSubmit={handleImportSubmit} className="bg-white rounded-2xl shadow-sm border border-blue-200 p-6 mb-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
+                  Importacao oficial TOTVS
+                </div>
+                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricoes por CSV</h2>
+                <p className="text-sm text-slate-500 leading-6 max-w-2xl">
+                  Use o arquivo <span className="font-semibold">ANON_nome_transcricao.csv</span>. O backend entende o formato real da planilha,
+                  importa as reunioes como transcricoes e coloca a LeanIA para analisar em segundo plano.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
+                <p className="font-semibold text-slate-700">Colunas reconhecidas</p>
+                <p className="mt-1 text-xs leading-5">
+                  ID_MEETING, DT_MEETING, DURACAO_MEETING, CODT, ANON_TRANSCRICAO, UF, CNAE, unidade, segmento, faturamento e NPS.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_180px] gap-5 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo CSV</label>
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
+                  className="block w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-[#1a365d] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#244d7c]"
+                />
+                {importFile && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Selecionado: <span className="font-semibold">{importFile.name}</span>
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Limite por envio</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={200}
+                  value={importLimit}
+                  onChange={(event) => setImportLimit(Number(event.target.value))}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                />
+                <p className="mt-2 text-xs text-slate-500">Maximo 200 para proteger a fila gratuita da IA.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Iniciar no registro</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={importOffset}
+                  onChange={(event) => setImportOffset(Number(event.target.value))}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                />
+                <p className="mt-2 text-xs text-slate-500">Use 0, 200, 400... para importar em lotes.</p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <button
+                type="submit"
+                disabled={importLoading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a365d] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#244d7c] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {importLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Importando e enfileirando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M4.5 19.5h15" />
+                    </svg>
+                    Importar para analise
+                  </>
+                )}
+              </button>
+              <p className="text-sm text-slate-500">
+                As transcricoes entram como <span className="font-semibold">PROCESSANDO</span> e depois aparecem no dashboard.
+              </p>
+            </div>
+
+            {importError && (
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {importError}
+              </div>
+            )}
+
+            {importResult && (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <p className="font-semibold">
+                  {importResult.importados} {importResult.importados === 1 ? "transcricao importada" : "transcricoes importadas"}.
+                </p>
+                <p className="mt-1">
+                  Total encontrado no CSV: {importResult.totalRegistros}. Ignorados: {importResult.ignorados}.
+                </p>
+                {importResult.avisos.length > 0 && (
+                  <ul className="mt-2 list-disc pl-5 text-xs leading-5">
+                    {importResult.avisos.map((aviso) => (
+                      <li key={aviso}>{aviso}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </form>
+        )}
 
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">

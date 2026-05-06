@@ -57,7 +57,10 @@ async function request<T>(path: string, options?: RequestInit, retry = true): Pr
   }
 
   const headers = new Headers(options?.headers);
-  headers.set("Content-Type", "application/json");
+  const isFormData = typeof FormData !== "undefined" && options?.body instanceof FormData;
+  if (!isFormData) {
+    headers.set("Content-Type", "application/json");
+  }
   headers.set("X-Request-ID", createRequestId());
   if (accessToken) {
     headers.set("Authorization", `Bearer ${accessToken}`);
@@ -160,6 +163,17 @@ export const api = {
       request<import("./types").TranscricaoResponse>(`/transcricoes/${id}/reprocessar`, {
         method: "POST",
       }),
+    importarTotvs: (file: File, limit = 25, offset = 0) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request<import("./types").TranscricaoImportResponse>(
+        `/transcricoes/import/totvs?limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+    },
     feedback: (id: string, data: { util: boolean; ajuste?: string }) =>
       request<import("./types").AnaliseFeedbackResponse>(`/transcricoes/${id}/feedback`, {
         method: "POST",
