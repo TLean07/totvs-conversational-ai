@@ -27,8 +27,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +41,7 @@ public class TranscricaoService {
 
     private static final int MAX_IMPORT_LIMIT = 200;
     private static final int MAX_TRANSCRICAO_LENGTH = 20000;
+    private static final int MAX_IMPORT_SAMPLE_CHARS = 12000;
     private static final Pattern TOTVS_RECORD_START = Pattern.compile("(?m)^\"\\d+,\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},");
     private static final Pattern LOCUTOR_PATTERN = Pattern.compile("\\[LOCUTOR\\s+\\d+]");
 
@@ -99,24 +103,18 @@ public class TranscricaoService {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Arquivo CSV obrigatorio");
         }
-        int safeLimit = Math.max(1, Math.min(MAX_IMPORT_LIMIT, limit));
-        int safeOffset = Math.max(0, offset);
         String ownerId = SecurityUtils.currentUser().id();
         List<String> avisos = new ArrayList<>();
-        ImportCounters counters = processTotvsCsv(file, safeLimit, safeOffset, ownerId);
+        ImportCounters counters = processTotvsCsvAsSingleDocument(file, ownerId);
 
-        if (safeOffset >= counters.totalRegistros) {
-            avisos.add("O offset informado e maior que a quantidade de registros do CSV.");
-        }
-        if (counters.totalRegistros > safeOffset + safeLimit) {
-            avisos.add("Importacao limitada a " + safeLimit + " registros nesta execucao. Proximo offset sugerido: " + (safeOffset + counters.importados + counters.ignorados) + ".");
-        }
         if (counters.ignorados > 0) {
             avisos.add(counters.ignorados + " registro(s) foram ignorados por formato invalido ou transcricao vazia.");
         }
-        avisos.add("Transcricoes importadas entram como PROCESSANDO e aparecem no dashboard conforme a LeanIA concluir as analises.");
+        avisos.add("Foi criado 1 documento de lote para este CSV, evitando centenas de documentos na colecao transcricoes.");
+        avisos.add("A LeanIA analisa um resumo consolidado com estatisticas e amostras representativas do arquivo.");
+        avisos.add("O CSV bruto nao e salvo inteiro no MongoDB porque documentos MongoDB possuem limite de 16 MB.");
 
-        auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "imported=" + counters.importados);
+        auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "records=" + counters.totalRegistros + ";documents=1");
         return TranscricaoImportResponse.builder()
                 .totalRegistros(counters.totalRegistros)
                 .importados(counters.importados)
@@ -125,10 +123,10 @@ public class TranscricaoService {
                 .build();
     }
 
-    private ImportCounters processTotvsCsv(MultipartFile file, int safeLimit, int safeOffset, String ownerId) {
+    private ImportCounters processTotvsCsvAsSingleDocument(MultipartFile file, String ownerId) {
         ImportCounters counters = new ImportCounters();
+        TotvsImportSummary summary = new TotvsImportSummary(file.getOriginalFilename());
         StringBuilder currentRecord = null;
-        int currentIndex = -1;
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
@@ -136,9 +134,8 @@ public class TranscricaoService {
                 line = line.replace("\uFEFF", "");
                 if (isTotvsRecordStart(line)) {
                     if (currentRecord != null) {
-                        processTotvsRecord(currentRecord.toString(), currentIndex, safeLimit, safeOffset, ownerId, counters);
+                        processTotvsRecordIntoSummary(currentRecord.toString(), counters, summary);
                     }
-                    currentIndex = counters.totalRegistros;
                     counters.totalRegistros++;
                     currentRecord = new StringBuilder(line);
                 } else if (currentRecord != null) {
@@ -146,11 +143,26 @@ public class TranscricaoService {
                 }
             }
             if (currentRecord != null) {
-                processTotvsRecord(currentRecord.toString(), currentIndex, safeLimit, safeOffset, ownerId, counters);
+                processTotvsRecordIntoSummary(currentRecord.toString(), counters, summary);
             }
         } catch (IOException e) {
             throw new IllegalArgumentException("Nao foi possivel ler o arquivo CSV");
         }
+
+        if (summary.validRecords == 0) {
+            throw new IllegalArgumentException("Nenhuma transcricao valida foi encontrada no CSV");
+        }
+
+        TranscricaoRequest request = TranscricaoRequest.builder()
+                .textoOriginal(summary.buildText())
+                .cliente("Importacao TOTVS - " + safeFileName(file.getOriginalFilename()))
+                .vendedor("TOTVS CSV")
+                .participantes(summary.buildParticipants())
+                .duracaoMinutos(summary.totalDurationMinutes)
+                .dataReuniao(toIsoLocalDateTime(summary.firstDate))
+                .build();
+        criarEAnalisar(request, ownerId);
+        counters.importados = 1;
 
         return counters;
     }
@@ -159,30 +171,13 @@ public class TranscricaoService {
         return TOTVS_RECORD_START.matcher(line).find();
     }
 
-    private void processTotvsRecord(String record,
-                                    int index,
-                                    int safeLimit,
-                                    int safeOffset,
-                                    String ownerId,
-                                    ImportCounters counters) {
-        if (index < safeOffset || counters.importados >= safeLimit) {
-            return;
-        }
+    private void processTotvsRecordIntoSummary(String record, ImportCounters counters, TotvsImportSummary summary) {
         TotvsCsvRow row = parseTotvsRecord(record);
         if (row == null || row.transcricao().isBlank()) {
             counters.ignorados++;
             return;
         }
-        TranscricaoRequest request = TranscricaoRequest.builder()
-                .textoOriginal(buildImportedText(row))
-                .cliente(buildCliente(row))
-                .vendedor(blankToNull(row.nomeUnidade()))
-                .participantes(extractLocutores(row.transcricao()))
-                .duracaoMinutos(parseDurationMinutes(row.duracaoMeeting()))
-                .dataReuniao(toIsoLocalDateTime(row.dtMeeting()))
-                .build();
-        criarEAnalisar(request, ownerId);
-        counters.importados++;
+        summary.add(row);
     }
 
     private TotvsCsvRow parseTotvsRecord(String rawRecord) {
@@ -292,6 +287,14 @@ public class TranscricaoService {
         return base.length() > 160 ? base.substring(0, 160) : base;
     }
 
+    private String safeFileName(String value) {
+        String fileName = blankToNull(value);
+        if (fileName == null) {
+            return "arquivo CSV";
+        }
+        return fileName.length() > 120 ? fileName.substring(0, 120) : fileName;
+    }
+
     private String extractLocutores(String transcript) {
         Set<String> speakers = new LinkedHashSet<>();
         Matcher matcher = LOCUTOR_PATTERN.matcher(transcript);
@@ -350,6 +353,193 @@ public class TranscricaoService {
         private int totalRegistros;
         private int importados;
         private int ignorados;
+    }
+
+    private class TotvsImportSummary {
+        private final String fileName;
+        private final Map<String, Integer> segmentos = new LinkedHashMap<>();
+        private final Map<String, Integer> unidades = new LinkedHashMap<>();
+        private final Map<String, Integer> ufs = new LinkedHashMap<>();
+        private final Map<String, Integer> status = new LinkedHashMap<>();
+        private final Map<String, Integer> faixasFaturamento = new LinkedHashMap<>();
+        private final Set<String> locutores = new LinkedHashSet<>();
+        private final StringBuilder amostras = new StringBuilder();
+        private int validRecords;
+        private int totalDurationMinutes;
+        private int npsCount;
+        private int npsSum;
+        private String firstDate;
+        private String lastDate;
+
+        private TotvsImportSummary(String fileName) {
+            this.fileName = safeFileName(fileName);
+        }
+
+        private void add(TotvsCsvRow row) {
+            validRecords++;
+            addCount(segmentos, row.nomeSegmento());
+            addCount(unidades, row.nomeUnidade());
+            addCount(ufs, row.uf());
+            addCount(status, row.statusMeeting());
+            addCount(faixasFaturamento, row.faixaFaturamento());
+            addLocutores(row.transcricao());
+
+            Integer minutes = parseDurationMinutes(row.duracaoMeeting());
+            if (minutes != null) {
+                totalDurationMinutes += minutes;
+            }
+            addNps(row.notaNps());
+            updateDates(row.dtMeeting());
+            addSample(row);
+        }
+
+        private String buildText() {
+            String metadata = """
+                    [IMPORTACAO CSV TOTVS - LOTE CONSOLIDADO]
+                    ARQUIVO: %s
+                    TOTAL_REUNIOES_VALIDAS: %d
+                    PERIODO: %s ate %s
+                    DURACAO_TOTAL_ESTIMADA_MIN: %d
+                    NPS_MEDIO: %s
+
+                    DISTRIBUICAO_POR_SEGMENTO:
+                    %s
+
+                    DISTRIBUICAO_POR_UNIDADE:
+                    %s
+
+                    DISTRIBUICAO_POR_UF:
+                    %s
+
+                    DISTRIBUICAO_POR_STATUS:
+                    %s
+
+                    DISTRIBUICAO_POR_FAIXA_FATURAMENTO:
+                    %s
+
+                    AMOSTRAS_REPRESENTATIVAS:
+                    """.formatted(
+                    fileName,
+                    validRecords,
+                    blankOrDash(firstDate),
+                    blankOrDash(lastDate),
+                    totalDurationMinutes,
+                    npsCount == 0 ? "-" : String.format("%.1f", (double) npsSum / npsCount),
+                    formatTop(segementosOrEmpty(segmentos)),
+                    formatTop(segementosOrEmpty(unidades)),
+                    formatTop(segementosOrEmpty(ufs)),
+                    formatTop(segementosOrEmpty(status)),
+                    formatTop(segementosOrEmpty(faixasFaturamento))
+            );
+            String text = metadata + amostras;
+            if (text.length() > MAX_TRANSCRICAO_LENGTH) {
+                return text.substring(0, MAX_TRANSCRICAO_LENGTH - 80)
+                        + "\n\n[RESUMO TRUNCADO PARA RESPEITAR O LIMITE DE ANALISE]";
+            }
+            return text;
+        }
+
+        private String buildParticipants() {
+            if (locutores.isEmpty()) {
+                return "Importacao CSV TOTVS";
+            }
+            return String.join(", ", locutores.stream().limit(20).toList());
+        }
+
+        private void addCount(Map<String, Integer> map, String value) {
+            String key = blankToNull(value);
+            if (key == null) {
+                key = "NAO_INFORMADO";
+            }
+            map.merge(key, 1, Integer::sum);
+        }
+
+        private void addLocutores(String transcript) {
+            Matcher matcher = LOCUTOR_PATTERN.matcher(transcript);
+            while (matcher.find() && locutores.size() < 20) {
+                locutores.add(matcher.group().replace("[", "").replace("]", ""));
+            }
+        }
+
+        private void addNps(String value) {
+            try {
+                int nps = Integer.parseInt(value.replace("\"", "").trim());
+                npsSum += nps;
+                npsCount++;
+            } catch (RuntimeException ignored) {
+                // NPS ausente ou nao numerico nao deve bloquear a importacao.
+            }
+        }
+
+        private void updateDates(String value) {
+            String date = blankToNull(value);
+            if (date == null) {
+                return;
+            }
+            if (firstDate == null || date.compareTo(firstDate) < 0) {
+                firstDate = date;
+            }
+            if (lastDate == null || date.compareTo(lastDate) > 0) {
+                lastDate = date;
+            }
+        }
+
+        private void addSample(TotvsCsvRow row) {
+            if (amostras.length() >= MAX_IMPORT_SAMPLE_CHARS) {
+                return;
+            }
+            String transcript = row.transcricao().replaceAll("\\s+", " ").trim();
+            int maxSnippet = Math.min(900, transcript.length());
+            String snippet = transcript.substring(0, maxSnippet);
+            if (transcript.length() > maxSnippet) {
+                snippet += "...";
+            }
+            String sample = """
+
+                    ---
+                    ID_MEETING: %s
+                    DATA: %s
+                    CODT: %s
+                    SEGMENTO: %s
+                    UNIDADE: %s
+                    UF: %s
+                    NPS: %s
+                    TRECHO:
+                    %s
+                    """.formatted(
+                    row.idMeeting(),
+                    row.dtMeeting(),
+                    row.codt(),
+                    row.nomeSegmento(),
+                    row.nomeUnidade(),
+                    row.uf(),
+                    row.notaNps(),
+                    snippet
+            );
+            if (amostras.length() + sample.length() <= MAX_IMPORT_SAMPLE_CHARS) {
+                amostras.append(sample);
+            }
+        }
+
+        private Map<String, Integer> segementosOrEmpty(Map<String, Integer> values) {
+            return values;
+        }
+
+        private String formatTop(Map<String, Integer> values) {
+            if (values.isEmpty()) {
+                return "-";
+            }
+            return values.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
+                    .limit(10)
+                    .map(entry -> "- " + entry.getKey() + ": " + entry.getValue())
+                    .reduce((left, right) -> left + "\n" + right)
+                    .orElse("-");
+        }
+
+        private String blankOrDash(String value) {
+            return value == null || value.isBlank() ? "-" : value;
+        }
     }
 
     public List<TranscricaoResponse> listarTodas() {

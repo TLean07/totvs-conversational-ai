@@ -19,8 +19,6 @@ function TranscricoesPageInner() {
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importLimit, setImportLimit] = useState(25);
-  const [importOffset, setImportOffset] = useState(0);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState<TranscricaoImportResponse | null>(null);
@@ -115,7 +113,7 @@ function TranscricoesPageInner() {
     setImportError("");
     setImportResult(null);
     try {
-      const result = await api.transcricoes.importarTotvs(importFile, importLimit, importOffset);
+      const result = await api.transcricoes.importarTotvs(importFile);
       setImportResult(result);
       setImportFile(null);
       setPageIndex(0);
@@ -257,7 +255,7 @@ function TranscricoesPageInner() {
                 <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricoes por CSV</h2>
                 <p className="text-sm text-slate-500 leading-6 max-w-2xl">
                   Use o arquivo <span className="font-semibold">ANON_nome_transcricao.csv</span>. O backend entende o formato real da planilha,
-                  importa as reunioes como transcricoes e coloca a LeanIA para analisar em segundo plano.
+                  cria <span className="font-semibold">1 documento consolidado por CSV</span> e coloca a LeanIA para analisar o lote em segundo plano.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
@@ -268,7 +266,7 @@ function TranscricoesPageInner() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_180px] gap-5 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 mt-6">
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo CSV</label>
                 <input
@@ -283,28 +281,12 @@ function TranscricoesPageInner() {
                   </p>
                 )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Limite por envio</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={200}
-                  value={importLimit}
-                  onChange={(event) => setImportLimit(Number(event.target.value))}
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                />
-                <p className="mt-2 text-xs text-slate-500">Maximo 200 para proteger a fila gratuita da IA.</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Iniciar no registro</label>
-                <input
-                  type="number"
-                  min={0}
-                  value={importOffset}
-                  onChange={(event) => setImportOffset(Number(event.target.value))}
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                />
-                <p className="mt-2 text-xs text-slate-500">Use 0, 200, 400... para importar em lotes.</p>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <p className="text-sm font-semibold text-emerald-900">Modo economico ativado</p>
+                <p className="mt-1 text-xs leading-5 text-emerald-800">
+                  O CSV inteiro vira uma unica transcricao consolidada no MongoDB. A LeanIA recebe estatisticas, distribuicoes
+                  e amostras representativas para evitar centenas de documentos por arquivo.
+                </p>
               </div>
             </div>
 
@@ -329,7 +311,7 @@ function TranscricoesPageInner() {
                 )}
               </button>
               <p className="text-sm text-slate-500">
-                As transcricoes entram como <span className="font-semibold">PROCESSANDO</span> e depois aparecem no dashboard.
+                O lote entra como <span className="font-semibold">PROCESSANDO</span> e depois aparece no dashboard como uma unica analise.
               </p>
             </div>
 
@@ -342,10 +324,10 @@ function TranscricoesPageInner() {
             {importResult && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <p className="font-semibold">
-                  {importResult.importados} {importResult.importados === 1 ? "transcricao importada" : "transcricoes importadas"}.
+                  {importResult.importados} documento consolidado criado para este CSV.
                 </p>
                 <p className="mt-1">
-                  Total encontrado no CSV: {importResult.totalRegistros}. Ignorados: {importResult.ignorados}.
+                  Reunioes lidas no CSV: {importResult.totalRegistros}. Registros ignorados: {importResult.ignorados}.
                 </p>
                 {importResult.avisos.length > 0 && (
                   <ul className="mt-2 list-disc pl-5 text-xs leading-5">
