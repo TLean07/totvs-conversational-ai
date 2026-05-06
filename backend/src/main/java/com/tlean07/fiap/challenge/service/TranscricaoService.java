@@ -110,8 +110,9 @@ public class TranscricaoService {
         if (counters.ignorados > 0) {
             avisos.add(counters.ignorados + " registro(s) foram ignorados por formato invalido ou transcricao vazia.");
         }
-        avisos.add("Foi criado 1 documento de lote para este CSV, evitando centenas de documentos na colecao transcricoes.");
-        avisos.add("A LeanIA analisa um resumo consolidado com estatisticas e amostras representativas do arquivo.");
+        avisos.add("Foi criada 1 transcricao consolidada para este CSV, evitando centenas de documentos na colecao transcricoes.");
+        avisos.add("Os registros do CSV foram tratados como partes da mesma transcricao TOTVS.");
+        avisos.add("A LeanIA analisa estatisticas e trechos representativos da transcricao consolidada.");
         avisos.add("O CSV bruto nao e salvo inteiro no MongoDB porque documentos MongoDB possuem limite de 16 MB.");
 
         auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "records=" + counters.totalRegistros + ";documents=1");
@@ -155,7 +156,7 @@ public class TranscricaoService {
 
         TranscricaoRequest request = TranscricaoRequest.builder()
                 .textoOriginal(summary.buildText())
-                .cliente("Importacao TOTVS - " + safeFileName(file.getOriginalFilename()))
+                .cliente("Transcricao TOTVS - " + safeFileName(file.getOriginalFilename()))
                 .vendedor("TOTVS CSV")
                 .participantes(summary.buildParticipants())
                 .duracaoMinutos(summary.totalDurationMinutes)
@@ -395,12 +396,13 @@ public class TranscricaoService {
 
         private String buildText() {
             String metadata = """
-                    [IMPORTACAO CSV TOTVS - LOTE CONSOLIDADO]
+                    [TRANSCRICAO CSV TOTVS - CONSOLIDADA]
                     ARQUIVO: %s
-                    TOTAL_REUNIOES_VALIDAS: %d
+                    TOTAL_PARTES_VALIDAS: %d
                     PERIODO: %s ate %s
                     DURACAO_TOTAL_ESTIMADA_MIN: %d
                     NPS_MEDIO: %s
+                    OBSERVACAO: Os registros do CSV foram interpretados como partes de uma unica transcricao.
 
                     DISTRIBUICAO_POR_SEGMENTO:
                     %s
@@ -417,7 +419,7 @@ public class TranscricaoService {
                     DISTRIBUICAO_POR_FAIXA_FATURAMENTO:
                     %s
 
-                    AMOSTRAS_REPRESENTATIVAS:
+                    TRECHOS_REPRESENTATIVOS_DA_TRANSCRICAO:
                     """.formatted(
                     fileName,
                     validRecords,
@@ -441,7 +443,7 @@ public class TranscricaoService {
 
         private String buildParticipants() {
             if (locutores.isEmpty()) {
-                return "Importacao CSV TOTVS";
+                return "Transcricao CSV TOTVS";
             }
             return String.join(", ", locutores.stream().limit(20).toList());
         }

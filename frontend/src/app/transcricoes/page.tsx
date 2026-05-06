@@ -106,7 +106,7 @@ function TranscricoesPageInner() {
   const handleImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) {
-      setImportError("Selecione um arquivo CSV da TOTVS.");
+      setImportError("Selecione um arquivo CSV no formato de transcricao TOTVS.");
       return;
     }
     setImportLoading(true);
@@ -250,12 +250,12 @@ function TranscricoesPageInner() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
-                  Importacao oficial TOTVS
+                  Importacao CSV TOTVS
                 </div>
-                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricoes por CSV</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricao por CSV</h2>
                 <p className="text-sm text-slate-500 leading-6 max-w-2xl">
-                  Use o arquivo <span className="font-semibold">ANON_nome_transcricao.csv</span>. O backend entende o formato real da planilha,
-                  cria <span className="font-semibold">1 documento consolidado por CSV</span> e coloca a LeanIA para analisar o lote em segundo plano.
+                  Envie um CSV no formato de transcricao TOTVS. O sistema le as colunas reconhecidas,
+                  cria <span className="font-semibold">1 transcricao consolidada por arquivo</span> e coloca a LeanIA para analisar em segundo plano.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
@@ -284,8 +284,8 @@ function TranscricoesPageInner() {
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <p className="text-sm font-semibold text-emerald-900">Modo economico ativado</p>
                 <p className="mt-1 text-xs leading-5 text-emerald-800">
-                  O CSV inteiro vira uma unica transcricao consolidada no MongoDB. A LeanIA recebe estatisticas, distribuicoes
-                  e amostras representativas para evitar centenas de documentos por arquivo.
+                  Cada arquivo CSV vira uma unica transcricao no MongoDB. As linhas internas sao tratadas como partes do mesmo
+                  material, e a LeanIA recebe estatisticas, distribuicoes e trechos representativos sem criar centenas de documentos.
                 </p>
               </div>
             </div>
@@ -311,7 +311,7 @@ function TranscricoesPageInner() {
                 )}
               </button>
               <p className="text-sm text-slate-500">
-                O lote entra como <span className="font-semibold">PROCESSANDO</span> e depois aparece no dashboard como uma unica analise.
+                A transcricao consolidada entra como <span className="font-semibold">PROCESSANDO</span> e depois aparece no dashboard.
               </p>
             </div>
 
@@ -324,10 +324,10 @@ function TranscricoesPageInner() {
             {importResult && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <p className="font-semibold">
-                  {importResult.importados} documento consolidado criado para este CSV.
+                  {importResult.importados} transcricao consolidada criada para este arquivo.
                 </p>
                 <p className="mt-1">
-                  Reunioes lidas no CSV: {importResult.totalRegistros}. Registros ignorados: {importResult.ignorados}.
+                  Partes lidas no CSV: {importResult.totalRegistros}. Registros ignorados: {importResult.ignorados}.
                 </p>
                 {importResult.avisos.length > 0 && (
                   <ul className="mt-2 list-disc pl-5 text-xs leading-5">
