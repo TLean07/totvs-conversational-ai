@@ -16,6 +16,14 @@ public class DashboardResponse {
     private long totalOportunidades;
     private long totalRiscos;
     private long alertasNovos;
+    private long totalPartes;
+    private long partesAnalisadas;
+    private long partesNegativas;
+    private long partesPositivas;
+    private long partesNeutras;
+    private long churnsPotenciais;
+    private long mencoesCriticas;
+    private long alertasConsolidados;
     private Map<String, Long> sentimentoDistribuicao;
     private Map<String, Long> riscoPorTipo;
     private Map<String, Long> oportunidadePorTipo;

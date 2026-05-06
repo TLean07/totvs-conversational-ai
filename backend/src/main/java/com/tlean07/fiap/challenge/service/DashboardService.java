@@ -4,6 +4,7 @@ import com.tlean07.fiap.challenge.dto.DashboardResponse;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
+import com.tlean07.fiap.challenge.model.MetricasAgregadas;
 import com.tlean07.fiap.challenge.repository.*;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
@@ -43,33 +44,56 @@ public class DashboardService {
                 ? analiseRepository.findAll()
                 : analiseRepository.findAllByOwnerIdOrderByDataAnaliseDesc(user.id());
 
-        Map<String, Long> sentimentoDistribuicao = analises.stream()
-                .collect(Collectors.groupingBy(
-                        a -> a.getSentimentoGeral().name(),
-                        Collectors.counting()
-                ));
+        Map<String, Long> sentimentoDistribuicao = new java.util.LinkedHashMap<>();
+        Map<String, Long> riscoPorTipo = new java.util.LinkedHashMap<>();
+        Map<String, Long> oportunidadePorTipo = new java.util.LinkedHashMap<>();
 
-        Map<String, Long> riscoPorTipo = analises.stream()
-                .flatMap(a -> a.getRiscos().stream())
-                .collect(Collectors.groupingBy(
-                        r -> r.getTipo().name(),
-                        Collectors.counting()
-                ));
+        long totalOportunidades = 0;
+        long totalRiscos = 0;
+        long totalPartes = 0;
+        long partesAnalisadas = 0;
+        long partesNegativas = 0;
+        long partesPositivas = 0;
+        long partesNeutras = 0;
+        long churnsPotenciais = 0;
+        long mencoesCriticas = 0;
+        long alertasConsolidados = 0;
 
-        Map<String, Long> oportunidadePorTipo = analises.stream()
-                .flatMap(a -> a.getOportunidades().stream())
-                .collect(Collectors.groupingBy(
-                        o -> o.getTipo().name(),
-                        Collectors.counting()
-                ));
+        for (AnaliseResultado analise : analises) {
+            MetricasAgregadas metricas = analise.getMetricasAgregadas();
+            if (metricas != null && metricas.getPartesAnalisadas() > 0) {
+                increment(sentimentoDistribuicao, "NEGATIVO", metricas.getPartesNegativas());
+                increment(sentimentoDistribuicao, "POSITIVO", metricas.getPartesPositivas());
+                increment(sentimentoDistribuicao, "NEUTRO", metricas.getPartesNeutras());
+                totalOportunidades += metricas.getOportunidadesDetectadas();
+                totalRiscos += metricas.getRiscosDetectados();
+                totalPartes += metricas.getTotalPartes();
+                partesAnalisadas += metricas.getPartesAnalisadas();
+                partesNegativas += metricas.getPartesNegativas();
+                partesPositivas += metricas.getPartesPositivas();
+                partesNeutras += metricas.getPartesNeutras();
+                churnsPotenciais += metricas.getChurnsPotenciais();
+                mencoesCriticas += metricas.getMencoesCriticas();
+                alertasConsolidados += metricas.getAlertasConsolidados();
 
-        long totalOportunidades = analises.stream()
-                .mapToLong(a -> a.getOportunidades().size())
-                .sum();
+                safeList(analise.getRiscosConsolidados()).forEach(risco ->
+                        increment(riscoPorTipo, normalizeRiskKey(risco.getCategoria()), risco.getOcorrencias()));
+                safeList(analise.getOportunidadesConsolidadas()).forEach(oportunidade ->
+                        increment(oportunidadePorTipo, normalizeOpportunityKey(oportunidade.getCategoria()), oportunidade.getOcorrencias()));
+            } else {
+                increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
+                safeList(analise.getRiscos()).forEach(risco -> increment(riscoPorTipo, risco.getTipo().name(), 1));
+                safeList(analise.getOportunidades()).forEach(oportunidade -> increment(oportunidadePorTipo, oportunidade.getTipo().name(), 1));
+                totalOportunidades += safeList(analise.getOportunidades()).size();
+                totalRiscos += safeList(analise.getRiscos()).size();
+            }
+        }
 
-        long totalRiscos = analises.stream()
-                .mapToLong(a -> a.getRiscos().size())
-                .sum();
+        long alertasNovos = alertasConsolidados > 0
+                ? alertasConsolidados
+                : user.isAdmin()
+                ? alertaRepository.countByStatus(StatusAlerta.NOVO)
+                : alertaRepository.countByOwnerIdAndStatus(user.id(), StatusAlerta.NOVO);
 
         return DashboardResponse.builder()
                 .totalTranscricoes(user.isAdmin()
@@ -80,14 +104,48 @@ public class DashboardService {
                         : transcricaoRepository.findByOwnerIdAndStatus(user.id(), StatusTranscricao.PROCESSADA).size())
                 .totalOportunidades(totalOportunidades)
                 .totalRiscos(totalRiscos)
-                .alertasNovos(user.isAdmin()
-                        ? alertaRepository.countByStatus(StatusAlerta.NOVO)
-                        : alertaRepository.countByOwnerIdAndStatus(user.id(), StatusAlerta.NOVO))
+                .alertasNovos(alertasNovos)
+                .totalPartes(totalPartes)
+                .partesAnalisadas(partesAnalisadas)
+                .partesNegativas(partesNegativas)
+                .partesPositivas(partesPositivas)
+                .partesNeutras(partesNeutras)
+                .churnsPotenciais(churnsPotenciais)
+                .mencoesCriticas(mencoesCriticas)
+                .alertasConsolidados(alertasConsolidados)
                 .sentimentoDistribuicao(sentimentoDistribuicao)
                 .riscoPorTipo(riscoPorTipo)
                 .oportunidadePorTipo(oportunidadePorTipo)
                 .alertasRecentes(alertaService.listarNovos().stream().limit(10).toList())
                 .ultimasTranscricoes(transcricaoService.listarTodas().stream().limit(5).toList())
                 .build();
+    }
+
+    private void increment(Map<String, Long> map, String key, long value) {
+        if (value <= 0) {
+            return;
+        }
+        map.merge(key, value, Long::sum);
+    }
+
+    private String normalizeRiskKey(String categoria) {
+        if (categoria == null) return "INSATISFACAO";
+        String normalized = categoria.toUpperCase();
+        if (normalized.contains("CHURN")) return "CHURN";
+        if (normalized.contains("CONCORR")) return "CONCORRENCIA";
+        if (normalized.contains("CONFIAN")) return "PERDA_CONFIANCA";
+        return "INSATISFACAO";
+    }
+
+    private String normalizeOpportunityKey(String categoria) {
+        if (categoria == null) return "NOVO_PRODUTO";
+        String normalized = categoria.toUpperCase();
+        if (normalized.contains("UPSELL") || normalized.contains("MODULO") || normalized.contains("LICENCA")) return "UPSELL";
+        if (normalized.contains("CROSS")) return "CROSS_SELL";
+        return "NOVO_PRODUTO";
+    }
+
+    private <T> List<T> safeList(List<T> values) {
+        return values == null ? List.of() : values;
     }
 }

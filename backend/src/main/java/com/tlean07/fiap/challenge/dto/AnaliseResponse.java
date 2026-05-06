@@ -1,6 +1,11 @@
 package com.tlean07.fiap.challenge.dto;
 
 import com.tlean07.fiap.challenge.enums.Sentimento;
+import com.tlean07.fiap.challenge.model.AlertaConsolidado;
+import com.tlean07.fiap.challenge.model.ItemCritico;
+import com.tlean07.fiap.challenge.model.MetricasAgregadas;
+import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
+import com.tlean07.fiap.challenge.model.RiscoConsolidado;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -18,9 +23,16 @@ public class AnaliseResponse {
     private String personaIdentificada;
     private String budgetIdentificado;
     private Double scoreConfiancaVendedor;
+    private Double scoreSentimento;
+    private MetricasAgregadas metricasAgregadas;
+    private String resumoExecutivo;
     private LocalDateTime dataAnalise;
     private List<ProdutoResponse> produtos;
     private List<OportunidadeResponse> oportunidades;
     private List<RiscoResponse> riscos;
     private List<AlertaResponse> alertas;
+    private List<RiscoConsolidado> riscosConsolidados;
+    private List<OportunidadeConsolidada> oportunidadesConsolidadas;
+    private List<AlertaConsolidado> alertasConsolidados;
+    private List<ItemCritico> itensCriticos;
 }

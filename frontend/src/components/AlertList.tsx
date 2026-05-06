@@ -12,6 +12,9 @@ interface AlertListProps {
 
 const TIPO_LABELS: Record<string, string> = {
   CHURN: "Risco de Churn",
+  CONSOLIDADO_CHURN: "Churn consolidado",
+  CONSOLIDADO_SENTIMENTO_NEGATIVO: "Sentimento negativo",
+  CONSOLIDADO_CRITICIDADE_OPERACIONAL: "Criticidade operacional",
   CONCORRENCIA: "Concorrencia",
   INSATISFACAO: "Insatisfacao",
   PERDA_CONFIANCA: "Perda de Confianca",
@@ -60,7 +63,13 @@ export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido, p
                   </span>
                 )}
               </div>
+              {alerta.titulo && <p className="mb-1 text-sm font-semibold text-slate-900">{alerta.titulo}</p>}
               <p className="text-sm text-slate-700 leading-relaxed break-words">{alerta.mensagem}</p>
+              {alerta.ocorrencias > 0 && (
+                <p className="mt-2 text-xs font-semibold text-slate-500">
+                  {alerta.ocorrencias} ocorrencia{alerta.ocorrencias === 1 ? "" : "s"} consolidada{alerta.ocorrencias === 1 ? "" : "s"}
+                </p>
+              )}
               <p className="text-xs text-slate-400 mt-2">
                 {new Date(alerta.dataCriacao).toLocaleString("pt-BR")}
               </p>

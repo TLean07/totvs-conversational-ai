@@ -14,7 +14,12 @@ import java.time.LocalDateTime;
 public class AlertaResponse {
     private String id;
     private String tipo;
+    private String titulo;
+    private String categoria;
     private String mensagem;
+    private String motivo;
+    private String recomendacao;
+    private Integer ocorrencias;
     private Severidade prioridade;
     private StatusAlerta status;
     private LocalDateTime dataCriacao;

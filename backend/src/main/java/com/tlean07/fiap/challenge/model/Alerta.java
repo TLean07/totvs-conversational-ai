@@ -25,7 +25,12 @@ public class Alerta {
     @Indexed
     private String analiseId;
     private String tipo;
+    private String titulo;
+    private String categoria;
     private String mensagem;
+    private String motivo;
+    private String recomendacao;
+    private Integer ocorrencias;
     private Severidade prioridade;
     @Indexed
     private StatusAlerta status;

@@ -30,6 +30,9 @@ public class AnaliseResultado {
     private String personaIdentificada;
     private String budgetIdentificado;
     private Double scoreConfiancaVendedor;
+    private Double scoreSentimento;
+    private MetricasAgregadas metricasAgregadas;
+    private String resumoExecutivo;
     @Indexed
     private LocalDateTime dataAnalise;
 
@@ -44,6 +47,18 @@ public class AnaliseResultado {
 
     @Builder.Default
     private List<Alerta> alertas = new ArrayList<>();
+
+    @Builder.Default
+    private List<RiscoConsolidado> riscosConsolidados = new ArrayList<>();
+
+    @Builder.Default
+    private List<OportunidadeConsolidada> oportunidadesConsolidadas = new ArrayList<>();
+
+    @Builder.Default
+    private List<AlertaConsolidado> alertasConsolidados = new ArrayList<>();
+
+    @Builder.Default
+    private List<ItemCritico> itensCriticos = new ArrayList<>();
 
     public void prePersist() {
         dataAnalise = LocalDateTime.now();

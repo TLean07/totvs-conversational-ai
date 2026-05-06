@@ -46,6 +46,13 @@ public class AnaliseService {
                 .personaIdentificada(defaultText(dto.getPersonaIdentificada(), "Nao identificado"))
                 .budgetIdentificado(defaultText(dto.getBudgetIdentificado(), "Nao identificado"))
                 .scoreConfiancaVendedor(clampScore(dto.getScoreConfiancaVendedor()))
+                .scoreSentimento(dto.getScoreSentimento())
+                .metricasAgregadas(resolveMetrics(transcricao, dto))
+                .resumoExecutivo(defaultText(transcricao.getResumoExecutivo(), dto.getResumo()))
+                .riscosConsolidados(resolveConsolidatedRisks(transcricao, dto))
+                .oportunidadesConsolidadas(resolveConsolidatedOpportunities(transcricao, dto))
+                .alertasConsolidados(resolveConsolidatedAlerts(transcricao, dto))
+                .itensCriticos(resolveCriticalItems(transcricao, dto))
                 .dataAnalise(LocalDateTime.now())
                 .build();
 
@@ -119,6 +126,93 @@ public class AnaliseService {
         return values == null ? Collections.emptyList() : values;
     }
 
+    private MetricasAgregadas resolveMetrics(Transcricao transcricao, AiAnalysisDTO dto) {
+        if (transcricao.getMetricasAgregadas() != null) {
+            return transcricao.getMetricasAgregadas();
+        }
+        AiAnalysisDTO.MetricasAgregadasDTO metrics = dto.getMetricasAgregadas();
+        if (metrics == null) {
+            return null;
+        }
+        return MetricasAgregadas.builder()
+                .totalPartes(valueOrZero(metrics.getTotalPartes()))
+                .partesAnalisadas(valueOrZero(metrics.getPartesAnalisadas()))
+                .partesNegativas(valueOrZero(metrics.getPartesNegativas()))
+                .partesNeutras(valueOrZero(metrics.getPartesNeutras()))
+                .partesPositivas(valueOrZero(metrics.getPartesPositivas()))
+                .riscosDetectados(valueOrZero(metrics.getRiscosDetectados()))
+                .oportunidadesDetectadas(valueOrZero(metrics.getOportunidadesDetectadas()))
+                .churnsPotenciais(valueOrZero(metrics.getChurnsPotenciais()))
+                .mencoesCriticas(valueOrZero(metrics.getMencoesCriticas()))
+                .alertasConsolidados(valueOrZero(metrics.getAlertasConsolidados()))
+                .chunksProcessados(valueOrZero(metrics.getChunksProcessados()))
+                .build();
+    }
+
+    private List<RiscoConsolidado> resolveConsolidatedRisks(Transcricao transcricao, AiAnalysisDTO dto) {
+        if (transcricao.getRiscosConsolidados() != null && !transcricao.getRiscosConsolidados().isEmpty()) {
+            return transcricao.getRiscosConsolidados();
+        }
+        return nullSafe(dto.getRiscosConsolidados()).stream()
+                .map(r -> RiscoConsolidado.builder()
+                        .categoria(defaultText(r.getCategoria(), "Risco"))
+                        .severidade(parseEnum(Severidade.class, r.getSeveridade(), Severidade.MEDIO))
+                        .ocorrencias(valueOrZero(r.getOcorrencias()))
+                        .evidencias(nullSafe(r.getEvidencias()))
+                        .recomendacao(defaultText(r.getRecomendacao(), "Acompanhar recorrencia e definir plano de acao."))
+                        .build())
+                .toList();
+    }
+
+    private List<OportunidadeConsolidada> resolveConsolidatedOpportunities(Transcricao transcricao, AiAnalysisDTO dto) {
+        if (transcricao.getOportunidadesConsolidadas() != null && !transcricao.getOportunidadesConsolidadas().isEmpty()) {
+            return transcricao.getOportunidadesConsolidadas();
+        }
+        return nullSafe(dto.getOportunidadesConsolidadas()).stream()
+                .map(o -> OportunidadeConsolidada.builder()
+                        .categoria(defaultText(o.getCategoria(), "Oportunidade"))
+                        .score(clampScore(o.getScore()))
+                        .ocorrencias(valueOrZero(o.getOcorrencias()))
+                        .evidencias(nullSafe(o.getEvidencias()))
+                        .recomendacao(defaultText(o.getRecomendacao(), "Validar oportunidade com o time comercial."))
+                        .build())
+                .toList();
+    }
+
+    private List<AlertaConsolidado> resolveConsolidatedAlerts(Transcricao transcricao, AiAnalysisDTO dto) {
+        if (transcricao.getAlertasConsolidados() != null && !transcricao.getAlertasConsolidados().isEmpty()) {
+            return transcricao.getAlertasConsolidados();
+        }
+        return nullSafe(dto.getAlertasConsolidados()).stream()
+                .map(a -> AlertaConsolidado.builder()
+                        .titulo(defaultText(a.getTitulo(), "Alerta consolidado"))
+                        .categoria(defaultText(a.getCategoria(), "Geral"))
+                        .severidade(parseEnum(Severidade.class, a.getSeveridade(), Severidade.MEDIO))
+                        .ocorrencias(valueOrZero(a.getOcorrencias()))
+                        .motivo(defaultText(a.getMotivo(), "Padrao recorrente detectado na transcricao."))
+                        .recomendacao(defaultText(a.getRecomendacao(), "Revisar evidencias e definir responsavel."))
+                        .build())
+                .toList();
+    }
+
+    private List<ItemCritico> resolveCriticalItems(Transcricao transcricao, AiAnalysisDTO dto) {
+        if (transcricao.getItensCriticos() != null && !transcricao.getItensCriticos().isEmpty()) {
+            return transcricao.getItensCriticos();
+        }
+        return nullSafe(dto.getItensCriticos()).stream()
+                .map(i -> ItemCritico.builder()
+                        .tipo(defaultText(i.getTipo(), "risco"))
+                        .categoria(defaultText(i.getCategoria(), "Critico"))
+                        .trecho(defaultText(i.getTrecho(), "Trecho nao informado"))
+                        .severidade(parseEnum(Severidade.class, i.getSeveridade(), Severidade.MEDIO))
+                        .build())
+                .toList();
+    }
+
+    private int valueOrZero(Integer value) {
+        return value == null ? 0 : Math.max(0, value);
+    }
+
     public AnaliseResponse toResponse(AnaliseResultado a) {
         return AnaliseResponse.builder()
                 .id(a.getId())
@@ -127,15 +221,18 @@ public class AnaliseService {
                 .personaIdentificada(a.getPersonaIdentificada())
                 .budgetIdentificado(a.getBudgetIdentificado())
                 .scoreConfiancaVendedor(a.getScoreConfiancaVendedor())
+                .scoreSentimento(a.getScoreSentimento())
+                .metricasAgregadas(a.getMetricasAgregadas())
+                .resumoExecutivo(a.getResumoExecutivo())
                 .dataAnalise(a.getDataAnalise())
-                .produtos(a.getProdutosIdentificados().stream()
+                .produtos(nullSafe(a.getProdutosIdentificados()).stream()
                         .map(p -> ProdutoResponse.builder()
                                 .nomeProduto(p.getNomeProduto())
                                 .tipo(p.getTipo())
                                 .contexto(p.getContexto())
                                 .build())
                         .toList())
-                .oportunidades(a.getOportunidades().stream()
+                .oportunidades(nullSafe(a.getOportunidades()).stream()
                         .map(o -> OportunidadeResponse.builder()
                                 .tipo(o.getTipo())
                                 .descricao(o.getDescricao())
@@ -144,7 +241,7 @@ public class AnaliseService {
                                 .valorEstimado(o.getValorEstimado())
                                 .build())
                         .toList())
-                .riscos(a.getRiscos().stream()
+                .riscos(nullSafe(a.getRiscos()).stream()
                         .map(r -> RiscoResponse.builder()
                                 .tipo(r.getTipo())
                                 .descricao(r.getDescricao())
@@ -152,16 +249,25 @@ public class AnaliseService {
                                 .concorrenteMencionado(r.getConcorrenteMencionado())
                                 .build())
                         .toList())
-                .alertas(a.getAlertas().stream()
+                .alertas(nullSafe(a.getAlertas()).stream()
                         .map(al -> AlertaResponse.builder()
                                 .id(al.getId())
                                 .tipo(al.getTipo())
+                                .titulo(al.getTitulo())
+                                .categoria(al.getCategoria())
                                 .mensagem(al.getMensagem())
+                                .motivo(al.getMotivo())
+                                .recomendacao(al.getRecomendacao())
+                                .ocorrencias(al.getOcorrencias())
                                 .prioridade(al.getPrioridade())
                                 .status(al.getStatus())
                                 .dataCriacao(al.getDataCriacao())
                                 .build())
                         .toList())
+                .riscosConsolidados(nullSafe(a.getRiscosConsolidados()))
+                .oportunidadesConsolidadas(nullSafe(a.getOportunidadesConsolidadas()))
+                .alertasConsolidados(nullSafe(a.getAlertasConsolidados()))
+                .itensCriticos(nullSafe(a.getItensCriticos()))
                 .build();
     }
 }

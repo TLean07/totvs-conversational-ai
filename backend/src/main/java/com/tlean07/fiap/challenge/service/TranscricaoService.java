@@ -3,10 +3,9 @@ package com.tlean07.fiap.challenge.service;
 import com.tlean07.fiap.challenge.dto.*;
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
 import com.tlean07.fiap.challenge.dto.TranscricaoResponse;
+import com.tlean07.fiap.challenge.enums.Severidade;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
-import com.tlean07.fiap.challenge.model.AnaliseResultado;
-import com.tlean07.fiap.challenge.model.AnaliseFeedback;
-import com.tlean07.fiap.challenge.model.Transcricao;
+import com.tlean07.fiap.challenge.model.*;
 import com.tlean07.fiap.challenge.repository.AnaliseFeedbackRepository;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
@@ -42,6 +41,7 @@ public class TranscricaoService {
     private static final int MAX_IMPORT_LIMIT = 200;
     private static final int MAX_TRANSCRICAO_LENGTH = 20000;
     private static final int MAX_IMPORT_SAMPLE_CHARS = 12000;
+    private static final int MAX_EVIDENCES_PER_CATEGORY = 5;
     private static final Pattern TOTVS_RECORD_START = Pattern.compile("(?m)^\"\\d+,\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},");
     private static final Pattern LOCUTOR_PATTERN = Pattern.compile("\\[LOCUTOR\\s+\\d+]");
 
@@ -154,18 +154,39 @@ public class TranscricaoService {
             throw new IllegalArgumentException("Nenhuma transcricao valida foi encontrada no CSV");
         }
 
-        TranscricaoRequest request = TranscricaoRequest.builder()
+        Transcricao transcricao = Transcricao.builder()
+                .ownerId(ownerId)
                 .textoOriginal(summary.buildText())
                 .cliente("Transcricao TOTVS - " + safeFileName(file.getOriginalFilename()))
                 .vendedor("TOTVS CSV")
                 .participantes(summary.buildParticipants())
                 .duracaoMinutos(summary.totalDurationMinutes)
-                .dataReuniao(toIsoLocalDateTime(summary.firstDate))
+                .status(StatusTranscricao.PENDENTE)
+                .dataCriacao(LocalDateTime.now())
+                .metricasAgregadas(summary.buildMetrics())
+                .resumoExecutivo(summary.buildExecutiveSummary())
+                .riscosConsolidados(summary.buildConsolidatedRisks())
+                .oportunidadesConsolidadas(summary.buildConsolidatedOpportunities())
+                .alertasConsolidados(summary.buildConsolidatedAlerts())
+                .itensCriticos(summary.criticalItems)
                 .build();
-        criarEAnalisar(request, ownerId);
+        String isoDate = toIsoLocalDateTime(summary.firstDate);
+        if (isoDate != null) {
+            transcricao.setDataReuniao(LocalDateTime.parse(isoDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        }
+        salvarEEnfileirar(transcricao, ownerId, "transcricao.import.totvs.document");
         counters.importados = 1;
 
         return counters;
+    }
+
+    private TranscricaoResponse salvarEEnfileirar(Transcricao transcricao, String ownerId, String auditEvent) {
+        Transcricao saved = transcricaoRepository.save(transcricao);
+        saved.setStatus(StatusTranscricao.PROCESSANDO);
+        saved = transcricaoRepository.save(saved);
+        analysisJob.processar(saved.getId());
+        auditService.record(auditEvent, ownerId, saved.getId(), "queued");
+        return toResponse(saved);
     }
 
     private boolean isTotvsRecordStart(String line) {
@@ -363,12 +384,23 @@ public class TranscricaoService {
         private final Map<String, Integer> ufs = new LinkedHashMap<>();
         private final Map<String, Integer> status = new LinkedHashMap<>();
         private final Map<String, Integer> faixasFaturamento = new LinkedHashMap<>();
+        private final Map<String, Integer> riskCategories = new LinkedHashMap<>();
+        private final Map<String, Integer> opportunityCategories = new LinkedHashMap<>();
+        private final Map<String, List<String>> riskEvidences = new LinkedHashMap<>();
+        private final Map<String, List<String>> opportunityEvidences = new LinkedHashMap<>();
         private final Set<String> locutores = new LinkedHashSet<>();
+        private final List<ItemCritico> criticalItems = new ArrayList<>();
         private final StringBuilder amostras = new StringBuilder();
         private int validRecords;
         private int totalDurationMinutes;
         private int npsCount;
         private int npsSum;
+        private int negativeParts;
+        private int positiveParts;
+        private int neutralParts;
+        private int churnSignals;
+        private int criticalMentions;
+        private int opportunitySignals;
         private String firstDate;
         private String lastDate;
 
@@ -391,6 +423,7 @@ public class TranscricaoService {
             }
             addNps(row.notaNps());
             updateDates(row.dtMeeting());
+            analyzeSignals(row);
             addSample(row);
         }
 
@@ -402,6 +435,11 @@ public class TranscricaoService {
                     PERIODO: %s ate %s
                     DURACAO_TOTAL_ESTIMADA_MIN: %d
                     NPS_MEDIO: %s
+                    SENTIMENTO_PARTES: positivas=%d, neutras=%d, negativas=%d
+                    RISCOS_DETECTADOS: %d
+                    OPORTUNIDADES_DETECTADAS: %d
+                    CHURNS_POTENCIAIS: %d
+                    MENCOES_CRITICAS: %d
                     OBSERVACAO: Os registros do CSV foram interpretados como partes de uma unica transcricao.
 
                     DISTRIBUICAO_POR_SEGMENTO:
@@ -427,6 +465,13 @@ public class TranscricaoService {
                     blankOrDash(lastDate),
                     totalDurationMinutes,
                     npsCount == 0 ? "-" : String.format("%.1f", (double) npsSum / npsCount),
+                    positiveParts,
+                    neutralParts,
+                    negativeParts,
+                    totalRisks(),
+                    opportunitySignals,
+                    churnSignals,
+                    criticalMentions,
                     formatTop(segementosOrEmpty(segmentos)),
                     formatTop(segementosOrEmpty(unidades)),
                     formatTop(segementosOrEmpty(ufs)),
@@ -446,6 +491,102 @@ public class TranscricaoService {
                 return "Transcricao CSV TOTVS";
             }
             return String.join(", ", locutores.stream().limit(20).toList());
+        }
+
+        private MetricasAgregadas buildMetrics() {
+            int alertCount = buildConsolidatedAlerts().size();
+            return MetricasAgregadas.builder()
+                    .totalPartes(validRecords)
+                    .partesAnalisadas(validRecords)
+                    .partesNegativas(negativeParts)
+                    .partesNeutras(neutralParts)
+                    .partesPositivas(positiveParts)
+                    .riscosDetectados(totalRisks())
+                    .oportunidadesDetectadas(opportunitySignals)
+                    .churnsPotenciais(churnSignals)
+                    .mencoesCriticas(criticalMentions)
+                    .alertasConsolidados(alertCount)
+                    .chunksProcessados(Math.max(1, (int) Math.ceil(validRecords / 50.0)))
+                    .build();
+        }
+
+        private String buildExecutiveSummary() {
+            return "Transcricao CSV TOTVS consolidada com %d parte(s), %d parte(s) negativas, %d risco(s), %d oportunidade(s), %d indicio(s) de churn e %d mencao(oes) critica(s)."
+                    .formatted(validRecords, negativeParts, totalRisks(), opportunitySignals, churnSignals, criticalMentions);
+        }
+
+        private List<RiscoConsolidado> buildConsolidatedRisks() {
+            return riskCategories.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
+                    .map(entry -> RiscoConsolidado.builder()
+                            .categoria(entry.getKey())
+                            .ocorrencias(entry.getValue())
+                            .severidade(riskSeverity(entry.getKey(), entry.getValue()))
+                            .evidencias(riskEvidences.getOrDefault(entry.getKey(), List.of()))
+                            .recomendacao(riskRecommendation(entry.getKey()))
+                            .build())
+                    .toList();
+        }
+
+        private List<OportunidadeConsolidada> buildConsolidatedOpportunities() {
+            return opportunityCategories.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()))
+                    .map(entry -> OportunidadeConsolidada.builder()
+                            .categoria(entry.getKey())
+                            .ocorrencias(entry.getValue())
+                            .score(Math.min(0.95, 0.45 + (entry.getValue() * 0.08)))
+                            .evidencias(opportunityEvidences.getOrDefault(entry.getKey(), List.of()))
+                            .recomendacao(opportunityRecommendation(entry.getKey()))
+                            .build())
+                    .toList();
+        }
+
+        private List<AlertaConsolidado> buildConsolidatedAlerts() {
+            List<AlertaConsolidado> alerts = new ArrayList<>();
+            int negativeRate = validRecords == 0 ? 0 : (negativeParts * 100 / validRecords);
+            if (negativeRate >= 15 || negativeParts >= 10) {
+                alerts.add(AlertaConsolidado.builder()
+                        .titulo("Alta recorrencia de sentimento negativo")
+                        .categoria("Sentimento negativo")
+                        .severidade(negativeRate >= 30 ? Severidade.ALTO : Severidade.MEDIO)
+                        .ocorrencias(negativeParts)
+                        .motivo("A transcricao consolidada possui recorrencia relevante de partes negativas.")
+                        .recomendacao("Priorizar leitura dos itens criticos e planejar contato de recuperacao com responsavel comercial.")
+                        .build());
+            }
+            if (churnSignals > 0) {
+                alerts.add(AlertaConsolidado.builder()
+                        .titulo("Indicadores de churn no CSV")
+                        .categoria("Churn")
+                        .severidade(churnSignals >= 5 ? Severidade.ALTO : Severidade.MEDIO)
+                        .ocorrencias(churnSignals)
+                        .motivo("Foram encontrados termos associados a cancelamento, troca de fornecedor ou nao renovacao.")
+                        .recomendacao("Abrir plano de retencao, revisar causas recorrentes e acionar o time responsavel pela conta.")
+                        .build());
+            }
+            if (criticalMentions >= 5) {
+                alerts.add(AlertaConsolidado.builder()
+                        .titulo("Muitas mencoes criticas operacionais")
+                        .categoria("Criticidade operacional")
+                        .severidade(criticalMentions >= 15 ? Severidade.ALTO : Severidade.MEDIO)
+                        .ocorrencias(criticalMentions)
+                        .motivo("A transcricao tem volume alto de mencoes como erro, instabilidade, lentidao, parada ou problema.")
+                        .recomendacao("Agrupar causas tecnicas e priorizar plano de acao com suporte, CS e produto.")
+                        .build());
+            }
+            for (Map.Entry<String, Integer> risk : riskCategories.entrySet()) {
+                if (risk.getValue() >= 8) {
+                    alerts.add(AlertaConsolidado.builder()
+                            .titulo("Risco recorrente: " + risk.getKey())
+                            .categoria(risk.getKey())
+                            .severidade(riskSeverity(risk.getKey(), risk.getValue()))
+                            .ocorrencias(risk.getValue())
+                            .motivo("Categoria de risco apareceu muitas vezes na transcricao consolidada.")
+                            .recomendacao(riskRecommendation(risk.getKey()))
+                            .build());
+                }
+            }
+            return alerts;
         }
 
         private void addCount(Map<String, Integer> map, String value) {
@@ -471,6 +612,126 @@ public class TranscricaoService {
             } catch (RuntimeException ignored) {
                 // NPS ausente ou nao numerico nao deve bloquear a importacao.
             }
+        }
+
+        private void analyzeSignals(TotvsCsvRow row) {
+            String text = normalize(row.transcricao());
+            boolean negative = containsAny(text, "problema", "erro", "falha", "lento", "lentidao", "trav", "instavel",
+                    "insatisfeito", "ruim", "reclam", "dificuldade", "nao funciona", "parado", "atraso", "suporte");
+            boolean positive = containsAny(text, "otimo", "excelente", "bom atendimento", "satisfeito", "resolveu",
+                    "funciona bem", "gostei", "aprovado", "melhorou");
+            if (negative) {
+                negativeParts++;
+            } else if (positive) {
+                positiveParts++;
+            } else {
+                neutralParts++;
+            }
+
+            if (containsAny(text, "cancelar", "cancelamento", "churn", "trocar fornecedor", "trocar de sistema",
+                    "nao renovar", "nao vamos renovar", "encerrar contrato", "sair da totvs")) {
+                churnSignals++;
+                addRisk("CHURN", row);
+            }
+            if (negative) {
+                addRisk("Insatisfacao", row);
+            }
+            if (containsAny(text, "concorrente", "sap", "oracle", "senior", "sankhya", "linx", "omie", "bling")) {
+                addRisk("Concorrencia", row);
+            }
+            if (containsAny(text, "perdi confianca", "sem confianca", "desconfio", "prometeram", "nao cumpriu")) {
+                addRisk("Perda de confianca", row);
+            }
+            if (containsAny(text, "critico", "urgente", "grave", "parado", "sem operar", "impacta faturamento",
+                    "producao parada", "folha parada", "nao consigo emitir", "sistema fora")) {
+                criticalMentions++;
+                addCriticalItem("risco", containsAny(text, "cancelar", "churn", "nao renovar") ? "Churn" : "Criticidade operacional", row);
+            }
+            if (containsAny(text, "precisamos de", "gostaria de", "seria bom", "melhorar", "automatizar",
+                    "integrar", "dashboard", "relatorio", "treinamento", "modulo", "licenca")) {
+                opportunitySignals++;
+                String category = containsAny(text, "treinamento", "capacitar") ? "Treinamento e adocao"
+                        : containsAny(text, "integrar", "integracao") ? "Integracao"
+                        : containsAny(text, "modulo", "licenca") ? "Upsell"
+                        : "Melhoria no atendimento";
+                addOpportunity(category, row);
+            }
+        }
+
+        private String normalize(String value) {
+            return value == null ? "" : java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFD)
+                    .replaceAll("\\p{M}", "")
+                    .toLowerCase();
+        }
+
+        private boolean containsAny(String text, String... terms) {
+            for (String term : terms) {
+                if (text.contains(term)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void addRisk(String category, TotvsCsvRow row) {
+            riskCategories.merge(category, 1, Integer::sum);
+            addEvidence(riskEvidences, category, row);
+        }
+
+        private void addOpportunity(String category, TotvsCsvRow row) {
+            opportunityCategories.merge(category, 1, Integer::sum);
+            addEvidence(opportunityEvidences, category, row);
+        }
+
+        private void addEvidence(Map<String, List<String>> target, String category, TotvsCsvRow row) {
+            List<String> evidences = target.computeIfAbsent(category, key -> new ArrayList<>());
+            if (evidences.size() >= MAX_EVIDENCES_PER_CATEGORY) {
+                return;
+            }
+            String transcript = row.transcricao().replaceAll("\\s+", " ").trim();
+            evidences.add("ID " + row.idMeeting() + ": " + transcript.substring(0, Math.min(240, transcript.length())));
+        }
+
+        private void addCriticalItem(String type, String category, TotvsCsvRow row) {
+            if (criticalItems.size() >= 20) {
+                return;
+            }
+            String transcript = row.transcricao().replaceAll("\\s+", " ").trim();
+            criticalItems.add(ItemCritico.builder()
+                    .tipo(type)
+                    .categoria(category)
+                    .trecho(transcript.substring(0, Math.min(300, transcript.length())))
+                    .severidade("Churn".equals(category) ? Severidade.ALTO : Severidade.MEDIO)
+                    .build());
+        }
+
+        private int totalRisks() {
+            return riskCategories.values().stream().mapToInt(Integer::intValue).sum();
+        }
+
+        private Severidade riskSeverity(String category, int count) {
+            if ("CHURN".equalsIgnoreCase(category) || count >= 15) {
+                return Severidade.ALTO;
+            }
+            return count >= 5 ? Severidade.MEDIO : Severidade.BAIXO;
+        }
+
+        private String riskRecommendation(String category) {
+            return switch (category.toUpperCase()) {
+                case "CHURN" -> "Acionar plano de retencao, mapear causa raiz e envolver lideranca comercial.";
+                case "CONCORRENCIA" -> "Comparar proposta concorrente, reforcar diferenciais TOTVS e remover bloqueios comerciais.";
+                case "PERDA DE CONFIANCA" -> "Criar plano de recuperacao com prazos, responsaveis e acompanhamento executivo.";
+                default -> "Agrupar evidencias, priorizar causas recorrentes e acompanhar evolucao com o cliente.";
+            };
+        }
+
+        private String opportunityRecommendation(String category) {
+            return switch (category.toUpperCase()) {
+                case "UPSELL" -> "Validar aderencia, estimar valor e encaminhar proposta com modulo relacionado.";
+                case "INTEGRACAO" -> "Mapear sistemas envolvidos, integrações existentes e esforço tecnico.";
+                case "TREINAMENTO E ADOCAO" -> "Planejar capacitacao direcionada para reduzir atrito e aumentar uso.";
+                default -> "Transformar a recorrencia em backlog de melhoria e acompanhar impacto no cliente.";
+            };
         }
 
         private void updateDates(String value) {
@@ -692,7 +953,13 @@ public class TranscricaoService {
                 .vendedor(t.getVendedor())
                 .status(t.getStatus())
                 .dataCriacao(t.getDataCriacao())
-                .dataProcessamento(t.getDataProcessamento());
+                .dataProcessamento(t.getDataProcessamento())
+                .metricasAgregadas(t.getMetricasAgregadas())
+                .resumoExecutivo(t.getResumoExecutivo())
+                .riscosConsolidados(t.getRiscosConsolidados())
+                .oportunidadesConsolidadas(t.getOportunidadesConsolidadas())
+                .alertasConsolidados(t.getAlertasConsolidados())
+                .itensCriticos(t.getItensCriticos());
 
         // Buscar analise se existir
         if (t.getAnaliseResultado() != null) {

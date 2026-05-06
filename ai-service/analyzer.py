@@ -151,6 +151,10 @@ class TranscricaoAnalyzer:
         concorrentes = self._extrair_concorrentes(texto_lower, contexto)
         oportunidades = self._extrair_oportunidades(texto, texto_lower, produtos)
         riscos = self._extrair_riscos(texto, texto_lower, concorrentes)
+        metricas = self._extrair_metricas_consolidadas(texto)
+        riscos_consolidados = self._consolidar_riscos(riscos, metricas)
+        oportunidades_consolidadas = self._consolidar_oportunidades(oportunidades, metricas)
+        alertas_consolidados = self._gerar_alertas_consolidados(metricas, riscos_consolidados)
         persona = self._identificar_persona(texto_lower)
         budget = self._extrair_budget(texto)
         score_confianca = self._calcular_confianca(texto_lower)
@@ -162,9 +166,15 @@ class TranscricaoAnalyzer:
             "personaIdentificada": persona,
             "budgetIdentificado": budget,
             "scoreConfiancaVendedor": score_confianca,
+            "scoreSentimento": self._score_sentimento(sentimento, metricas),
+            "metricasAgregadas": metricas,
             "produtos": produtos,
             "oportunidades": oportunidades,
             "riscos": riscos,
+            "riscosConsolidados": riscos_consolidados,
+            "oportunidadesConsolidadas": oportunidades_consolidadas,
+            "alertasConsolidados": alertas_consolidados,
+            "itensCriticos": self._extrair_itens_criticos(texto, riscos_consolidados),
         }
 
     def _analisar_sentimento(self, texto: str) -> str:
@@ -381,6 +391,159 @@ class TranscricaoAnalyzer:
                     break
 
         return riscos
+
+    def _extrair_metricas_consolidadas(self, texto: str) -> dict:
+        def number(label: str) -> int:
+            match = re.search(rf"{label}:\s*(\d+)", texto, re.IGNORECASE)
+            return int(match.group(1)) if match else 0
+
+        partes_match = re.search(
+            r"SENTIMENTO_PARTES:\s*positivas=(\d+),\s*neutras=(\d+),\s*negativas=(\d+)",
+            texto,
+            re.IGNORECASE,
+        )
+        positivas = int(partes_match.group(1)) if partes_match else 0
+        neutras = int(partes_match.group(2)) if partes_match else 0
+        negativas = int(partes_match.group(3)) if partes_match else 0
+        total = number("TOTAL_PARTES_VALIDAS") or positivas + neutras + negativas
+        riscos = number("RISCOS_DETECTADOS")
+        oportunidades = number("OPORTUNIDADES_DETECTADAS")
+        churns = number("CHURNS_POTENCIAIS")
+        criticas = number("MENCOES_CRITICAS")
+        alertas = 0
+        if negativas >= 10 or (total and negativas / total >= 0.15):
+            alertas += 1
+        if churns:
+            alertas += 1
+        if criticas >= 5:
+            alertas += 1
+
+        return {
+            "totalPartes": total,
+            "partesAnalisadas": total,
+            "partesNegativas": negativas,
+            "partesNeutras": neutras,
+            "partesPositivas": positivas,
+            "riscosDetectados": riscos,
+            "oportunidadesDetectadas": oportunidades,
+            "churnsPotenciais": churns,
+            "mencoesCriticas": criticas,
+            "alertasConsolidados": alertas,
+            "chunksProcessados": max(1, (total + 49) // 50) if total else 1,
+        }
+
+    def _consolidar_riscos(self, riscos: list, metricas: dict) -> list:
+        buckets: dict[str, dict] = {}
+        for risco in riscos:
+            categoria = risco.get("tipo") or "INSATISFACAO"
+            bucket = buckets.setdefault(categoria, {
+                "categoria": categoria.title().replace("_", " "),
+                "severidade": "ALTO" if categoria == "CHURN" else "MEDIO",
+                "ocorrencias": 0,
+                "evidencias": [],
+                "recomendacao": "Agrupar evidencias, priorizar causa raiz e definir responsavel pelo plano de acao.",
+            })
+            bucket["ocorrencias"] += 1
+            if len(bucket["evidencias"]) < 5:
+                bucket["evidencias"].append(risco.get("descricao", "")[:240])
+
+        if metricas.get("churnsPotenciais", 0) and "CHURN" not in buckets:
+            buckets["CHURN"] = {
+                "categoria": "Churn",
+                "severidade": "ALTO",
+                "ocorrencias": metricas["churnsPotenciais"],
+                "evidencias": [],
+                "recomendacao": "Acionar plano de retencao e revisar causas recorrentes.",
+            }
+        if metricas.get("riscosDetectados", 0) and "INSATISFACAO" not in buckets:
+            buckets["INSATISFACAO"] = {
+                "categoria": "Insatisfacao",
+                "severidade": "ALTO" if metricas["riscosDetectados"] >= 15 else "MEDIO",
+                "ocorrencias": metricas["riscosDetectados"],
+                "evidencias": [],
+                "recomendacao": "Priorizar dores recorrentes e criar plano de comunicacao com o cliente.",
+            }
+        return list(buckets.values())
+
+    def _consolidar_oportunidades(self, oportunidades: list, metricas: dict) -> list:
+        buckets: dict[str, dict] = {}
+        for oportunidade in oportunidades:
+            categoria = oportunidade.get("tipo") or "NOVO_PRODUTO"
+            bucket = buckets.setdefault(categoria, {
+                "categoria": categoria.title().replace("_", " "),
+                "score": 0.65,
+                "ocorrencias": 0,
+                "evidencias": [],
+                "recomendacao": "Validar necessidade, impacto e proximo passo comercial.",
+            })
+            bucket["ocorrencias"] += 1
+            bucket["score"] = max(bucket["score"], oportunidade.get("score", 0.65))
+            if len(bucket["evidencias"]) < 5:
+                bucket["evidencias"].append(oportunidade.get("descricao", "")[:240])
+        if metricas.get("oportunidadesDetectadas", 0) and not buckets:
+            buckets["NOVO_PRODUTO"] = {
+                "categoria": "Melhoria no atendimento",
+                "score": 0.72,
+                "ocorrencias": metricas["oportunidadesDetectadas"],
+                "evidencias": [],
+                "recomendacao": "Transformar recorrencias em backlog comercial e de produto.",
+            }
+        return list(buckets.values())
+
+    def _gerar_alertas_consolidados(self, metricas: dict, riscos_consolidados: list) -> list:
+        alertas = []
+        total = metricas.get("partesAnalisadas", 0)
+        negativas = metricas.get("partesNegativas", 0)
+        taxa_negativa = negativas / total if total else 0
+        if negativas >= 10 or taxa_negativa >= 0.15:
+            alertas.append({
+                "titulo": "Alta recorrencia de sentimento negativo",
+                "categoria": "Sentimento negativo",
+                "severidade": "ALTO" if taxa_negativa >= 0.3 else "MEDIO",
+                "ocorrencias": negativas,
+                "motivo": "Volume relevante de partes negativas na transcricao consolidada.",
+                "recomendacao": "Priorizar revisao das evidencias e contato de recuperacao.",
+            })
+        if metricas.get("churnsPotenciais", 0):
+            alertas.append({
+                "titulo": "Indicadores de churn no CSV",
+                "categoria": "Churn",
+                "severidade": "ALTO",
+                "ocorrencias": metricas["churnsPotenciais"],
+                "motivo": "Foram encontrados sinais de cancelamento, troca ou nao renovacao.",
+                "recomendacao": "Abrir plano de retencao com causa raiz e responsaveis.",
+            })
+        if metricas.get("mencoesCriticas", 0) >= 5:
+            alertas.append({
+                "titulo": "Muitas mencoes criticas operacionais",
+                "categoria": "Criticidade operacional",
+                "severidade": "ALTO" if metricas["mencoesCriticas"] >= 15 else "MEDIO",
+                "ocorrencias": metricas["mencoesCriticas"],
+                "motivo": "Recorrencia de mencoes criticas no material analisado.",
+                "recomendacao": "Consolidar causas tecnicas e criar plano de acao com suporte e produto.",
+            })
+        return alertas
+
+    def _extrair_itens_criticos(self, texto: str, riscos_consolidados: list) -> list:
+        itens = []
+        for linha in texto.splitlines():
+            linha_lower = linha.lower()
+            if any(s in linha_lower for s in ["cancelar", "nao renovar", "churn", "urgente", "critico", "parado", "erro"]):
+                itens.append({
+                    "tipo": "risco",
+                    "categoria": "Churn" if any(s in linha_lower for s in ["cancelar", "nao renovar", "churn"]) else "Criticidade operacional",
+                    "trecho": linha.strip()[:300],
+                    "severidade": "ALTO",
+                })
+            if len(itens) >= 20:
+                break
+        return itens
+
+    def _score_sentimento(self, sentimento: str, metricas: dict) -> float:
+        total = metricas.get("partesAnalisadas", 0)
+        if total:
+            return round((metricas.get("partesPositivas", 0) - metricas.get("partesNegativas", 0)) / total, 2)
+        return {"POSITIVO": 0.7, "MISTO": 0.0, "NEUTRO": 0.0, "NEGATIVO": -0.7}.get(sentimento, 0.0)
 
     def _identificar_persona(self, texto_lower: str) -> str:
         encontrados = []

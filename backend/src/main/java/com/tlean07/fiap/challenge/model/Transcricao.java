@@ -34,6 +34,20 @@ public class Transcricao {
     @Indexed
     private LocalDateTime dataCriacao;
     private LocalDateTime dataProcessamento;
+    private MetricasAgregadas metricasAgregadas;
+    private String resumoExecutivo;
+
+    @Builder.Default
+    private java.util.List<RiscoConsolidado> riscosConsolidados = new java.util.ArrayList<>();
+
+    @Builder.Default
+    private java.util.List<OportunidadeConsolidada> oportunidadesConsolidadas = new java.util.ArrayList<>();
+
+    @Builder.Default
+    private java.util.List<AlertaConsolidado> alertasConsolidados = new java.util.ArrayList<>();
+
+    @Builder.Default
+    private java.util.List<ItemCritico> itensCriticos = new java.util.ArrayList<>();
 
     @DBRef
     private AnaliseResultado analiseResultado;

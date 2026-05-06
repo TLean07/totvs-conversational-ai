@@ -220,7 +220,10 @@ export default function DashboardPage() {
 
   const activeFilterCount = [filtroCliente, filtroSentimento, filtroStatus].filter(Boolean).length;
   const churnCount = data?.riscoPorTipo.CHURN ?? 0;
-  const negativeCount = data?.sentimentoDistribuicao.NEGATIVO ?? 0;
+  const negativeCount = data?.partesNegativas || data?.sentimentoDistribuicao.NEGATIVO || 0;
+  const partesAnalisadas = data?.partesAnalisadas ?? 0;
+  const mencoesCriticas = data?.mencoesCriticas ?? 0;
+  const alertasConsolidados = data?.alertasConsolidados || data?.alertasNovos || 0;
   const processingRate = data?.totalTranscricoes
     ? Math.round((data.transcricoesProcessadas / data.totalTranscricoes) * 100)
     : 0;
@@ -249,7 +252,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section aria-label="Indicadores principais" className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <section aria-label="Indicadores principais" className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatsCard
             title="Transcricoes"
             value={data.totalTranscricoes}
@@ -265,6 +268,13 @@ export default function DashboardPage() {
             color="green"
             href="/transcricoes?status=PROCESSADA"
             icon={metricIcon("M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z")}
+          />
+          <StatsCard
+            title="Partes analisadas"
+            value={partesAnalisadas}
+            subtitle={`${data.totalPartes || partesAnalisadas} partes lidas`}
+            color="blue"
+            icon={metricIcon("M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5")}
           />
           <StatsCard
             title="Oportunidades"
@@ -284,8 +294,8 @@ export default function DashboardPage() {
           />
           <StatsCard
             title="Alertas novos"
-            value={data.alertasNovos}
-            subtitle="Pendentes de acao"
+            value={alertasConsolidados}
+            subtitle="Consolidados"
             color="yellow"
             href="/alertas"
             icon={metricIcon("M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0")}
@@ -295,18 +305,18 @@ export default function DashboardPage() {
         <section className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
             <p className="text-sm font-semibold text-rose-700">Risco critico</p>
-            <p className="mt-2 text-3xl font-bold text-rose-800">{churnCount}</p>
-            <p className="mt-1 text-sm text-rose-700/80">Sinais de churn identificados nas analises recentes.</p>
+            <p className="mt-2 text-3xl font-bold text-rose-800">{data.churnsPotenciais || churnCount}</p>
+            <p className="mt-1 text-sm text-rose-700/80">Sinais de churn identificados dentro das transcricoes importadas.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
             <p className="text-sm font-semibold text-slate-600">Sentimento negativo</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">{negativeCount}</p>
-            <p className="mt-1 text-sm text-slate-500">Reunioes com percepcao negativa capturada pela LeanIA.</p>
+            <p className="mt-1 text-sm text-slate-500">Partes com percepcao negativa capturada pela LeanIA.</p>
           </div>
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <p className="text-sm font-semibold text-blue-700">Saude do processamento</p>
-            <p className="mt-2 text-3xl font-bold text-blue-900">{processingRate}%</p>
-            <p className="mt-1 text-sm text-blue-700/80">Percentual de transcricoes processadas com sucesso.</p>
+            <p className="text-sm font-semibold text-blue-700">Mencoes criticas</p>
+            <p className="mt-2 text-3xl font-bold text-blue-900">{mencoesCriticas}</p>
+            <p className="mt-1 text-sm text-blue-700/80">Ocorrencias internas que exigem priorizacao.</p>
           </div>
         </section>
 

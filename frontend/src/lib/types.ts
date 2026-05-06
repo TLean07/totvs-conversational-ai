@@ -62,10 +62,61 @@ export interface RiscoResponse {
 export interface AlertaResponse {
   id: string;
   tipo: string;
+  titulo: string;
+  categoria: string;
   mensagem: string;
+  motivo: string;
+  recomendacao: string;
+  ocorrencias: number;
   prioridade: Severidade;
   status: StatusAlerta;
   dataCriacao: string;
+}
+
+export interface MetricasAgregadas {
+  totalPartes: number;
+  partesAnalisadas: number;
+  partesNegativas: number;
+  partesNeutras: number;
+  partesPositivas: number;
+  riscosDetectados: number;
+  oportunidadesDetectadas: number;
+  churnsPotenciais: number;
+  mencoesCriticas: number;
+  alertasConsolidados: number;
+  chunksProcessados: number;
+}
+
+export interface RiscoConsolidado {
+  categoria: string;
+  severidade: Severidade;
+  ocorrencias: number;
+  evidencias: string[];
+  recomendacao: string;
+}
+
+export interface OportunidadeConsolidada {
+  categoria: string;
+  score: number;
+  ocorrencias: number;
+  evidencias: string[];
+  recomendacao: string;
+}
+
+export interface AlertaConsolidado {
+  titulo: string;
+  categoria: string;
+  severidade: Severidade;
+  ocorrencias: number;
+  motivo: string;
+  recomendacao: string;
+}
+
+export interface ItemCritico {
+  tipo: string;
+  categoria: string;
+  trecho: string;
+  severidade: Severidade;
 }
 
 export interface AnaliseResponse {
@@ -75,11 +126,18 @@ export interface AnaliseResponse {
   personaIdentificada: string;
   budgetIdentificado: string;
   scoreConfiancaVendedor: number;
+  scoreSentimento: number;
+  metricasAgregadas: MetricasAgregadas | null;
+  resumoExecutivo: string;
   dataAnalise: string;
   produtos: ProdutoResponse[];
   oportunidades: OportunidadeResponse[];
   riscos: RiscoResponse[];
   alertas: AlertaResponse[];
+  riscosConsolidados: RiscoConsolidado[];
+  oportunidadesConsolidadas: OportunidadeConsolidada[];
+  alertasConsolidados: AlertaConsolidado[];
+  itensCriticos: ItemCritico[];
 }
 
 export interface TranscricaoResponse {
@@ -93,6 +151,12 @@ export interface TranscricaoResponse {
   status: StatusTranscricao;
   dataCriacao: string;
   dataProcessamento: string;
+  metricasAgregadas: MetricasAgregadas | null;
+  resumoExecutivo: string;
+  riscosConsolidados: RiscoConsolidado[];
+  oportunidadesConsolidadas: OportunidadeConsolidada[];
+  alertasConsolidados: AlertaConsolidado[];
+  itensCriticos: ItemCritico[];
   analise: AnaliseResponse | null;
 }
 
@@ -111,6 +175,14 @@ export interface DashboardResponse {
   totalOportunidades: number;
   totalRiscos: number;
   alertasNovos: number;
+  totalPartes: number;
+  partesAnalisadas: number;
+  partesNegativas: number;
+  partesPositivas: number;
+  partesNeutras: number;
+  churnsPotenciais: number;
+  mencoesCriticas: number;
+  alertasConsolidados: number;
   sentimentoDistribuicao: Record<string, number>;
   riscoPorTipo: Record<string, number>;
   oportunidadePorTipo: Record<string, number>;
