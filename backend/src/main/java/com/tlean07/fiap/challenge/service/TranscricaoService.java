@@ -20,7 +20,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -101,74 +103,86 @@ public class TranscricaoService {
         int safeOffset = Math.max(0, offset);
         String ownerId = SecurityUtils.currentUser().id();
         List<String> avisos = new ArrayList<>();
-        List<String> records = splitTotvsRecords(readCsv(file));
+        ImportCounters counters = processTotvsCsv(file, safeLimit, safeOffset, ownerId);
 
-        int importados = 0;
-        int ignorados = 0;
-        for (int i = safeOffset; i < records.size(); i++) {
-            if (importados >= safeLimit) {
-                break;
-            }
-            String record = records.get(i);
-            TotvsCsvRow row = parseTotvsRecord(record);
-            if (row == null || row.transcricao().isBlank()) {
-                ignorados++;
-                continue;
-            }
-            TranscricaoRequest request = TranscricaoRequest.builder()
-                    .textoOriginal(buildImportedText(row))
-                    .cliente(buildCliente(row))
-                    .vendedor(blankToNull(row.nomeUnidade()))
-                    .participantes(extractLocutores(row.transcricao()))
-                    .duracaoMinutos(parseDurationMinutes(row.duracaoMeeting()))
-                    .dataReuniao(toIsoLocalDateTime(row.dtMeeting()))
-                    .build();
-            criarEAnalisar(request, ownerId);
-            importados++;
-        }
-
-        if (safeOffset >= records.size()) {
+        if (safeOffset >= counters.totalRegistros) {
             avisos.add("O offset informado e maior que a quantidade de registros do CSV.");
         }
-        if (records.size() > safeOffset + safeLimit) {
-            avisos.add("Importacao limitada a " + safeLimit + " registros nesta execucao. Proximo offset sugerido: " + (safeOffset + importados + ignorados) + ".");
+        if (counters.totalRegistros > safeOffset + safeLimit) {
+            avisos.add("Importacao limitada a " + safeLimit + " registros nesta execucao. Proximo offset sugerido: " + (safeOffset + counters.importados + counters.ignorados) + ".");
         }
-        if (ignorados > 0) {
-            avisos.add(ignorados + " registro(s) foram ignorados por formato invalido ou transcricao vazia.");
+        if (counters.ignorados > 0) {
+            avisos.add(counters.ignorados + " registro(s) foram ignorados por formato invalido ou transcricao vazia.");
         }
         avisos.add("Transcricoes importadas entram como PROCESSANDO e aparecem no dashboard conforme a LeanIA concluir as analises.");
 
-        auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "imported=" + importados);
+        auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "imported=" + counters.importados);
         return TranscricaoImportResponse.builder()
-                .totalRegistros(records.size())
-                .importados(importados)
-                .ignorados(ignorados)
+                .totalRegistros(counters.totalRegistros)
+                .importados(counters.importados)
+                .ignorados(counters.ignorados)
                 .avisos(avisos)
                 .build();
     }
 
-    private String readCsv(MultipartFile file) {
-        try {
-            return new String(file.getBytes(), StandardCharsets.UTF_8)
-                    .replace("\uFEFF", "");
+    private ImportCounters processTotvsCsv(MultipartFile file, int safeLimit, int safeOffset, String ownerId) {
+        ImportCounters counters = new ImportCounters();
+        StringBuilder currentRecord = null;
+        int currentIndex = -1;
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.replace("\uFEFF", "");
+                if (isTotvsRecordStart(line)) {
+                    if (currentRecord != null) {
+                        processTotvsRecord(currentRecord.toString(), currentIndex, safeLimit, safeOffset, ownerId, counters);
+                    }
+                    currentIndex = counters.totalRegistros;
+                    counters.totalRegistros++;
+                    currentRecord = new StringBuilder(line);
+                } else if (currentRecord != null) {
+                    currentRecord.append('\n').append(line);
+                }
+            }
+            if (currentRecord != null) {
+                processTotvsRecord(currentRecord.toString(), currentIndex, safeLimit, safeOffset, ownerId, counters);
+            }
         } catch (IOException e) {
             throw new IllegalArgumentException("Nao foi possivel ler o arquivo CSV");
         }
+
+        return counters;
     }
 
-    private List<String> splitTotvsRecords(String csvText) {
-        Matcher matcher = TOTVS_RECORD_START.matcher(csvText);
-        List<Integer> starts = new ArrayList<>();
-        while (matcher.find()) {
-            starts.add(matcher.start());
+    private boolean isTotvsRecordStart(String line) {
+        return TOTVS_RECORD_START.matcher(line).find();
+    }
+
+    private void processTotvsRecord(String record,
+                                    int index,
+                                    int safeLimit,
+                                    int safeOffset,
+                                    String ownerId,
+                                    ImportCounters counters) {
+        if (index < safeOffset || counters.importados >= safeLimit) {
+            return;
         }
-        List<String> records = new ArrayList<>();
-        for (int i = 0; i < starts.size(); i++) {
-            int start = starts.get(i);
-            int end = i + 1 < starts.size() ? starts.get(i + 1) : csvText.length();
-            records.add(csvText.substring(start, end).trim());
+        TotvsCsvRow row = parseTotvsRecord(record);
+        if (row == null || row.transcricao().isBlank()) {
+            counters.ignorados++;
+            return;
         }
-        return records;
+        TranscricaoRequest request = TranscricaoRequest.builder()
+                .textoOriginal(buildImportedText(row))
+                .cliente(buildCliente(row))
+                .vendedor(blankToNull(row.nomeUnidade()))
+                .participantes(extractLocutores(row.transcricao()))
+                .duracaoMinutos(parseDurationMinutes(row.duracaoMeeting()))
+                .dataReuniao(toIsoLocalDateTime(row.dtMeeting()))
+                .build();
+        criarEAnalisar(request, ownerId);
+        counters.importados++;
     }
 
     private TotvsCsvRow parseTotvsRecord(String rawRecord) {
@@ -330,6 +344,12 @@ public class TranscricaoService {
             String dtUltimaPesquisa,
             String notaNps
     ) {
+    }
+
+    private static class ImportCounters {
+        private int totalRegistros;
+        private int importados;
+        private int ignorados;
     }
 
     public List<TranscricaoResponse> listarTodas() {
