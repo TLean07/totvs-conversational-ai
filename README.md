@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/LeanIA-Adaptive%20AI-FFD21E" alt="LeanIA">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white" alt="Next.js">
   <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white" alt="MongoDB">
   <img src="https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/FIAP-Challenge%20TOTVS%202026-E4002B" alt="FIAP">
@@ -41,6 +41,49 @@ O objetivo e que a TOTVS consiga analisar milhares de reunioes diarias e identif
 - **Identificacao de personas** — Cargo e papel do interlocutor na reuniao
 - **Deteccao de budget** — Captura de valores monetarios mencionados
 - **100% gratuito** — Sem dependencia de APIs pagas, roda inteiramente local
+
+---
+
+### Importacao CSV TOTVS e Granularidade
+
+O fluxo de importacao por CSV mantem o banco limpo sem perder riqueza analitica:
+
+```text
+1 CSV TOTVS
+   |
+   |-- leitura em streaming, sem carregar o arquivo inteiro em memoria
+   |-- parsing das partes internas do CSV
+   |-- calculo de metricas agregadas
+   |-- geracao de riscos, oportunidades, itens criticos e alertas consolidados
+   v
+1 documento em transcricoes
+```
+
+Regra principal:
+
+- **1 arquivo CSV importado = 1 unico documento principal em `transcricoes`**
+- O sistema **nao cria 1 documento por linha, parte, chunk ou conversa**
+- As partes internas sao analisadas em memoria e viram campos agregados dentro do documento unico
+- O CSV bruto completo nao e salvo quando excede o limite pratico do MongoDB; o sistema salva uma transcricao consolidada, estatisticas e trechos representativos
+
+Campos consolidados adicionados ao documento e a analise:
+
+| Campo | Objetivo |
+|---|---|
+| `metricasAgregadas.totalPartes` | Quantidade de partes encontradas no CSV |
+| `metricasAgregadas.partesAnalisadas` | Partes usadas no calculo consolidado |
+| `metricasAgregadas.partesNegativas` | Volume interno de sinais negativos |
+| `metricasAgregadas.riscosDetectados` | Riscos encontrados nas partes internas |
+| `metricasAgregadas.oportunidadesDetectadas` | Oportunidades encontradas nas partes internas |
+| `metricasAgregadas.churnsPotenciais` | Indicadores internos de churn |
+| `metricasAgregadas.mencoesCriticas` | Mencoes operacionais ou comerciais criticas |
+| `metricasAgregadas.alertasConsolidados` | Alertas gerados por recorrencia/categoria |
+| `riscosConsolidados` | Riscos agrupados por categoria, severidade e ocorrencias |
+| `oportunidadesConsolidadas` | Oportunidades agrupadas por categoria, score e ocorrencias |
+| `alertasConsolidados` | Alertas com titulo, categoria, severidade, motivo e recomendacao |
+| `itensCriticos` | Evidencias/trechos mais importantes para revisao |
+
+Com isso, o dashboard continua exibindo **Transcricoes = quantidade de documentos**, mas cards como riscos, oportunidades, churn, sentimento negativo, partes analisadas e alertas passam a usar os sinais internos agregados do CSV.
 
 ---
 
@@ -145,7 +188,7 @@ challenge-totvs-conversational-intelligence/
 | **FastAPI** | Framework web do microsservico Python |
 | **HuggingFace Transformers** | Modelo BERT multilingual para analise de sentimento |
 | **Lombok** | Reducao de boilerplate no Java |
-| **Next.js 15** | Framework React para o frontend |
+| **Next.js 16** | Framework React para o frontend |
 | **Tailwind CSS** | Estilizacao do dashboard |
 | **Recharts** | Graficos interativos (pizza, barras) |
 | **Vercel** | Deploy do frontend |
@@ -308,6 +351,7 @@ git add . && git commit -m "Deploy AI service" && git push
 | Metodo | Endpoint | Descricao |
 | --- | --- | --- |
 | `POST` | `/api/transcricoes` | Envia transcricao e processa com IA |
+| `POST` | `/api/transcricoes/import/totvs` | Importa CSV TOTVS como 1 transcricao consolidada |
 | `GET` | `/api/transcricoes` | Lista todas as transcricoes |
 | `GET` | `/api/transcricoes/{id}` | Detalhe de uma transcricao + analise |
 | `GET` | `/api/transcricoes/cliente/{nome}` | Busca por cliente |
@@ -359,6 +403,48 @@ POST /api/transcricoes
 }
 ```
 
+**Importando CSV TOTVS:**
+
+```http
+POST /api/transcricoes/import/totvs
+Content-Type: multipart/form-data
+
+file=@transcricao_totvs.csv
+```
+
+**Resposta da importacao CSV:**
+
+```json
+{
+  "totalRegistros": 200,
+  "importados": 1,
+  "ignorados": 0,
+  "avisos": [
+    "Foi criada 1 transcricao consolidada para este CSV, evitando centenas de documentos na colecao transcricoes.",
+    "Os registros do CSV foram tratados como partes da mesma transcricao TOTVS."
+  ]
+}
+```
+
+Depois do processamento, a transcricao consolidada passa a conter metricas como:
+
+```json
+{
+  "metricasAgregadas": {
+    "totalPartes": 200,
+    "partesAnalisadas": 200,
+    "partesNegativas": 37,
+    "partesNeutras": 120,
+    "partesPositivas": 43,
+    "riscosDetectados": 37,
+    "oportunidadesDetectadas": 12,
+    "churnsPotenciais": 8,
+    "mencoesCriticas": 25,
+    "alertasConsolidados": 5
+  }
+}
+```
+
 ---
 
 ### Como Funciona a IA Local
@@ -377,6 +463,8 @@ O microsservico Python utiliza uma abordagem hibrida:
 3. **Deteccao de Oportunidades** — Analise de padroes linguisticos que indicam intencao de compra, com scoring de probabilidade (0.0 a 1.0).
 
 4. **Deteccao de Riscos** — Identificacao de sinais de insatisfacao, mencoes a concorrentes e indicadores de churn, com classificacao de severidade (ALTO/MEDIO/BAIXO).
+
+5. **Analise Consolidada de CSV** - Para arquivos grandes, a LeanIA e o backend extraem metricas agregadas das partes internas sem criar documentos extras no MongoDB. O dashboard usa esses agregados para manter numeros ricos mesmo com apenas 1 documento por CSV.
 
 ---
 
