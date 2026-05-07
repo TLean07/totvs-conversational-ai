@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { OportunidadeResponse, TranscricaoResponse, TipoOportunidade } from "@/lib/types";
+import {
+  contarOcorrencias,
+  contarPartesAnalisadas,
+  extrairOportunidadesDetalhadas,
+  type OportunidadeDetalhada,
+} from "@/lib/insightDetails";
+import type { TranscricaoResponse, TipoOportunidade } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-
-interface OportunidadeComContexto extends OportunidadeResponse {
-  transcricaoId: string;
-  cliente: string;
-}
 
 const TIPO_LABELS: Record<TipoOportunidade, string> = {
   UPSELL: "Upsell",
@@ -24,7 +25,8 @@ const TIPO_COLORS: Record<TipoOportunidade, string> = {
 };
 
 export default function OportunidadesPage() {
-  const [oportunidades, setOportunidades] = useState<OportunidadeComContexto[]>([]);
+  const [oportunidades, setOportunidades] = useState<OportunidadeDetalhada[]>([]);
+  const [partesAnalisadas, setPartesAnalisadas] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<TipoOportunidade | "">("");
 
@@ -32,19 +34,17 @@ export default function OportunidadesPage() {
     api.transcricoes
       .listar()
       .then((transcricoes: TranscricaoResponse[]) => {
-        const todas: OportunidadeComContexto[] = [];
-        for (const t of transcricoes) {
-          if (!t.analise) continue;
-          for (const op of t.analise.oportunidades) {
-            todas.push({ ...op, transcricaoId: t.id, cliente: t.cliente || "Cliente nao informado" });
-          }
-        }
+        const todas = extrairOportunidadesDetalhadas(transcricoes);
+        todas.sort((a, b) => b.ocorrencias - a.ocorrencias);
         setOportunidades(todas);
+        setPartesAnalisadas(contarPartesAnalisadas(transcricoes));
       })
       .finally(() => setLoading(false));
   }, []);
 
   const filtradas = filtroTipo ? oportunidades.filter((o) => o.tipo === filtroTipo) : oportunidades;
+  const totalOcorrencias = contarOcorrencias(oportunidades);
+  const ocorrenciasFiltradas = contarOcorrencias(filtradas);
 
   return (
     <>
@@ -59,10 +59,32 @@ export default function OportunidadesPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Oportunidades</h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              {loading ? "Carregando..." : `${filtradas.length} oportunidade${filtradas.length !== 1 ? "s" : ""} encontrada${filtradas.length !== 1 ? "s" : ""}`}
+              {loading
+                ? "Carregando..."
+                : `${ocorrenciasFiltradas} ocorrencia${ocorrenciasFiltradas !== 1 ? "s" : ""} em ${filtradas.length} categoria${filtradas.length !== 1 ? "s" : ""} consolidada${filtradas.length !== 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
+
+        {!loading && (
+          <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">Ocorrencias totais</p>
+              <p className="mt-1 text-2xl font-bold text-violet-800">{totalOcorrencias}</p>
+              <p className="mt-1 text-xs text-violet-700">Soma dos sinais comerciais internos.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Categorias exibidas</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{filtradas.length}</p>
+              <p className="mt-1 text-xs text-slate-500">Cada card agrupa sinais semelhantes.</p>
+            </div>
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Partes analisadas</p>
+              <p className="mt-1 text-2xl font-bold text-blue-900">{partesAnalisadas}</p>
+              <p className="mt-1 text-xs text-blue-700">Base interna usada pela LeanIA no CSV.</p>
+            </div>
+          </section>
+        )}
 
         <div className="flex gap-2 mb-6 flex-wrap">
           {([["", "Todas"], ["UPSELL", "Upsell"], ["CROSS_SELL", "Cross-sell"], ["NOVO_PRODUTO", "Novo Produto"]] as [TipoOportunidade | "", string][]).map(([val, label]) => (
@@ -98,15 +120,15 @@ export default function OportunidadesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtradas.map((op, i) => (
+            {filtradas.map((op) => (
               <Link
-                key={i}
+                key={op.id}
                 href={`/transcricoes/${op.transcricaoId}`}
                 className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block"
               >
                 <div className="flex items-start justify-between mb-3">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${TIPO_COLORS[op.tipo]}`}>
-                    {TIPO_LABELS[op.tipo]}
+                    {op.categoria || TIPO_LABELS[op.tipo]}
                   </span>
                   {op.score != null && (
                     <span className="text-xs font-medium text-slate-400">
@@ -114,17 +136,25 @@ export default function OportunidadesPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">{op.descricao}</p>
+                <div className="mb-3 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-900">{op.ocorrencias}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    ocorrencia{op.ocorrencias === 1 ? "" : "s"}
+                  </span>
+                </div>
+                {op.evidencias.length > 0 && (
+                  <ul className="mb-3 space-y-2">
+                    {op.evidencias.slice(0, 3).map((evidencia, index) => (
+                      <li key={index} className="rounded-xl bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                        {evidencia}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-sm text-slate-700 leading-relaxed mb-3">{op.recomendacao}</p>
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">
                   <span className="font-medium text-slate-500 truncate">{op.cliente}</span>
-                  <div className="flex items-center gap-3 shrink-0">
-                    {op.produtoRelacionado && (
-                      <span className="truncate max-w-[100px]">{op.produtoRelacionado}</span>
-                    )}
-                    {op.valorEstimado && (
-                      <span className="text-emerald-600 font-semibold">{op.valorEstimado}</span>
-                    )}
-                  </div>
+                  <span>{op.legado ? "Registro legado" : "Consolidado"}</span>
                 </div>
               </Link>
             ))}

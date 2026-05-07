@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { RiscoResponse, TranscricaoResponse, TipoRisco, Severidade } from "@/lib/types";
+import {
+  contarOcorrencias,
+  contarPartesAnalisadas,
+  extrairRiscosDetalhados,
+  type RiscoDetalhado,
+} from "@/lib/insightDetails";
+import type { TranscricaoResponse, TipoRisco, Severidade } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SeveridadeBadge from "@/components/SeveridadeBadge";
 import Link from "next/link";
-
-interface RiscoComContexto extends RiscoResponse {
-  transcricaoId: string;
-  cliente: string;
-}
 
 const TIPO_LABELS: Record<TipoRisco, string> = {
   CHURN: "Churn",
@@ -29,7 +30,8 @@ const TIPO_COLORS: Record<TipoRisco, string> = {
 const SEV_ORDER: Record<Severidade, number> = { ALTO: 0, MEDIO: 1, BAIXO: 2 };
 
 export default function RiscosPage() {
-  const [riscos, setRiscos] = useState<RiscoComContexto[]>([]);
+  const [riscos, setRiscos] = useState<RiscoDetalhado[]>([]);
+  const [partesAnalisadas, setPartesAnalisadas] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<TipoRisco | "">("");
   const [filtroSev, setFiltroSev] = useState<Severidade | "">("");
@@ -38,15 +40,10 @@ export default function RiscosPage() {
     api.transcricoes
       .listar()
       .then((transcricoes: TranscricaoResponse[]) => {
-        const todos: RiscoComContexto[] = [];
-        for (const t of transcricoes) {
-          if (!t.analise) continue;
-          for (const r of t.analise.riscos) {
-            todos.push({ ...r, transcricaoId: t.id, cliente: t.cliente || "Cliente nao informado" });
-          }
-        }
+        const todos = extrairRiscosDetalhados(transcricoes);
         todos.sort((a, b) => SEV_ORDER[a.severidade] - SEV_ORDER[b.severidade]);
         setRiscos(todos);
+        setPartesAnalisadas(contarPartesAnalisadas(transcricoes));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -56,6 +53,8 @@ export default function RiscosPage() {
     if (filtroSev && r.severidade !== filtroSev) return false;
     return true;
   });
+  const totalOcorrencias = contarOcorrencias(riscos);
+  const ocorrenciasFiltradas = contarOcorrencias(filtrados);
 
   return (
     <>
@@ -70,10 +69,32 @@ export default function RiscosPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Riscos</h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              {loading ? "Carregando..." : `${filtrados.length} risco${filtrados.length !== 1 ? "s" : ""} encontrado${filtrados.length !== 1 ? "s" : ""}`}
+              {loading
+                ? "Carregando..."
+                : `${ocorrenciasFiltradas} ocorrencia${ocorrenciasFiltradas !== 1 ? "s" : ""} em ${filtrados.length} categoria${filtrados.length !== 1 ? "s" : ""} consolidada${filtrados.length !== 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
+
+        {!loading && (
+          <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Ocorrencias totais</p>
+              <p className="mt-1 text-2xl font-bold text-rose-800">{totalOcorrencias}</p>
+              <p className="mt-1 text-xs text-rose-700">Soma das ocorrencias internas consolidadas.</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Categorias exibidas</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{filtrados.length}</p>
+              <p className="mt-1 text-xs text-slate-500">Cada card agrupa evidencias semelhantes.</p>
+            </div>
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Partes analisadas</p>
+              <p className="mt-1 text-2xl font-bold text-blue-900">{partesAnalisadas}</p>
+              <p className="mt-1 text-xs text-blue-700">Base interna usada pela LeanIA no CSV.</p>
+            </div>
+          </section>
+        )}
 
         <div className="flex gap-2 mb-3 flex-wrap">
           {([["", "Todos os tipos"], ["CHURN", "Churn"], ["CONCORRENCIA", "Concorrencia"], ["INSATISFACAO", "Insatisfacao"], ["PERDA_CONFIANCA", "Perda de Confianca"]] as [TipoRisco | "", string][]).map(([val, label]) => (
@@ -125,26 +146,39 @@ export default function RiscosPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtrados.map((r, i) => (
+            {filtrados.map((r) => (
               <Link
-                key={i}
+                key={r.id}
                 href={`/transcricoes/${r.transcricaoId}`}
                 className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block"
               >
                 <div className="flex items-start justify-between mb-3">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${TIPO_COLORS[r.tipo]}`}>
-                    {TIPO_LABELS[r.tipo]}
+                    {r.categoria || TIPO_LABELS[r.tipo]}
                   </span>
                   <SeveridadeBadge severidade={r.severidade} />
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-3">{r.descricao}</p>
+                <div className="mb-3 flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-900">{r.ocorrencias}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    ocorrencia{r.ocorrencias === 1 ? "" : "s"}
+                  </span>
+                </div>
+                {r.evidencias.length > 0 && (
+                  <ul className="mb-3 space-y-2">
+                    {r.evidencias.slice(0, 3).map((evidencia, index) => (
+                      <li key={index} className="rounded-xl bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                        {evidencia}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-sm text-slate-700 leading-relaxed mb-3">{r.recomendacao}</p>
                 <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100">
                   <span className="font-medium text-slate-500 truncate">{r.cliente}</span>
-                  {r.concorrenteMencionado && (
-                    <span className="text-orange-500 font-medium truncate max-w-[140px]">
-                      vs {r.concorrenteMencionado}
-                    </span>
-                  )}
+                  <span className="text-slate-400">
+                    {r.legado ? "Registro legado" : "Consolidado"}
+                  </span>
                 </div>
               </Link>
             ))}

@@ -70,6 +70,22 @@ export default function AlertList({ alertas, onMarcarVisto, onMarcarResolvido, p
                   {alerta.ocorrencias} ocorrencia{alerta.ocorrencias === 1 ? "" : "s"} consolidada{alerta.ocorrencias === 1 ? "" : "s"}
                 </p>
               )}
+              {(alerta.motivo || alerta.recomendacao) && (
+                <div className="mt-3 grid gap-2 text-xs text-slate-600 md:grid-cols-2">
+                  {alerta.motivo && (
+                    <div className="rounded-xl bg-white/70 px-3 py-2 ring-1 ring-slate-100">
+                      <span className="font-semibold text-slate-700">Motivo: </span>
+                      {alerta.motivo}
+                    </div>
+                  )}
+                  {alerta.recomendacao && (
+                    <div className="rounded-xl bg-white/70 px-3 py-2 ring-1 ring-slate-100">
+                      <span className="font-semibold text-slate-700">Recomendacao: </span>
+                      {alerta.recomendacao}
+                    </div>
+                  )}
+                </div>
+              )}
               <p className="text-xs text-slate-400 mt-2">
                 {new Date(alerta.dataCriacao).toLocaleString("pt-BR")}
               </p>

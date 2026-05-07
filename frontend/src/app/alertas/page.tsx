@@ -114,6 +114,27 @@ export default function AlertasPage() {
             : alertas;
           return (
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Alertas exibidos</p>
+                  <p className="mt-1 text-2xl font-bold text-amber-900">{filtrados.length}</p>
+                  <p className="mt-1 text-xs text-amber-700">Grupos consolidados gerados pela LeanIA.</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ocorrencias cobertas</p>
+                  <p className="mt-1 text-2xl font-bold text-slate-900">
+                    {filtrados.reduce((total, alerta) => total + Math.max(0, alerta.ocorrencias || 0), 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">Soma interna dos alertas consolidados.</p>
+                </div>
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">Alta prioridade</p>
+                  <p className="mt-1 text-2xl font-bold text-rose-900">
+                    {filtrados.filter((alerta) => alerta.prioridade === "ALTO").length}
+                  </p>
+                  <p className="mt-1 text-xs text-rose-700">Alertas que pedem acao imediata.</p>
+                </div>
+              </div>
               {filtrados.length !== alertas.length && (
                 <p className="text-xs text-slate-400 mb-3">
                   Mostrando <span className="font-semibold text-slate-600">{filtrados.length}</span> de{" "}
