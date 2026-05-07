@@ -616,8 +616,11 @@ public class TranscricaoService {
 
         private void analyzeSignals(TotvsCsvRow row) {
             String text = normalize(row.transcricao());
-            boolean negative = containsAny(text, "problema", "erro", "falha", "lento", "lentidao", "trav", "instavel",
-                    "insatisfeito", "ruim", "reclam", "dificuldade", "nao funciona", "parado", "atraso", "suporte");
+            boolean churn = hasChurnSignal(text);
+            boolean competitor = hasCompetitorSignal(text);
+            boolean trustLoss = hasTrustLossSignal(text);
+            boolean critical = hasCriticalSignal(text);
+            boolean negative = hasNegativeSignal(text) || churn || trustLoss || critical;
             boolean positive = containsAny(text, "otimo", "excelente", "bom atendimento", "satisfeito", "resolveu",
                     "funciona bem", "gostei", "aprovado", "melhorou");
             if (negative) {
@@ -628,34 +631,87 @@ public class TranscricaoService {
                 neutralParts++;
             }
 
-            if (containsAny(text, "cancelar", "cancelamento", "churn", "trocar fornecedor", "trocar de sistema",
-                    "nao renovar", "nao vamos renovar", "encerrar contrato", "sair da totvs")) {
+            if (churn) {
                 churnSignals++;
                 addRisk("CHURN", row);
             }
             if (negative) {
                 addRisk("Insatisfacao", row);
             }
-            if (containsAny(text, "concorrente", "sap", "oracle", "senior", "sankhya", "linx", "omie", "bling")) {
+            if (competitor) {
                 addRisk("Concorrencia", row);
             }
-            if (containsAny(text, "perdi confianca", "sem confianca", "desconfio", "prometeram", "nao cumpriu")) {
+            if (trustLoss) {
                 addRisk("Perda de confianca", row);
             }
-            if (containsAny(text, "critico", "urgente", "grave", "parado", "sem operar", "impacta faturamento",
-                    "producao parada", "folha parada", "nao consigo emitir", "sistema fora")) {
+            if (critical) {
                 criticalMentions++;
-                addCriticalItem("risco", containsAny(text, "cancelar", "churn", "nao renovar") ? "Churn" : "Criticidade operacional", row);
+                addCriticalItem("risco", churn ? "Churn" : "Criticidade operacional", row);
             }
-            if (containsAny(text, "precisamos de", "gostaria de", "seria bom", "melhorar", "automatizar",
-                    "integrar", "dashboard", "relatorio", "treinamento", "modulo", "licenca")) {
+            String opportunityCategory = classifyOpportunity(text);
+            if (opportunityCategory != null) {
                 opportunitySignals++;
-                String category = containsAny(text, "treinamento", "capacitar") ? "Treinamento e adocao"
-                        : containsAny(text, "integrar", "integracao") ? "Integracao"
-                        : containsAny(text, "modulo", "licenca") ? "Upsell"
-                        : "Melhoria no atendimento";
-                addOpportunity(category, row);
+                addOpportunity(opportunityCategory, row);
             }
+        }
+
+        private boolean hasNegativeSignal(String text) {
+            if (containsAny(text, "sem problema", "sem problemas", "nao tem problema", "nao temos problema",
+                    "nenhum problema", "tudo bem", "obrigado", "obrigada")) {
+                return false;
+            }
+            return containsAny(text,
+                    "erro recorrente", "falha recorrente", "problema recorrente", "problemas recorrentes",
+                    "nao funciona", "nao esta funcionando", "parou de funcionar", "sistema fora",
+                    "instabilidade", "instavel", "lentidao", "muito lento", "travando",
+                    "insatisfeito", "insatisfeita", "reclamacao", "reclamar", "atraso no atendimento",
+                    "suporte nao responde", "suporte demorou", "dificuldade operacional");
+        }
+
+        private boolean hasChurnSignal(String text) {
+            return containsAny(text,
+                    "cancelar contrato", "cancelamento do contrato", "cancelar a totvs", "cancelar com a totvs",
+                    "churn", "trocar fornecedor", "trocar de sistema", "migrar para concorrente",
+                    "nao renovar contrato", "nao vamos renovar", "encerrar contrato", "sair da totvs");
+        }
+
+        private boolean hasCompetitorSignal(String text) {
+            return containsAny(text,
+                    "concorrente", "proposta da sap", "proposta do sap", "sap business",
+                    "oracle netsuite", "senior sistemas", "sankhya", "linx", "omie", "bling");
+        }
+
+        private boolean hasTrustLossSignal(String text) {
+            return containsAny(text,
+                    "perdi confianca", "perdemos confianca", "sem confianca", "desconfio",
+                    "prometeram e nao cumpriram", "nao cumpriu o combinado", "quebrou a confianca");
+        }
+
+        private boolean hasCriticalSignal(String text) {
+            return containsAny(text,
+                    "critico", "urgente", "grave", "sem operar", "impacta faturamento",
+                    "producao parada", "folha parada", "nao consigo emitir", "sistema fora");
+        }
+
+        private String classifyOpportunity(String text) {
+            if (containsAny(text, "contratar treinamento", "precisamos de treinamento", "treinamento para equipe",
+                    "capacitar equipe", "capacitacao")) {
+                return "Treinamento e adocao";
+            }
+            if (containsAny(text, "integrar com", "integracao com", "precisamos integrar", "api de integracao",
+                    "conectar com", "sincronizar com")) {
+                return "Integracao";
+            }
+            if (containsAny(text, "novo modulo", "modulo adicional", "mais licencas", "comprar licenca",
+                    "contratar modulo", "upgrade de plano", "ampliar contrato")) {
+                return "Upsell";
+            }
+            if (containsAny(text, "precisamos automatizar", "queremos automatizar", "melhorar processo",
+                    "dashboard gerencial", "relatorio gerencial", "orcamento", "proposta comercial",
+                    "interesse em contratar")) {
+                return "Melhoria no atendimento";
+            }
+            return null;
         }
 
         private String normalize(String value) {

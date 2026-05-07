@@ -450,7 +450,7 @@ export default function TranscricaoDetailPage() {
                 <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <h2 className="text-base font-semibold text-slate-700">Oportunidades</h2>
                   <p className="text-xs font-semibold text-emerald-700">
-                    {totalOportunidades} ocorrencia{totalOportunidades === 1 ? "" : "s"} em {oportunidadesDetalhadas.length} categoria{oportunidadesDetalhadas.length === 1 ? "" : "s"}
+                    {oportunidadesDetalhadas.length} consolidada{oportunidadesDetalhadas.length === 1 ? "" : "s"} / {totalOportunidades} ocorrencia{totalOportunidades === 1 ? "" : "s"} interna{totalOportunidades === 1 ? "" : "s"}
                   </p>
                 </div>
                 <div className="space-y-3">
@@ -467,7 +467,7 @@ export default function TranscricaoDetailPage() {
                         )}
                       </div>
                       <p className="mb-2 text-sm font-semibold text-slate-800">
-                        {o.ocorrencias} ocorrencia{o.ocorrencias === 1 ? "" : "s"} consolidada{o.ocorrencias === 1 ? "" : "s"}
+                        {o.ocorrencias} ocorrencia{o.ocorrencias === 1 ? "" : "s"} interna{o.ocorrencias === 1 ? "" : "s"}
                       </p>
                       {o.evidencias.length > 0 && (
                         <ul className="space-y-2">
@@ -493,7 +493,7 @@ export default function TranscricaoDetailPage() {
                 <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <h2 className="text-base font-semibold text-slate-700">Riscos</h2>
                   <p className="text-xs font-semibold text-rose-700">
-                    {totalRiscos} ocorrencia{totalRiscos === 1 ? "" : "s"} em {riscosDetalhados.length} categoria{riscosDetalhados.length === 1 ? "" : "s"}
+                    {riscosDetalhados.length} consolidado{riscosDetalhados.length === 1 ? "" : "s"} / {totalRiscos} ocorrencia{totalRiscos === 1 ? "" : "s"} interna{totalRiscos === 1 ? "" : "s"}
                   </p>
                 </div>
                 <div className="space-y-3">
@@ -504,7 +504,7 @@ export default function TranscricaoDetailPage() {
                         <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">{r.categoria}</span>
                       </div>
                       <p className="mb-2 text-sm font-semibold text-slate-800">
-                        {r.ocorrencias} ocorrencia{r.ocorrencias === 1 ? "" : "s"} consolidada{r.ocorrencias === 1 ? "" : "s"}
+                        {r.ocorrencias} ocorrencia{r.ocorrencias === 1 ? "" : "s"} interna{r.ocorrencias === 1 ? "" : "s"}
                       </p>
                       {r.evidencias.length > 0 && (
                         <ul className="space-y-2">

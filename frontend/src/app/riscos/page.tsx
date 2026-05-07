@@ -71,27 +71,27 @@ export default function RiscosPage() {
             <p className="text-sm text-slate-500 mt-0.5">
               {loading
                 ? "Carregando..."
-                : `${ocorrenciasFiltradas} ocorrencia${ocorrenciasFiltradas !== 1 ? "s" : ""} em ${filtrados.length} categoria${filtrados.length !== 1 ? "s" : ""} consolidada${filtrados.length !== 1 ? "s" : ""}`}
+                : `${filtrados.length} risco${filtrados.length !== 1 ? "s" : ""} consolidado${filtrados.length !== 1 ? "s" : ""} cobrindo ${ocorrenciasFiltradas} ocorrencia${ocorrenciasFiltradas !== 1 ? "s" : ""} internas`}
             </p>
           </div>
         </div>
 
         {!loading && (
           <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Ocorrencias totais</p>
-              <p className="mt-1 text-2xl font-bold text-rose-800">{totalOcorrencias}</p>
-              <p className="mt-1 text-xs text-rose-700">Soma das ocorrencias internas consolidadas.</p>
-            </div>
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Categorias exibidas</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Riscos consolidados</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{filtrados.length}</p>
               <p className="mt-1 text-xs text-slate-500">Cada card agrupa evidencias semelhantes.</p>
             </div>
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-rose-600">Ocorrencias internas</p>
+              <p className="mt-1 text-2xl font-bold text-rose-800">{totalOcorrencias}</p>
+              <p className="mt-1 text-xs text-rose-700">Volume coberto pelas categorias consolidadas.</p>
+            </div>
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Partes analisadas</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Registros lidos</p>
               <p className="mt-1 text-2xl font-bold text-blue-900">{partesAnalisadas}</p>
-              <p className="mt-1 text-xs text-blue-700">Base interna usada pela LeanIA no CSV.</p>
+              <p className="mt-1 text-xs text-blue-700">Linhas validas do CSV processadas pela LeanIA.</p>
             </div>
           </section>
         )}
@@ -159,9 +159,9 @@ export default function RiscosPage() {
                   <SeveridadeBadge severidade={r.severidade} />
                 </div>
                 <div className="mb-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-slate-900">{r.ocorrencias}</span>
+                  <span className="text-xl font-bold text-slate-900">{r.ocorrencias}</span>
                   <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    ocorrencia{r.ocorrencias === 1 ? "" : "s"}
+                    ocorrencia{r.ocorrencias === 1 ? "" : "s"} internas
                   </span>
                 </div>
                 {r.evidencias.length > 0 && (

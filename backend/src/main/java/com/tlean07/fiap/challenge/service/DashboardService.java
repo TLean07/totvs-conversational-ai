@@ -65,8 +65,8 @@ public class DashboardService {
                 increment(sentimentoDistribuicao, "NEGATIVO", metricas.getPartesNegativas());
                 increment(sentimentoDistribuicao, "POSITIVO", metricas.getPartesPositivas());
                 increment(sentimentoDistribuicao, "NEUTRO", metricas.getPartesNeutras());
-                totalOportunidades += metricas.getOportunidadesDetectadas();
-                totalRiscos += metricas.getRiscosDetectados();
+                totalOportunidades += consolidatedOpportunityCount(analise);
+                totalRiscos += consolidatedRiskCount(analise);
                 totalPartes += metricas.getTotalPartes();
                 partesAnalisadas += metricas.getPartesAnalisadas();
                 partesNegativas += metricas.getPartesNegativas();
@@ -143,6 +143,16 @@ public class DashboardService {
         if (normalized.contains("UPSELL") || normalized.contains("MODULO") || normalized.contains("LICENCA")) return "UPSELL";
         if (normalized.contains("CROSS")) return "CROSS_SELL";
         return "NOVO_PRODUTO";
+    }
+
+    private long consolidatedRiskCount(AnaliseResultado analise) {
+        List<?> consolidados = safeList(analise.getRiscosConsolidados());
+        return consolidados.isEmpty() ? safeList(analise.getRiscos()).size() : consolidados.size();
+    }
+
+    private long consolidatedOpportunityCount(AnaliseResultado analise) {
+        List<?> consolidadas = safeList(analise.getOportunidadesConsolidadas());
+        return consolidadas.isEmpty() ? safeList(analise.getOportunidades()).size() : consolidadas.size();
     }
 
     private <T> List<T> safeList(List<T> values) {

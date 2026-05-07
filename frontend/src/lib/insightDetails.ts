@@ -85,30 +85,24 @@ export function contarPartesAnalisadas(transcricoes: TranscricaoResponse[]) {
 }
 
 export function totalRiscosDaTranscricao(transcricao: TranscricaoResponse) {
-  const metricas = transcricao.analise?.metricasAgregadas ?? transcricao.metricasAgregadas;
-  if (metricas?.riscosDetectados) return metricas.riscosDetectados;
-
   const consolidados = preferirConsolidados(
     transcricao.analise?.riscosConsolidados,
     transcricao.riscosConsolidados
   );
   if (consolidados.length > 0) {
-    return consolidados.reduce((total, risco) => total + Math.max(0, risco.ocorrencias || 0), 0);
+    return consolidados.length;
   }
 
   return transcricao.analise?.riscos.length ?? 0;
 }
 
 export function totalOportunidadesDaTranscricao(transcricao: TranscricaoResponse) {
-  const metricas = transcricao.analise?.metricasAgregadas ?? transcricao.metricasAgregadas;
-  if (metricas?.oportunidadesDetectadas) return metricas.oportunidadesDetectadas;
-
   const consolidadas = preferirConsolidados(
     transcricao.analise?.oportunidadesConsolidadas,
     transcricao.oportunidadesConsolidadas
   );
   if (consolidadas.length > 0) {
-    return consolidadas.reduce((total, oportunidade) => total + Math.max(0, oportunidade.ocorrencias || 0), 0);
+    return consolidadas.length;
   }
 
   return transcricao.analise?.oportunidades.length ?? 0;
