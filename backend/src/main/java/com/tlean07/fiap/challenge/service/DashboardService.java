@@ -62,9 +62,7 @@ public class DashboardService {
         for (AnaliseResultado analise : analises) {
             MetricasAgregadas metricas = analise.getMetricasAgregadas();
             if (metricas != null && metricas.getPartesAnalisadas() > 0) {
-                increment(sentimentoDistribuicao, "NEGATIVO", metricas.getPartesNegativas());
-                increment(sentimentoDistribuicao, "POSITIVO", metricas.getPartesPositivas());
-                increment(sentimentoDistribuicao, "NEUTRO", metricas.getPartesNeutras());
+                increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
                 totalOportunidades += consolidatedOpportunityCount(analise);
                 totalRiscos += consolidatedRiskCount(analise);
                 totalPartes += metricas.getTotalPartes();
@@ -77,9 +75,9 @@ public class DashboardService {
                 alertasConsolidados += metricas.getAlertasConsolidados();
 
                 safeList(analise.getRiscosConsolidados()).forEach(risco ->
-                        increment(riscoPorTipo, normalizeRiskKey(risco.getCategoria()), risco.getOcorrencias()));
+                        increment(riscoPorTipo, normalizeRiskKey(risco.getCategoria()), 1));
                 safeList(analise.getOportunidadesConsolidadas()).forEach(oportunidade ->
-                        increment(oportunidadePorTipo, normalizeOpportunityKey(oportunidade.getCategoria()), oportunidade.getOcorrencias()));
+                        increment(oportunidadePorTipo, normalizeOpportunityKey(oportunidade.getCategoria()), 1));
             } else {
                 increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
                 safeList(analise.getRiscos()).forEach(risco -> increment(riscoPorTipo, risco.getTipo().name(), 1));

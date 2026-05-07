@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import {
-  contarOcorrencias,
-  contarPartesAnalisadas,
   extrairOportunidadesDetalhadas,
   type OportunidadeDetalhada,
 } from "@/lib/insightDetails";
@@ -26,7 +24,6 @@ const TIPO_COLORS: Record<TipoOportunidade, string> = {
 
 export default function OportunidadesPage() {
   const [oportunidades, setOportunidades] = useState<OportunidadeDetalhada[]>([]);
-  const [partesAnalisadas, setPartesAnalisadas] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<TipoOportunidade | "">("");
 
@@ -37,14 +34,12 @@ export default function OportunidadesPage() {
         const todas = extrairOportunidadesDetalhadas(transcricoes);
         todas.sort((a, b) => b.ocorrencias - a.ocorrencias);
         setOportunidades(todas);
-        setPartesAnalisadas(contarPartesAnalisadas(transcricoes));
       })
       .finally(() => setLoading(false));
   }, []);
 
   const filtradas = filtroTipo ? oportunidades.filter((o) => o.tipo === filtroTipo) : oportunidades;
-  const totalOcorrencias = contarOcorrencias(oportunidades);
-  const ocorrenciasFiltradas = contarOcorrencias(filtradas);
+  const basesConsolidadas = new Set(filtradas.map((oportunidade) => oportunidade.transcricaoId)).size;
 
   return (
     <>
@@ -61,27 +56,22 @@ export default function OportunidadesPage() {
             <p className="text-sm text-slate-500 mt-0.5">
               {loading
                 ? "Carregando..."
-                : `${filtradas.length} oportunidade${filtradas.length !== 1 ? "s" : ""} consolidada${filtradas.length !== 1 ? "s" : ""} cobrindo ${ocorrenciasFiltradas} ocorrencia${ocorrenciasFiltradas !== 1 ? "s" : ""} internas`}
+                : `${filtradas.length} oportunidade${filtradas.length !== 1 ? "s" : ""} consolidada${filtradas.length !== 1 ? "s" : ""}`}
             </p>
           </div>
         </div>
 
         {!loading && (
-          <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+          <section className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Oportunidades consolidadas</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{filtradas.length}</p>
               <p className="mt-1 text-xs text-slate-500">Cada card agrupa sinais semelhantes.</p>
             </div>
-            <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-violet-600">Ocorrencias internas</p>
-              <p className="mt-1 text-2xl font-bold text-violet-800">{totalOcorrencias}</p>
-              <p className="mt-1 text-xs text-violet-700">Volume coberto pelas categorias consolidadas.</p>
-            </div>
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Registros lidos</p>
-              <p className="mt-1 text-2xl font-bold text-blue-900">{partesAnalisadas}</p>
-              <p className="mt-1 text-xs text-blue-700">Linhas validas do CSV processadas pela LeanIA.</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Bases consolidadas</p>
+              <p className="mt-1 text-2xl font-bold text-blue-900">{basesConsolidadas}</p>
+              <p className="mt-1 text-xs text-blue-700">CSV/documento unico usado nesta visao.</p>
             </div>
           </section>
         )}
@@ -136,12 +126,7 @@ export default function OportunidadesPage() {
                     </span>
                   )}
                 </div>
-                <div className="mb-3 flex items-baseline gap-2">
-                  <span className="text-xl font-bold text-slate-900">{op.ocorrencias}</span>
-                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                    ocorrencia{op.ocorrencias === 1 ? "" : "s"} internas
-                  </span>
-                </div>
+                <p className="mb-3 text-sm font-semibold text-slate-800">Oportunidade consolidada</p>
                 {op.evidencias.length > 0 && (
                   <ul className="mb-3 space-y-2">
                     {op.evidencias.slice(0, 3).map((evidencia, index) => (
@@ -150,6 +135,11 @@ export default function OportunidadesPage() {
                       </li>
                     ))}
                   </ul>
+                )}
+                {op.ocorrencias > 1 && (
+                  <p className="mb-3 text-xs text-slate-400">
+                    Cobertura interna: {op.ocorrencias} ocorrencia{op.ocorrencias === 1 ? "" : "s"} agrupada{op.ocorrencias === 1 ? "" : "s"}.
+                  </p>
                 )}
                 <p className="text-sm text-slate-700 leading-relaxed mb-3">{op.recomendacao}</p>
                 <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-100">

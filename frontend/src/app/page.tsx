@@ -219,11 +219,8 @@ export default function DashboardPage() {
   }, [data, filtroCliente, filtroSentimento, filtroStatus]);
 
   const activeFilterCount = [filtroCliente, filtroSentimento, filtroStatus].filter(Boolean).length;
-  const churnCount = data?.riscoPorTipo.CHURN ?? 0;
-  const negativeCount = data?.partesNegativas || data?.sentimentoDistribuicao.NEGATIVO || 0;
-  const partesAnalisadas = data?.partesAnalisadas ?? 0;
-  const mencoesCriticas = data?.mencoesCriticas ?? 0;
   const alertasConsolidados = data?.alertasConsolidados || data?.alertasNovos || 0;
+  const basesConsolidadas = data?.transcricoesProcessadas || data?.totalTranscricoes || 0;
   const processingRate = data?.totalTranscricoes
     ? Math.round((data.transcricoesProcessadas / data.totalTranscricoes) * 100)
     : 0;
@@ -270,16 +267,16 @@ export default function DashboardPage() {
             icon={metricIcon("M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z")}
           />
           <StatsCard
-            title="Registros lidos"
-            value={partesAnalisadas}
-            subtitle={`${data.totalPartes || partesAnalisadas} linhas validas do CSV`}
+            title="Bases consolidadas"
+            value={basesConsolidadas}
+            subtitle="CSVs/documentos unicos"
             color="blue"
             icon={metricIcon("M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5")}
           />
           <StatsCard
             title="Oportunidades"
             value={data.totalOportunidades}
-            subtitle={`${Object.values(data.oportunidadePorTipo || {}).reduce((total, value) => total + value, 0)} ocorrencias internas`}
+            subtitle="Consolidadas"
             color="purple"
             href="/oportunidades"
             icon={metricIcon("M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0z")}
@@ -287,7 +284,7 @@ export default function DashboardPage() {
           <StatsCard
             title="Riscos"
             value={data.totalRiscos}
-            subtitle={`${Object.values(data.riscoPorTipo || {}).reduce((total, value) => total + value, 0)} ocorrencias internas`}
+            subtitle="Consolidados"
             color="red"
             href="/riscos"
             icon={metricIcon("M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z")}
@@ -304,24 +301,24 @@ export default function DashboardPage() {
 
         <section className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
-            <p className="text-sm font-semibold text-rose-700">Risco critico</p>
-            <p className="mt-2 text-3xl font-bold text-rose-800">{data.churnsPotenciais || churnCount}</p>
-            <p className="mt-1 text-sm text-rose-700/80">Ocorrencias de churn identificadas dentro das transcricoes importadas.</p>
+            <p className="text-sm font-semibold text-rose-700">Riscos consolidados</p>
+            <p className="mt-2 text-3xl font-bold text-rose-800">{data.totalRiscos}</p>
+            <p className="mt-1 text-sm text-rose-700/80">Categorias de risco agrupadas para priorizacao.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
-            <p className="text-sm font-semibold text-slate-600">Sentimento negativo</p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">{negativeCount}</p>
-            <p className="mt-1 text-sm text-slate-500">Partes com percepcao negativa capturada pela LeanIA.</p>
+            <p className="text-sm font-semibold text-slate-600">Oportunidades consolidadas</p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">{data.totalOportunidades}</p>
+            <p className="mt-1 text-sm text-slate-500">Categorias comerciais agrupadas pela LeanIA.</p>
           </div>
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-            <p className="text-sm font-semibold text-blue-700">Mencoes criticas</p>
-            <p className="mt-2 text-3xl font-bold text-blue-900">{mencoesCriticas}</p>
-            <p className="mt-1 text-sm text-blue-700/80">Ocorrencias internas que exigem priorizacao.</p>
+            <p className="text-sm font-semibold text-blue-700">Alertas consolidados</p>
+            <p className="mt-2 text-3xl font-bold text-blue-900">{alertasConsolidados}</p>
+            <p className="mt-1 text-sm text-blue-700/80">Alertas acionaveis sem duplicar ocorrencias internas.</p>
           </div>
         </section>
 
         <section className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ChartCard title="Distribuicao de sentimento" description="Como as reunioes estao sendo percebidas pelos clientes.">
+          <ChartCard title="Distribuicao de sentimento" description="Sentimento consolidado por transcricao analisada.">
             {sentimentoData.length > 0 ? (
               <>
                 <div className="h-72" aria-hidden="true">
@@ -337,7 +334,7 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
                 <p className="sr-only">
-                  Distribuicao de sentimento: {sentimentoData.map((item) => `${item.name} ${item.value}`).join(", ")}.
+                  Distribuicao de sentimento consolidada: {sentimentoData.map((item) => `${item.name} ${item.value}`).join(", ")}.
                 </p>
                 <ChartLegend data={sentimentoData} colors={SENTIMENT_COLORS} />
               </>
@@ -346,7 +343,7 @@ export default function DashboardPage() {
             )}
           </ChartCard>
 
-          <ChartCard title="Riscos por tipo" description="Priorizacao dos riscos comerciais e operacionais encontrados.">
+          <ChartCard title="Riscos por tipo" description="Categorias consolidadas de risco, sem duplicar ocorrencias internas.">
             {riscoData.length > 0 ? (
               <>
                 <div className="h-72" aria-hidden="true">
@@ -356,7 +353,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                       <Tooltip contentStyle={{ borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
-                      <Bar dataKey="value" name="Quantidade" radius={[8, 8, 0, 0]}>
+                      <Bar dataKey="value" name="Consolidadas" radius={[8, 8, 0, 0]}>
                         {riscoData.map((entry) => (
                           <Cell key={entry.key} fill={RISK_COLORS[entry.key] || "#64748b"} />
                         ))}
@@ -365,7 +362,7 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
                 <p className="sr-only">
-                  Riscos por tipo: {riscoData.map((item) => `${item.name} ${item.value}`).join(", ")}.
+                  Riscos consolidados por tipo: {riscoData.map((item) => `${item.name} ${item.value}`).join(", ")}.
                 </p>
               </>
             ) : (
@@ -376,7 +373,7 @@ export default function DashboardPage() {
 
         <ChartCard
           title="Oportunidades por tipo"
-          description="Sinais comerciais capturados em conversas com clientes."
+          description="Categorias comerciais consolidadas, sem duplicar ocorrencias internas."
           className="mb-8"
         >
           {oportunidadeData.length > 0 ? (
@@ -388,7 +385,7 @@ export default function DashboardPage() {
                     <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} width={96} />
                     <Tooltip contentStyle={{ borderRadius: "14px", border: "1px solid #e2e8f0", fontSize: "13px" }} />
-                    <Bar dataKey="value" name="Quantidade" radius={[0, 8, 8, 0]}>
+                    <Bar dataKey="value" name="Consolidadas" radius={[0, 8, 8, 0]}>
                       {oportunidadeData.map((entry) => (
                         <Cell key={entry.key} fill={OPORTUNIDADE_COLORS[entry.key] || "#64748b"} />
                       ))}
@@ -397,7 +394,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
               <p className="sr-only">
-                Oportunidades por tipo: {oportunidadeData.map((item) => `${item.name} ${item.value}`).join(", ")}.
+                Oportunidades consolidadas por tipo: {oportunidadeData.map((item) => `${item.name} ${item.value}`).join(", ")}.
               </p>
             </>
           ) : (
