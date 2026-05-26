@@ -27,3 +27,9 @@ services:
         sync: false
       - key: AI_SERVICE_MAX_RETRIES
         value: "1"
+      - key: PARAKEET_MAX_AUDIO_MB
+        value: "100"
+      - key: PARAKEET_MAX_DURATION_SECONDS
+        value: "3600"
+      - key: PARAKEET_LANGUAGE
+        value: "pt"

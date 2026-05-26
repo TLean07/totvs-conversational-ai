@@ -43,14 +43,26 @@ public class TranscricaoController {
     }
 
     @PostMapping(value = "/import/totvs", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<TranscricaoImportResponse> importarTotvs(
+    public ResponseEntity<TranscricaoImportResponse> importarTotvsJson(
             @RequestParam("file") MultipartFile file,
             @RequestParam(defaultValue = "25") int limit,
             @RequestParam(defaultValue = "0") int offset,
             HttpServletRequest httpRequest) {
         rateLimitService.check("transcricao:import:user:" + SecurityUtils.currentUser().id(), 5, Duration.ofHours(1));
         rateLimitService.check("transcricao:import:ip:" + clientKey(httpRequest), 10, Duration.ofHours(1));
-        return ResponseEntity.status(HttpStatus.CREATED).body(transcricaoService.importarTotvsCsv(file, limit, offset));
+        return ResponseEntity.status(HttpStatus.CREATED).body(transcricaoService.importarTotvsJson(file, limit, offset));
+    }
+
+    @PostMapping(value = "/audio", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<TranscricaoResponse> importarAudio(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) String cliente,
+            @RequestParam(required = false) String vendedor,
+            @RequestParam(required = false) String participantes,
+            HttpServletRequest httpRequest) {
+        rateLimitService.check("transcricao:audio:user:" + SecurityUtils.currentUser().id(), 3, Duration.ofHours(1));
+        rateLimitService.check("transcricao:audio:ip:" + clientKey(httpRequest), 6, Duration.ofHours(1));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(transcricaoService.importarAudio(file, cliente, vendedor, participantes));
     }
 
     @GetMapping

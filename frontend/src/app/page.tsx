@@ -269,7 +269,7 @@ export default function DashboardPage() {
           <StatsCard
             title="Bases consolidadas"
             value={basesConsolidadas}
-            subtitle="CSVs/documentos unicos"
+            subtitle="JSONs/documentos unicos"
             color="blue"
             icon={metricIcon("M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5")}
           />
@@ -507,6 +507,10 @@ export default function DashboardPage() {
                     <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-500">{transcricao.textoOriginal}</p>
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="rounded-full bg-slate-100 px-2 py-1">{transcricao.status}</span>
+                      <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+                        {transcricao.origemTranscricao === "parakeet" ? "Audio Parakeet" : transcricao.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
+                      </span>
+                      {transcricao.transcriptionModel && <span>Modelo: {transcricao.transcriptionModel}</span>}
                       {transcricao.vendedor && <span>Vendedor: {transcricao.vendedor}</span>}
                     </div>
                   </Link>

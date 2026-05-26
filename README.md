@@ -44,15 +44,15 @@ O objetivo e que a TOTVS consiga analisar milhares de reunioes diarias e identif
 
 ---
 
-### Importacao CSV TOTVS e Granularidade
+### Importacao JSON TOTVS e Granularidade
 
-O fluxo de importacao por CSV mantem o banco limpo sem perder riqueza analitica:
+O fluxo de importacao por JSON mantem o banco limpo sem perder riqueza analitica:
 
 ```text
-1 CSV TOTVS
+1 JSON TOTVS
    |
    |-- leitura em streaming, sem carregar o arquivo inteiro em memoria
-   |-- parsing das partes internas do CSV
+   |-- parsing dos registros internos do JSON
    |-- calculo de metricas agregadas
    |-- geracao de riscos, oportunidades, itens criticos e alertas consolidados
    v
@@ -61,16 +61,16 @@ O fluxo de importacao por CSV mantem o banco limpo sem perder riqueza analitica:
 
 Regra principal:
 
-- **1 arquivo CSV importado = 1 unico documento principal em `transcricoes`**
+- **1 arquivo JSON importado = 1 unico documento principal em `transcricoes`**
 - O sistema **nao cria 1 documento por linha, parte, chunk ou conversa**
 - As partes internas sao analisadas em memoria e viram campos agregados dentro do documento unico
-- O CSV bruto completo nao e salvo quando excede o limite pratico do MongoDB; o sistema salva uma transcricao consolidada, estatisticas e trechos representativos
+- O JSON bruto completo nao e salvo quando excede o limite pratico do MongoDB; o sistema salva uma transcricao consolidada, estatisticas e trechos representativos
 
 Campos consolidados adicionados ao documento e a analise:
 
 | Campo | Objetivo |
 |---|---|
-| `metricasAgregadas.totalPartes` | Quantidade de partes encontradas no CSV |
+| `metricasAgregadas.totalPartes` | Quantidade de registros encontrados no JSON |
 | `metricasAgregadas.partesAnalisadas` | Partes usadas no calculo consolidado |
 | `metricasAgregadas.partesNegativas` | Volume interno de sinais negativos |
 | `metricasAgregadas.riscosDetectados` | Riscos encontrados nas partes internas |
@@ -83,7 +83,7 @@ Campos consolidados adicionados ao documento e a analise:
 | `alertasConsolidados` | Alertas com titulo, categoria, severidade, motivo e recomendacao |
 | `itensCriticos` | Evidencias/trechos mais importantes para revisao |
 
-Com isso, o dashboard continua exibindo **Transcricoes = quantidade de documentos**, mas cards como riscos, oportunidades, churn, sentimento negativo, partes analisadas e alertas passam a usar os sinais internos agregados do CSV.
+Com isso, o dashboard continua exibindo **Transcricoes = quantidade de documentos**, mas cards e graficos usam os dados consolidados do JSON sem multiplicar documentos no MongoDB.
 
 ---
 
@@ -222,6 +222,19 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 Na primeira execucao, o modelo BERT sera baixado automaticamente (~700MB). Acesse `http://localhost:8000/health` para verificar.
 
+Transcricao automatica de audio com Parakeet e opcional e vem desativada por padrao para manter o ambiente gratuito leve:
+
+```bash
+export TRANSCRIPTION_PROVIDER=manual
+export PARAKEET_ENABLED=false
+export PARAKEET_MODEL="nvidia/parakeet-tdt-0.6b-v3"
+export PARAKEET_MAX_AUDIO_MB=100
+export PARAKEET_MAX_DURATION_SECONDS=3600
+export PARAKEET_LANGUAGE=pt
+```
+
+Para habilitar Parakeet, configure `TRANSCRIPTION_PROVIDER=parakeet` e `PARAKEET_ENABLED=true` em um ambiente que tenha o provider ASR compativel instalado. Se o provider nao estiver disponivel, o sistema retorna erro amigavel e continua permitindo texto/JSON manual.
+
 **3. Backend (Java Spring Boot):**
 
 Configure o MongoDB em `backend/src/main/resources/application.properties`:
@@ -351,7 +364,8 @@ git add . && git commit -m "Deploy AI service" && git push
 | Metodo | Endpoint | Descricao |
 | --- | --- | --- |
 | `POST` | `/api/transcricoes` | Envia transcricao e processa com IA |
-| `POST` | `/api/transcricoes/import/totvs` | Importa CSV TOTVS como 1 transcricao consolidada |
+| `POST` | `/api/transcricoes/import/totvs` | Importa JSON TOTVS como 1 transcricao consolidada |
+| `POST` | `/api/transcricoes/audio` | Envia audio `.wav`, `.mp3` ou `.m4a`, transcreve no ai-service e analisa com LeanIA |
 | `GET` | `/api/transcricoes` | Lista todas as transcricoes |
 | `GET` | `/api/transcricoes/{id}` | Detalhe de uma transcricao + analise |
 | `GET` | `/api/transcricoes/cliente/{nome}` | Busca por cliente |
@@ -367,6 +381,7 @@ git add . && git commit -m "Deploy AI service" && git push
 | Metodo | Endpoint | Descricao |
 | --- | --- | --- |
 | `POST` | `/analisar` | Analisa uma transcricao e retorna insights |
+| `POST` | `/transcrever` | Transcreve audio com provider opcional Parakeet |
 | `GET` | `/health` | Verifica se o modelo esta carregado |
 
 ---
@@ -403,16 +418,16 @@ POST /api/transcricoes
 }
 ```
 
-**Importando CSV TOTVS:**
+**Importando JSON TOTVS:**
 
 ```http
 POST /api/transcricoes/import/totvs
 Content-Type: multipart/form-data
 
-file=@transcricao_totvs.csv
+file=@ANON_transcricao.json
 ```
 
-**Resposta da importacao CSV:**
+**Resposta da importacao JSON:**
 
 ```json
 {
@@ -420,11 +435,37 @@ file=@transcricao_totvs.csv
   "importados": 1,
   "ignorados": 0,
   "avisos": [
-    "Foi criada 1 transcricao consolidada para este CSV, evitando centenas de documentos na colecao transcricoes.",
-    "Os registros do CSV foram tratados como partes da mesma transcricao TOTVS."
+    "Foi criada 1 transcricao consolidada para este JSON, evitando centenas de documentos na colecao transcricoes.",
+    "Os registros do JSON foram tratados como partes da mesma transcricao TOTVS."
   ]
 }
 ```
+
+**Enviando audio para transcricao opcional:**
+
+```http
+POST /api/transcricoes/audio
+Content-Type: multipart/form-data
+
+file=@reuniao.wav
+cliente=Empresa ABC
+vendedor=Consultor TOTVS
+participantes=Cliente, Consultor TOTVS
+```
+
+O backend valida extensao, MIME e tamanho, envia o arquivo ao `ai-service /transcrever`, salva o texto retornado como uma transcricao com `origemTranscricao=parakeet` e enfileira a analise normal da LeanIA. O audio bruto nao e salvo em pasta publica; apenas metadados como nome do arquivo, modelo, idioma, duracao e avisos sao mantidos no documento.
+
+Se Parakeet estiver desativado, ausente ou falhar:
+
+```json
+{
+  "errorCode": "PARAKEET_NOT_INSTALLED",
+  "message": "Parakeet nao esta instalado neste ambiente. Use importacao manual de texto/JSON ou instale o provider ASR.",
+  "fallbackAvailable": true
+}
+```
+
+Nesse caso, o fluxo de texto e JSON continua funcionando normalmente.
 
 Depois do processamento, a transcricao consolidada passa a conter metricas como:
 
@@ -464,7 +505,7 @@ O microsservico Python utiliza uma abordagem hibrida:
 
 4. **Deteccao de Riscos** — Identificacao de sinais de insatisfacao, mencoes a concorrentes e indicadores de churn, com classificacao de severidade (ALTO/MEDIO/BAIXO).
 
-5. **Analise Consolidada de CSV** - Para arquivos grandes, a LeanIA e o backend extraem metricas agregadas das partes internas sem criar documentos extras no MongoDB. O dashboard usa esses agregados para manter numeros ricos mesmo com apenas 1 documento por CSV.
+5. **Analise Consolidada de JSON** - Para arquivos grandes, a LeanIA e o backend extraem metricas agregadas dos registros internos sem criar documentos extras no MongoDB. O dashboard usa esses agregados para manter numeros consolidados mesmo com apenas 1 documento por JSON.
 
 ---
 

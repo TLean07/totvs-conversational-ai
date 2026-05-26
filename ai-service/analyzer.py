@@ -506,7 +506,7 @@ class TranscricaoAnalyzer:
             })
         if metricas.get("churnsPotenciais", 0):
             alertas.append({
-                "titulo": "Indicadores de churn no CSV",
+                "titulo": "Indicadores de churn na transcricao",
                 "categoria": "Churn",
                 "severidade": "ALTO",
                 "ocorrencias": metricas["churnsPotenciais"],

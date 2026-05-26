@@ -12,6 +12,11 @@ import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import com.tlean07.fiap.challenge.security.AuthenticatedUser;
 import com.tlean07.fiap.challenge.security.SecurityUtils;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tlean07.fiap.challenge.dto.TranscriptionResultDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -19,10 +24,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -42,8 +44,8 @@ public class TranscricaoService {
     private static final int MAX_TRANSCRICAO_LENGTH = 20000;
     private static final int MAX_IMPORT_SAMPLE_CHARS = 12000;
     private static final int MAX_EVIDENCES_PER_CATEGORY = 5;
-    private static final Pattern TOTVS_RECORD_START = Pattern.compile("(?m)^\"\\d+,\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},");
     private static final Pattern LOCUTOR_PATTERN = Pattern.compile("\\[LOCUTOR\\s+\\d+]");
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final TranscricaoRepository transcricaoRepository;
     private final AnaliseResultadoRepository analiseRepository;
@@ -51,6 +53,7 @@ public class TranscricaoService {
     private final AlertaRepository alertaRepository;
     private final AnaliseService analiseService;
     private final TranscricaoAnalysisJob analysisJob;
+    private final AudioTranscriptionService audioTranscriptionService;
     private final AuditService auditService;
 
     public TranscricaoService(TranscricaoRepository transcricaoRepository,
@@ -59,6 +62,7 @@ public class TranscricaoService {
                               AlertaRepository alertaRepository,
                               AnaliseService analiseService,
                               TranscricaoAnalysisJob analysisJob,
+                              AudioTranscriptionService audioTranscriptionService,
                               AuditService auditService) {
         this.transcricaoRepository = transcricaoRepository;
         this.analiseRepository = analiseRepository;
@@ -66,6 +70,7 @@ public class TranscricaoService {
         this.alertaRepository = alertaRepository;
         this.analiseService = analiseService;
         this.analysisJob = analysisJob;
+        this.audioTranscriptionService = audioTranscriptionService;
         this.auditService = auditService;
     }
 
@@ -81,6 +86,7 @@ public class TranscricaoService {
                 .duracaoMinutos(request.getDuracaoMinutos())
                 .cliente(request.getCliente())
                 .vendedor(request.getVendedor())
+                .origemTranscricao("manual")
                 .status(StatusTranscricao.PENDENTE)
                 .dataCriacao(LocalDateTime.now())
                 .build();
@@ -99,21 +105,21 @@ public class TranscricaoService {
         return toResponse(transcricao);
     }
 
-    public TranscricaoImportResponse importarTotvsCsv(MultipartFile file, int limit, int offset) {
+    public TranscricaoImportResponse importarTotvsJson(MultipartFile file, int limit, int offset) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo CSV obrigatorio");
+            throw new IllegalArgumentException("Arquivo JSON obrigatorio");
         }
         String ownerId = SecurityUtils.currentUser().id();
         List<String> avisos = new ArrayList<>();
-        ImportCounters counters = processTotvsCsvAsSingleDocument(file, ownerId);
+        ImportCounters counters = processTotvsJsonAsSingleDocument(file, ownerId);
 
         if (counters.ignorados > 0) {
             avisos.add(counters.ignorados + " registro(s) foram ignorados por formato invalido ou transcricao vazia.");
         }
-        avisos.add("Foi criada 1 transcricao consolidada para este CSV, evitando centenas de documentos na colecao transcricoes.");
-        avisos.add("Os registros do CSV foram tratados como partes da mesma transcricao TOTVS.");
+        avisos.add("Foi criada 1 transcricao consolidada para este JSON, evitando centenas de documentos na colecao transcricoes.");
+        avisos.add("Os registros do JSON foram tratados como partes da mesma transcricao TOTVS.");
         avisos.add("A LeanIA analisa estatisticas e trechos representativos da transcricao consolidada.");
-        avisos.add("O CSV bruto nao e salvo inteiro no MongoDB porque documentos MongoDB possuem limite de 16 MB.");
+        avisos.add("O JSON bruto nao e salvo inteiro no MongoDB porque documentos MongoDB possuem limite de 16 MB.");
 
         auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "records=" + counters.totalRegistros + ";documents=1");
         return TranscricaoImportResponse.builder()
@@ -124,41 +130,33 @@ public class TranscricaoService {
                 .build();
     }
 
-    private ImportCounters processTotvsCsvAsSingleDocument(MultipartFile file, String ownerId) {
+    private ImportCounters processTotvsJsonAsSingleDocument(MultipartFile file, String ownerId) {
         ImportCounters counters = new ImportCounters();
         TotvsImportSummary summary = new TotvsImportSummary(file.getOriginalFilename());
-        StringBuilder currentRecord = null;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                line = line.replace("\uFEFF", "");
-                if (isTotvsRecordStart(line)) {
-                    if (currentRecord != null) {
-                        processTotvsRecordIntoSummary(currentRecord.toString(), counters, summary);
-                    }
+        try (JsonParser parser = OBJECT_MAPPER.getFactory().createParser(file.getInputStream())) {
+            JsonToken token;
+            while ((token = parser.nextToken()) != null) {
+                if (token == JsonToken.START_OBJECT) {
+                    JsonNode node = OBJECT_MAPPER.readTree(parser);
                     counters.totalRegistros++;
-                    currentRecord = new StringBuilder(line);
-                } else if (currentRecord != null) {
-                    currentRecord.append('\n').append(line);
+                    processTotvsJsonRecordIntoSummary(node, counters, summary);
                 }
             }
-            if (currentRecord != null) {
-                processTotvsRecordIntoSummary(currentRecord.toString(), counters, summary);
-            }
         } catch (IOException e) {
-            throw new IllegalArgumentException("Nao foi possivel ler o arquivo CSV");
+            throw new IllegalArgumentException("Nao foi possivel ler o arquivo JSON");
         }
 
         if (summary.validRecords == 0) {
-            throw new IllegalArgumentException("Nenhuma transcricao valida foi encontrada no CSV");
+            throw new IllegalArgumentException("Nenhuma transcricao valida foi encontrada no JSON");
         }
 
         Transcricao transcricao = Transcricao.builder()
                 .ownerId(ownerId)
                 .textoOriginal(summary.buildText())
                 .cliente("Transcricao TOTVS - " + safeFileName(file.getOriginalFilename()))
-                .vendedor("TOTVS CSV")
+                .vendedor("TOTVS JSON")
+                .origemTranscricao("json")
                 .participantes(summary.buildParticipants())
                 .duracaoMinutos(summary.totalDurationMinutes)
                 .status(StatusTranscricao.PENDENTE)
@@ -180,6 +178,36 @@ public class TranscricaoService {
         return counters;
     }
 
+    public TranscricaoResponse importarAudio(MultipartFile file, String cliente, String vendedor, String participantes) {
+        String ownerId = SecurityUtils.currentUser().id();
+        TranscriptionResultDTO transcription = audioTranscriptionService.transcrever(file, null);
+        Integer durationMinutes = transcription.getDurationSeconds() == null
+                ? null
+                : Math.max(1, (int) Math.ceil(transcription.getDurationSeconds() / 60.0));
+
+        Transcricao transcricao = Transcricao.builder()
+                .ownerId(ownerId)
+                .textoOriginal(transcription.getTranscript())
+                .cliente(blankToNull(cliente) == null ? "Transcricao de audio - " + safeFileName(file.getOriginalFilename()) : cliente)
+                .vendedor(blankToNull(vendedor) == null ? "Parakeet" : vendedor)
+                .participantes(participantes)
+                .duracaoMinutos(durationMinutes)
+                .origemTranscricao("parakeet")
+                .audioFileName(safeFileName(file.getOriginalFilename()))
+                .transcriptionModel(transcription.getModel())
+                .transcriptionLanguage(transcription.getLanguage())
+                .audioDurationSeconds(transcription.getDurationSeconds())
+                .transcriptionProcessingTimeMs(transcription.getProcessingTimeMs())
+                .transcriptionWarnings(transcription.getWarnings())
+                .status(StatusTranscricao.PENDENTE)
+                .dataCriacao(LocalDateTime.now())
+                .build();
+
+        TranscricaoResponse response = salvarEEnfileirar(transcricao, ownerId, "transcricao.audio.import");
+        auditService.record("transcricao.audio.transcribe", ownerId, response.getId(), "model=" + transcription.getModel());
+        return response;
+    }
+
     private TranscricaoResponse salvarEEnfileirar(Transcricao transcricao, String ownerId, String auditEvent) {
         Transcricao saved = transcricaoRepository.save(transcricao);
         saved.setStatus(StatusTranscricao.PROCESSANDO);
@@ -189,12 +217,8 @@ public class TranscricaoService {
         return toResponse(saved);
     }
 
-    private boolean isTotvsRecordStart(String line) {
-        return TOTVS_RECORD_START.matcher(line).find();
-    }
-
-    private void processTotvsRecordIntoSummary(String record, ImportCounters counters, TotvsImportSummary summary) {
-        TotvsCsvRow row = parseTotvsRecord(record);
+    private void processTotvsJsonRecordIntoSummary(JsonNode record, ImportCounters counters, TotvsImportSummary summary) {
+        TotvsJsonRow row = parseTotvsJsonRecord(record);
         if (row == null || row.transcricao().isBlank()) {
             counters.ignorados++;
             return;
@@ -202,101 +226,41 @@ public class TranscricaoService {
         summary.add(row);
     }
 
-    private TotvsCsvRow parseTotvsRecord(String rawRecord) {
-        String record = rawRecord.trim();
-        if (record.startsWith("\"")) {
-            record = record.substring(1);
-        }
-        if (record.endsWith("\"")) {
-            record = record.substring(0, record.length() - 1);
-        }
-
-        String[] firstFields = record.split(",", 11);
-        if (firstFields.length < 11) {
+    private TotvsJsonRow parseTotvsJsonRecord(JsonNode node) {
+        if (node == null || !node.isObject()) {
             return null;
         }
-
-        String transcriptAndTail = firstFields[10];
-        if (transcriptAndTail.startsWith("\"\"")) {
-            transcriptAndTail = transcriptAndTail.substring(2);
-        }
-
-        int tailStart = transcriptAndTail.lastIndexOf("\"\",");
-        if (tailStart < 0) {
-            return null;
-        }
-
-        String transcript = transcriptAndTail.substring(0, tailStart)
-                .replace("\"\"", "\"")
-                .trim();
-        String[] tail = transcriptAndTail.substring(tailStart + 3).split(",", -1);
-        if (tail.length < 7) {
-            return null;
-        }
-
-        return new TotvsCsvRow(
-                firstFields[0],
-                firstFields[1],
-                firstFields[2],
-                firstFields[3],
-                firstFields[4],
-                firstFields[5],
-                firstFields[6],
-                firstFields[7],
-                firstFields[8],
-                firstFields[9],
-                transcript,
-                tail[0],
-                tail[1],
-                tail[2],
-                tail[3],
-                tail[4],
-                tail[5],
-                tail[6].replace("\"", "")
+        return new TotvsJsonRow(
+                jsonText(node, "ID_MEETING"),
+                jsonText(node, "DT_MEETING"),
+                jsonText(node, "FORMATO_MEETING"),
+                jsonText(node, "ID_STATUS_MEETING"),
+                jsonText(node, "STATUS_MEETING"),
+                jsonText(node, "DURACAO_MEETING"),
+                jsonText(node, "CODT"),
+                "",
+                jsonText(node, "FLG_EXTERNO"),
+                jsonText(node, "DT_CRIACAO"),
+                jsonText(node, "ANON_TRANSCRICAO"),
+                jsonText(node, "UF"),
+                jsonText(node, "CNAE"),
+                jsonText(node, "NOME_UNIDADE"),
+                jsonText(node, "NOME_SEGMENTO"),
+                jsonText(node, "FAIXA_FATURAMENTO_CLIENTE_EC"),
+                jsonText(node, "DT_ULTIMA_PESQUISA"),
+                jsonText(node, "NOTA_NPS")
         );
     }
 
-    private String buildImportedText(TotvsCsvRow row) {
-        String metadata = """
-                [IMPORTACAO CSV TOTVS]
-                ID_MEETING: %s
-                DATA_REUNIAO: %s
-                FORMATO: %s
-                STATUS: %s
-                DURACAO: %s
-                CODT: %s
-                UF: %s
-                CNAE: %s
-                UNIDADE: %s
-                SEGMENTO: %s
-                FAIXA_FATURAMENTO: %s
-                NOTA_NPS: %s
-
-                TRANSCRICAO:
-                """.formatted(
-                row.idMeeting(),
-                row.dtMeeting(),
-                row.formatoMeeting(),
-                row.statusMeeting(),
-                row.duracaoMeeting(),
-                row.codt(),
-                row.uf(),
-                row.cnae(),
-                row.nomeUnidade(),
-                row.nomeSegmento(),
-                row.faixaFaturamento(),
-                row.notaNps()
-        );
-        int remaining = Math.max(0, MAX_TRANSCRICAO_LENGTH - metadata.length() - 120);
-        String transcript = row.transcricao();
-        if (transcript.length() > remaining) {
-            transcript = transcript.substring(0, remaining)
-                    + "\n\n[TRANSCRICAO TRUNCADA PARA RESPEITAR O LIMITE DE ANALISE]";
+    private String jsonText(JsonNode node, String field) {
+        JsonNode value = node == null ? null : node.get(field);
+        if (value == null || value.isNull()) {
+            return "";
         }
-        return metadata + transcript;
+        return value.isTextual() ? value.asText() : value.asText("");
     }
 
-    private String buildCliente(TotvsCsvRow row) {
+    private String buildCliente(TotvsJsonRow row) {
         String codt = blankToNull(row.codt());
         String segmento = blankToNull(row.nomeSegmento());
         String unidade = blankToNull(row.nomeUnidade());
@@ -312,7 +276,7 @@ public class TranscricaoService {
     private String safeFileName(String value) {
         String fileName = blankToNull(value);
         if (fileName == null) {
-            return "arquivo CSV";
+            return "arquivo JSON";
         }
         return fileName.length() > 120 ? fileName.substring(0, 120) : fileName;
     }
@@ -349,7 +313,7 @@ public class TranscricaoService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private record TotvsCsvRow(
+    private record TotvsJsonRow(
             String idMeeting,
             String dtMeeting,
             String formatoMeeting,
@@ -408,7 +372,7 @@ public class TranscricaoService {
             this.fileName = safeFileName(fileName);
         }
 
-        private void add(TotvsCsvRow row) {
+        private void add(TotvsJsonRow row) {
             validRecords++;
             addCount(segmentos, row.nomeSegmento());
             addCount(unidades, row.nomeUnidade());
@@ -429,7 +393,7 @@ public class TranscricaoService {
 
         private String buildText() {
             String metadata = """
-                    [TRANSCRICAO CSV TOTVS - CONSOLIDADA]
+                    [TRANSCRICAO JSON TOTVS - CONSOLIDADA]
                     ARQUIVO: %s
                     TOTAL_PARTES_VALIDAS: %d
                     PERIODO: %s ate %s
@@ -440,7 +404,7 @@ public class TranscricaoService {
                     OPORTUNIDADES_DETECTADAS: %d
                     CHURNS_POTENCIAIS: %d
                     MENCOES_CRITICAS: %d
-                    OBSERVACAO: Os registros do CSV foram interpretados como partes de uma unica transcricao.
+                    OBSERVACAO: Os registros do JSON foram interpretados como partes de uma unica transcricao.
 
                     DISTRIBUICAO_POR_SEGMENTO:
                     %s
@@ -488,7 +452,7 @@ public class TranscricaoService {
 
         private String buildParticipants() {
             if (locutores.isEmpty()) {
-                return "Transcricao CSV TOTVS";
+                return "Transcricao JSON TOTVS";
             }
             return String.join(", ", locutores.stream().limit(20).toList());
         }
@@ -511,7 +475,7 @@ public class TranscricaoService {
         }
 
         private String buildExecutiveSummary() {
-            return "Transcricao CSV TOTVS consolidada com %d parte(s), %d parte(s) negativas, %d risco(s), %d oportunidade(s), %d indicio(s) de churn e %d mencao(oes) critica(s)."
+            return "Transcricao JSON TOTVS consolidada com %d parte(s), %d parte(s) negativas, %d risco(s), %d oportunidade(s), %d indicio(s) de churn e %d mencao(oes) critica(s)."
                     .formatted(validRecords, negativeParts, totalRisks(), opportunitySignals, churnSignals, criticalMentions);
         }
 
@@ -556,7 +520,7 @@ public class TranscricaoService {
             }
             if (churnSignals > 0) {
                 alerts.add(AlertaConsolidado.builder()
-                        .titulo("Indicadores de churn no CSV")
+                        .titulo("Indicadores de churn no JSON")
                         .categoria("Churn")
                         .severidade(churnSignals >= 5 ? Severidade.ALTO : Severidade.MEDIO)
                         .ocorrencias(churnSignals)
@@ -614,7 +578,7 @@ public class TranscricaoService {
             }
         }
 
-        private void analyzeSignals(TotvsCsvRow row) {
+        private void analyzeSignals(TotvsJsonRow row) {
             String text = normalize(row.transcricao());
             boolean churn = hasChurnSignal(text);
             boolean competitor = hasCompetitorSignal(text);
@@ -729,17 +693,17 @@ public class TranscricaoService {
             return false;
         }
 
-        private void addRisk(String category, TotvsCsvRow row) {
+        private void addRisk(String category, TotvsJsonRow row) {
             riskCategories.merge(category, 1, Integer::sum);
             addEvidence(riskEvidences, category, row);
         }
 
-        private void addOpportunity(String category, TotvsCsvRow row) {
+        private void addOpportunity(String category, TotvsJsonRow row) {
             opportunityCategories.merge(category, 1, Integer::sum);
             addEvidence(opportunityEvidences, category, row);
         }
 
-        private void addEvidence(Map<String, List<String>> target, String category, TotvsCsvRow row) {
+        private void addEvidence(Map<String, List<String>> target, String category, TotvsJsonRow row) {
             List<String> evidences = target.computeIfAbsent(category, key -> new ArrayList<>());
             if (evidences.size() >= MAX_EVIDENCES_PER_CATEGORY) {
                 return;
@@ -748,7 +712,7 @@ public class TranscricaoService {
             evidences.add("ID " + row.idMeeting() + ": " + transcript.substring(0, Math.min(240, transcript.length())));
         }
 
-        private void addCriticalItem(String type, String category, TotvsCsvRow row) {
+        private void addCriticalItem(String type, String category, TotvsJsonRow row) {
             if (criticalItems.size() >= 20) {
                 return;
             }
@@ -803,7 +767,7 @@ public class TranscricaoService {
             }
         }
 
-        private void addSample(TotvsCsvRow row) {
+        private void addSample(TotvsJsonRow row) {
             if (amostras.length() >= MAX_IMPORT_SAMPLE_CHARS) {
                 return;
             }
@@ -1007,6 +971,13 @@ public class TranscricaoService {
                 .duracaoMinutos(t.getDuracaoMinutos())
                 .cliente(t.getCliente())
                 .vendedor(t.getVendedor())
+                .origemTranscricao(t.getOrigemTranscricao())
+                .audioFileName(t.getAudioFileName())
+                .transcriptionModel(t.getTranscriptionModel())
+                .transcriptionLanguage(t.getTranscriptionLanguage())
+                .audioDurationSeconds(t.getAudioDurationSeconds())
+                .transcriptionProcessingTimeMs(t.getTranscriptionProcessingTimeMs())
+                .transcriptionWarnings(t.getTranscriptionWarnings())
                 .status(t.getStatus())
                 .dataCriacao(t.getDataCriacao())
                 .dataProcessamento(t.getDataProcessamento())

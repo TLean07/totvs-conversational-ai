@@ -81,7 +81,7 @@ export default function RiscosPage() {
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Bases consolidadas</p>
               <p className="mt-1 text-2xl font-bold text-blue-900">{basesConsolidadas}</p>
-              <p className="mt-1 text-xs text-blue-700">CSV/documento unico usado nesta visao.</p>
+              <p className="mt-1 text-xs text-blue-700">JSON/documento unico usado nesta visao.</p>
             </div>
           </section>
         )}

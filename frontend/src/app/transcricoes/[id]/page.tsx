@@ -258,6 +258,21 @@ export default function TranscricaoDetailPage() {
                   {data.duracaoMinutos && <span>{data.duracaoMinutos} min</span>}
                   <span>{data.status}</span>
                 </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700 ring-1 ring-blue-100">
+                    {data.origemTranscricao === "parakeet" ? "Audio Parakeet" : data.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
+                  </span>
+                  {data.transcriptionModel && (
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                      Modelo: {data.transcriptionModel}
+                    </span>
+                  )}
+                  {data.audioDurationSeconds && (
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                      Audio: {Math.round(data.audioDurationSeconds)}s
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">

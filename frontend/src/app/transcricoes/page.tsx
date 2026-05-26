@@ -19,10 +19,20 @@ function TranscricoesPageInner() {
   const [submitError, setSubmitError] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showAudioImport, setShowAudioImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState("");
   const [importResult, setImportResult] = useState<TranscricaoImportResponse | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState("");
+  const [audioResult, setAudioResult] = useState<TranscricaoResponse | null>(null);
+  const [audioForm, setAudioForm] = useState({
+    cliente: "",
+    vendedor: "",
+    participantes: "",
+  });
   const [filtroCliente, setFiltroCliente] = useState("");
   const [filtroVendedor, setFiltroVendedor] = useState("");
   const [filtroSentimento, setFiltroSentimento] = useState<Sentimento | "">("");
@@ -107,22 +117,54 @@ function TranscricoesPageInner() {
   const handleImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) {
-      setImportError("Selecione um arquivo CSV no formato de transcricao TOTVS.");
+      setImportError("Selecione um arquivo JSON no formato de transcricao TOTVS.");
       return;
     }
     setImportLoading(true);
     setImportError("");
     setImportResult(null);
     try {
-      const result = await api.transcricoes.importarTotvs(importFile);
+      const result = await api.transcricoes.importarTotvsJson(importFile);
       setImportResult(result);
       setImportFile(null);
       setPageIndex(0);
       loadData(0);
     } catch (error) {
-      setImportError(error instanceof Error ? error.message : "Nao foi possivel importar o CSV.");
+      setImportError(error instanceof Error ? error.message : "Nao foi possivel importar o JSON.");
     } finally {
       setImportLoading(false);
+    }
+  };
+
+  const handleAudioSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!audioFile) {
+      setAudioError("Selecione um audio de reuniao em .wav, .mp3 ou .m4a.");
+      return;
+    }
+    setAudioLoading(true);
+    setAudioError("");
+    setAudioResult(null);
+    try {
+      const result = await api.transcricoes.importarAudio({
+        file: audioFile,
+        cliente: audioForm.cliente || undefined,
+        vendedor: audioForm.vendedor || undefined,
+        participantes: audioForm.participantes || undefined,
+      });
+      setAudioResult(result);
+      setAudioFile(null);
+      setAudioForm({ cliente: "", vendedor: "", participantes: "" });
+      setPageIndex(0);
+      loadData(0);
+    } catch (error) {
+      setAudioError(
+        error instanceof Error
+          ? error.message
+          : "Transcricao automatica indisponivel no momento. Voce ainda pode importar texto ou JSON."
+      );
+    } finally {
+      setAudioLoading(false);
     }
   };
 
@@ -140,8 +182,31 @@ function TranscricoesPageInner() {
               <button
                 type="button"
                 onClick={() => {
+                  setShowAudioImport(!showAudioImport);
+                  if (!showAudioImport) {
+                    setShowImport(false);
+                    setShowForm(false);
+                  }
+                }}
+                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl w-full sm:w-auto text-sm font-semibold transition-all duration-200 shadow-sm shrink-0 ${
+                  showAudioImport
+                    ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    : "bg-white text-[#1a365d] border border-slate-200 hover:border-blue-300 hover:bg-blue-50"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V5.25a3 3 0 10-6 0v7.5a3 3 0 003 3z" />
+                </svg>
+                {showAudioImport ? "Fechar Audio" : "Enviar Audio"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
                   setShowImport(!showImport);
-                  if (!showImport) setShowForm(false);
+                  if (!showImport) {
+                    setShowForm(false);
+                    setShowAudioImport(false);
+                  }
                 }}
                 className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl w-full sm:w-auto text-sm font-semibold transition-all duration-200 shadow-sm shrink-0 ${
                   showImport
@@ -152,13 +217,16 @@ function TranscricoesPageInner() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5h10.5A2.25 2.25 0 0019.5 17.25V6.75A2.25 2.25 0 0017.25 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5z" />
                 </svg>
-                {showImport ? "Fechar Importacao" : "Importar CSV TOTVS"}
+                {showImport ? "Fechar Importacao" : "Importar JSON TOTVS"}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowForm(!showForm);
-                  if (!showForm) setShowImport(false);
+                  if (!showForm) {
+                    setShowImport(false);
+                    setShowAudioImport(false);
+                  }
                 }}
                 className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl w-full sm:w-auto text-sm font-semibold transition-all duration-200 shadow-sm shrink-0 ${
                   showForm
@@ -251,28 +319,28 @@ function TranscricoesPageInner() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
-                  Importacao CSV TOTVS
+                  Importacao JSON TOTVS
                 </div>
-                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricao por CSV</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricoes por JSON</h2>
                 <p className="text-sm text-slate-500 leading-6 max-w-2xl">
-                  Envie um CSV no formato de transcricao TOTVS. O sistema le as colunas reconhecidas,
+                  Envie um JSON no formato de transcricao TOTVS. O sistema le os campos reconhecidos,
                   cria <span className="font-semibold">1 transcricao consolidada por arquivo</span> e coloca a LeanIA para analisar em segundo plano.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
-                <p className="font-semibold text-slate-700">Colunas reconhecidas</p>
+                <p className="font-semibold text-slate-700">Campos reconhecidos</p>
                 <p className="mt-1 text-xs leading-5">
-                  ID_MEETING, DT_MEETING, DURACAO_MEETING, CODT, ANON_TRANSCRICAO, UF, CNAE, unidade, segmento, faturamento e NPS.
+                  ID_MEETING, DT_MEETING, DURACAO_MEETING, CODT, ANON_TRANSCRICAO, UF, CNAE, NOME_UNIDADE, NOME_SEGMENTO, FAIXA_FATURAMENTO_CLIENTE_EC e NOTA_NPS.
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 mt-6">
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo CSV</label>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo JSON</label>
                 <input
                   type="file"
-                  accept=".csv,text/csv"
+                  accept=".json,application/json,application/x-ndjson"
                   onChange={(event) => setImportFile(event.target.files?.[0] ?? null)}
                   className="block w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-[#1a365d] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#244d7c]"
                 />
@@ -285,7 +353,7 @@ function TranscricoesPageInner() {
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
                 <p className="text-sm font-semibold text-emerald-900">Modo economico ativado</p>
                 <p className="mt-1 text-xs leading-5 text-emerald-800">
-                  Cada arquivo CSV vira uma unica transcricao no MongoDB. As linhas internas sao tratadas como partes do mesmo
+                  Cada arquivo JSON vira uma unica transcricao no MongoDB. Os registros internos sao tratados como partes do mesmo
                   material, e a LeanIA recebe estatisticas, distribuicoes e trechos representativos sem criar centenas de documentos.
                 </p>
               </div>
@@ -328,7 +396,7 @@ function TranscricoesPageInner() {
                   {importResult.importados} transcricao consolidada criada para este arquivo.
                 </p>
                 <p className="mt-1">
-                  Partes lidas no CSV: {importResult.totalRegistros}. Registros ignorados: {importResult.ignorados}.
+                  Registros lidos no JSON: {importResult.totalRegistros}. Registros ignorados: {importResult.ignorados}.
                 </p>
                 {importResult.avisos.length > 0 && (
                   <ul className="mt-2 list-disc pl-5 text-xs leading-5">
@@ -337,6 +405,119 @@ function TranscricoesPageInner() {
                     ))}
                   </ul>
                 )}
+              </div>
+            )}
+          </form>
+        )}
+
+        {showAudioImport && (
+          <form onSubmit={handleAudioSubmit} className="bg-white rounded-2xl shadow-sm border border-blue-200 p-6 mb-8">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">
+                  Transcricao automatica opcional
+                </div>
+                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Enviar audio da reuniao</h2>
+                <p className="text-sm text-slate-500 leading-6 max-w-2xl">
+                  O backend envia o audio ao ai-service. Quando o Parakeet estiver habilitado, ele gera a transcricao e a LeanIA analisa o texto em seguida.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
+                <p className="font-semibold text-slate-700">Formatos e limites</p>
+                <p className="mt-1 text-xs leading-5">
+                  Aceita .wav, .mp3 e .m4a. Limite padrao: 100 MB e ate 60 minutos. Se a transcricao automatica falhar, use texto ou JSON.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Cliente</label>
+                <input
+                  type="text"
+                  value={audioForm.cliente}
+                  onChange={(e) => setAudioForm({ ...audioForm, cliente: e.target.value })}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Nome do cliente"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Vendedor</label>
+                <input
+                  type="text"
+                  value={audioForm.vendedor}
+                  onChange={(e) => setAudioForm({ ...audioForm, vendedor: e.target.value })}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Responsavel comercial"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Participantes</label>
+                <input
+                  type="text"
+                  value={audioForm.participantes}
+                  onChange={(e) => setAudioForm({ ...audioForm, participantes: e.target.value })}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Pessoa A, Pessoa B"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo de audio</label>
+              <input
+                type="file"
+                accept=".wav,.mp3,.m4a,audio/wav,audio/mpeg,audio/mp4,audio/x-m4a"
+                onChange={(event) => setAudioFile(event.target.files?.[0] ?? null)}
+                className="block w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-[#1a365d] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#244d7c]"
+              />
+              {audioFile && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Selecionado: <span className="font-semibold">{audioFile.name}</span> ({Math.ceil(audioFile.size / 1024 / 1024)} MB)
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
+              <button
+                type="submit"
+                disabled={audioLoading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1a365d] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#244d7c] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {audioLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Transcrevendo e analisando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5" />
+                    </svg>
+                    Transcrever com Parakeet
+                  </>
+                )}
+              </button>
+              <p className="text-sm text-slate-500">
+                Parakeet e opcional. Texto e JSON continuam disponiveis como fallback.
+              </p>
+            </div>
+
+            {audioError && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <p className="font-semibold">Transcricao automatica indisponivel.</p>
+                <p className="mt-1">{audioError}</p>
+                <p className="mt-2 text-xs">Cole a transcricao manualmente ou importe o JSON da TOTVS para continuar sem bloquear o sistema.</p>
+              </div>
+            )}
+
+            {audioResult && (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <p className="font-semibold">Audio transcrito e enviado para analise da LeanIA.</p>
+                <p className="mt-1">
+                  Modelo: {audioResult.transcriptionModel || "provider automatico"}.
+                  {audioResult.audioDurationSeconds ? ` Duracao: ${Math.round(audioResult.audioDurationSeconds)}s.` : ""}
+                </p>
               </div>
             )}
           </form>
@@ -512,6 +693,9 @@ function TranscricoesPageInner() {
                       {t.analise && (
                         <SentimentBadge sentimento={t.analise.sentimentoGeral as Sentimento} />
                       )}
+                      <span className="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap bg-blue-50 text-blue-700 ring-1 ring-blue-100">
+                        {t.origemTranscricao === "parakeet" ? "Audio Parakeet" : t.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
+                      </span>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${
                         t.status === "PROCESSADA" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
                           : t.status === "ERRO" ? "bg-rose-50 text-rose-700 ring-1 ring-rose-200"
@@ -550,6 +734,12 @@ function TranscricoesPageInner() {
                   </div>
                 </div>
                 <p className="text-sm text-slate-500 line-clamp-2 mb-3 leading-relaxed">{t.textoOriginal}</p>
+                {t.origemTranscricao === "parakeet" && (
+                  <p className="text-xs text-slate-400 mb-3">
+                    Transcrito automaticamente por {t.transcriptionModel || "provider configurado"}
+                    {t.audioFileName ? ` a partir de ${t.audioFileName}` : ""}.
+                  </p>
+                )}
                 {t.analise && (
                   <div className="flex flex-wrap gap-2 sm:gap-4 text-xs">
                     <span className="flex items-center gap-1 text-violet-600 bg-violet-50 px-2 py-1 rounded-lg whitespace-nowrap">

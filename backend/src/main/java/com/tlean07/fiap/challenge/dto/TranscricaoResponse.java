@@ -24,6 +24,13 @@ public class TranscricaoResponse {
     private Integer duracaoMinutos;
     private String cliente;
     private String vendedor;
+    private String origemTranscricao;
+    private String audioFileName;
+    private String transcriptionModel;
+    private String transcriptionLanguage;
+    private Double audioDurationSeconds;
+    private Integer transcriptionProcessingTimeMs;
+    private List<String> transcriptionWarnings;
     private StatusTranscricao status;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataProcessamento;

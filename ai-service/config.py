@@ -33,6 +33,15 @@ class Settings:
     cache_ttl_seconds: int
     cache_max_entries: int
     sentiment_max_chunks: int
+    transcription_provider: str
+    parakeet_enabled: bool
+    parakeet_model: str
+    parakeet_device: str
+    parakeet_max_audio_mb: int
+    parakeet_max_duration_seconds: int
+    parakeet_language: str
+    parakeet_use_timestamps: bool
+    parakeet_cache_dir: str
 
 
 def load_settings() -> Settings:
@@ -60,4 +69,13 @@ def load_settings() -> Settings:
         cache_ttl_seconds=_int_env("AI_CACHE_TTL_SECONDS", 3600),
         cache_max_entries=_int_env("AI_CACHE_MAX_ENTRIES", 256),
         sentiment_max_chunks=_int_env("AI_SENTIMENT_MAX_CHUNKS", 8),
+        transcription_provider=os.getenv("TRANSCRIPTION_PROVIDER", "manual").strip().lower(),
+        parakeet_enabled=_bool_env("PARAKEET_ENABLED", False),
+        parakeet_model=os.getenv("PARAKEET_MODEL", "nvidia/parakeet-tdt-0.6b-v3"),
+        parakeet_device=os.getenv("PARAKEET_DEVICE", "auto").strip().lower(),
+        parakeet_max_audio_mb=_int_env("PARAKEET_MAX_AUDIO_MB", 100),
+        parakeet_max_duration_seconds=_int_env("PARAKEET_MAX_DURATION_SECONDS", 3600),
+        parakeet_language=os.getenv("PARAKEET_LANGUAGE", "pt"),
+        parakeet_use_timestamps=_bool_env("PARAKEET_USE_TIMESTAMPS", False),
+        parakeet_cache_dir=os.getenv("PARAKEET_CACHE_DIR", ""),
     )

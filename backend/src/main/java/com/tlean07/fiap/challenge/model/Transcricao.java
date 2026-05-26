@@ -29,6 +29,14 @@ public class Transcricao {
     @Indexed
     private String cliente;
     private String vendedor;
+    private String origemTranscricao;
+    private String audioFileName;
+    private String transcriptionModel;
+    private String transcriptionLanguage;
+    private Double audioDurationSeconds;
+    private Integer transcriptionProcessingTimeMs;
+    @Builder.Default
+    private java.util.List<String> transcriptionWarnings = new java.util.ArrayList<>();
     @Indexed
     private StatusTranscricao status;
     @Indexed

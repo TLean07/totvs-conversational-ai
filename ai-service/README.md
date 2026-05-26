@@ -19,12 +19,52 @@ Configure em **Settings -> Variables and secrets**:
 | `AI_PROVIDER` | Variable | `auto`, `transformers` ou `fallback` |
 | `AI_MODEL_NAME` | Variable | Modelo local gratuito de sentimento |
 | `AI_CACHE_ENABLED` | Variable | `true` |
+| `TRANSCRIPTION_PROVIDER` | Variable | `manual`, `parakeet` ou `auto` |
+| `PARAKEET_ENABLED` | Variable | `false` por padrao; use `true` apenas quando o ambiente tiver o provider ASR instalado |
+| `PARAKEET_MODEL` | Variable | `nvidia/parakeet-tdt-0.6b-v3` ou outro modelo compativel |
+| `PARAKEET_MAX_AUDIO_MB` | Variable | Limite de tamanho do audio, exemplo `100` |
+| `PARAKEET_MAX_DURATION_SECONDS` | Variable | Limite de duracao, exemplo `3600` |
 
 LeanIA e o AI Service gratuito e adaptativo para analise de transcricoes de reunioes comerciais.
 
-## Analise consolidada de CSV
+## Transcricao opcional com Parakeet
 
-O backend pode enviar para a LeanIA uma transcricao consolidada vinda de CSV. Nesse modo, o CSV inteiro continua sendo tratado como **1 unica transcricao**, mas a resposta da IA traz granularidade interna para o dashboard.
+O endpoint `POST /transcrever` permite receber audio de reuniao e gerar uma transcricao antes da analise da LeanIA.
+
+Fluxo:
+
+```text
+Audio da reuniao -> /transcrever -> texto transcrito -> backend -> LeanIA /analisar -> dashboard
+```
+
+Parakeet fica isolado como provider opcional. O `requirements.txt` padrao nao instala dependencias pesadas de ASR para manter o Space gratuito leve. Para usar Parakeet de fato, configure `TRANSCRIPTION_PROVIDER=parakeet`, `PARAKEET_ENABLED=true` e instale o provider compativel no ambiente, como `nemo_toolkit[asr]` e dependencias de runtime adequadas ao hardware.
+
+Se Parakeet estiver desativado, ausente ou falhar, o endpoint retorna erro estruturado com `fallbackAvailable=true`. O backend/frontend continuam permitindo importacao manual de texto ou JSON.
+
+Formatos aceitos pelo contrato:
+
+- `.wav`
+- `.mp3`
+- `.m4a`
+
+Resposta de sucesso:
+
+```json
+{
+  "transcript": "...",
+  "language": "pt",
+  "durationSeconds": 120.4,
+  "model": "nvidia/parakeet-tdt-0.6b-v3",
+  "processingTimeMs": 3200,
+  "segments": [],
+  "confidence": null,
+  "warnings": []
+}
+```
+
+## Analise consolidada de JSON
+
+O backend pode enviar para a LeanIA uma transcricao consolidada vinda de JSON. Nesse modo, o JSON inteiro continua sendo tratado como **1 unica transcricao**, mas a resposta da IA traz granularidade interna para o dashboard.
 
 A resposta estruturada inclui:
 

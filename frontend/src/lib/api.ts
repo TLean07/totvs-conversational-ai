@@ -163,7 +163,7 @@ export const api = {
       request<import("./types").TranscricaoResponse>(`/transcricoes/${id}/reprocessar`, {
         method: "POST",
       }),
-    importarTotvs: (file: File, limit = 25, offset = 0) => {
+    importarTotvsJson: (file: File, limit = 25, offset = 0) => {
       const formData = new FormData();
       formData.append("file", file);
       return request<import("./types").TranscricaoImportResponse>(
@@ -173,6 +173,22 @@ export const api = {
           body: formData,
         }
       );
+    },
+    importarAudio: (data: {
+      file: File;
+      cliente?: string;
+      vendedor?: string;
+      participantes?: string;
+    }) => {
+      const formData = new FormData();
+      formData.append("file", data.file);
+      if (data.cliente) formData.append("cliente", data.cliente);
+      if (data.vendedor) formData.append("vendedor", data.vendedor);
+      if (data.participantes) formData.append("participantes", data.participantes);
+      return request<import("./types").TranscricaoResponse>("/transcricoes/audio", {
+        method: "POST",
+        body: formData,
+      });
     },
     feedback: (id: string, data: { util: boolean; ajuste?: string }) =>
       request<import("./types").AnaliseFeedbackResponse>(`/transcricoes/${id}/feedback`, {

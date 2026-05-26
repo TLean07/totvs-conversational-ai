@@ -148,6 +148,13 @@ export interface TranscricaoResponse {
   duracaoMinutos: number;
   cliente: string;
   vendedor: string;
+  origemTranscricao: string | null;
+  audioFileName: string | null;
+  transcriptionModel: string | null;
+  transcriptionLanguage: string | null;
+  audioDurationSeconds: number | null;
+  transcriptionProcessingTimeMs: number | null;
+  transcriptionWarnings: string[];
   status: StatusTranscricao;
   dataCriacao: string;
   dataProcessamento: string;
