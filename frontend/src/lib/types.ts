@@ -180,6 +180,15 @@ export interface TranscricaoResponse {
   analise: AnaliseResponse | null;
 }
 
+export interface TranscricaoInsightsResponse {
+  id: string;
+  cliente: string | null;
+  riscosConsolidados: RiscoConsolidado[];
+  oportunidadesConsolidadas: OportunidadeConsolidada[];
+  riscos: RiscoResponse[];
+  oportunidades: OportunidadeResponse[];
+}
+
 export interface AnaliseFeedbackResponse {
   id: string;
   transcricaoId: string;

@@ -6,6 +6,7 @@ import type {
   Severidade,
   TipoOportunidade,
   TipoRisco,
+  TranscricaoInsightsResponse,
   TranscricaoResponse,
 } from "./types";
 
@@ -35,12 +36,13 @@ export interface OportunidadeDetalhada {
   legado: boolean;
 }
 
-export function extrairRiscosDetalhados(transcricoes: TranscricaoResponse[]) {
+type InsightSource = TranscricaoInsightsResponse | TranscricaoResponse;
+
+export function extrairRiscosDetalhados(transcricoes: InsightSource[]) {
   return transcricoes.flatMap((transcricao) => {
-    const consolidados = preferirConsolidados(
-      transcricao.analise?.riscosConsolidados,
-      transcricao.riscosConsolidados
-    );
+    const consolidados = "analise" in transcricao
+      ? preferirConsolidados(transcricao.analise?.riscosConsolidados, transcricao.riscosConsolidados)
+      : transcricao.riscosConsolidados ?? [];
 
     if (consolidados.length > 0) {
       return consolidados.map((risco, index) =>
@@ -48,18 +50,21 @@ export function extrairRiscosDetalhados(transcricoes: TranscricaoResponse[]) {
       );
     }
 
-    return (transcricao.analise?.riscos ?? []).map((risco, index) =>
+    const riscos = "analise" in transcricao ? transcricao.analise?.riscos ?? [] : transcricao.riscos ?? [];
+    return riscos.map((risco, index) =>
       riscoLegadoParaDetalhe(risco, transcricao, index)
     );
   });
 }
 
-export function extrairOportunidadesDetalhadas(transcricoes: TranscricaoResponse[]) {
+export function extrairOportunidadesDetalhadas(transcricoes: InsightSource[]) {
   return transcricoes.flatMap((transcricao) => {
-    const consolidadas = preferirConsolidados(
-      transcricao.analise?.oportunidadesConsolidadas,
-      transcricao.oportunidadesConsolidadas
-    );
+    const consolidadas = "analise" in transcricao
+      ? preferirConsolidados(
+          transcricao.analise?.oportunidadesConsolidadas,
+          transcricao.oportunidadesConsolidadas
+        )
+      : transcricao.oportunidadesConsolidadas ?? [];
 
     if (consolidadas.length > 0) {
       return consolidadas.map((oportunidade, index) =>
@@ -67,7 +72,10 @@ export function extrairOportunidadesDetalhadas(transcricoes: TranscricaoResponse
       );
     }
 
-    return (transcricao.analise?.oportunidades ?? []).map((oportunidade, index) =>
+    const oportunidades = "analise" in transcricao
+      ? transcricao.analise?.oportunidades ?? []
+      : transcricao.oportunidades ?? [];
+    return oportunidades.map((oportunidade, index) =>
       oportunidadeLegadaParaDetalhe(oportunidade, transcricao, index)
     );
   });
@@ -110,7 +118,7 @@ export function totalOportunidadesDaTranscricao(transcricao: TranscricaoResponse
 
 function riscoConsolidadoParaDetalhe(
   risco: RiscoConsolidado,
-  transcricao: TranscricaoResponse,
+  transcricao: InsightSource,
   index: number
 ): RiscoDetalhado {
   return {
@@ -129,7 +137,7 @@ function riscoConsolidadoParaDetalhe(
 
 function riscoLegadoParaDetalhe(
   risco: RiscoResponse,
-  transcricao: TranscricaoResponse,
+  transcricao: InsightSource,
   index: number
 ): RiscoDetalhado {
   return {
@@ -150,7 +158,7 @@ function riscoLegadoParaDetalhe(
 
 function oportunidadeConsolidadaParaDetalhe(
   oportunidade: OportunidadeConsolidada,
-  transcricao: TranscricaoResponse,
+  transcricao: InsightSource,
   index: number
 ): OportunidadeDetalhada {
   return {
@@ -169,7 +177,7 @@ function oportunidadeConsolidadaParaDetalhe(
 
 function oportunidadeLegadaParaDetalhe(
   oportunidade: OportunidadeResponse,
-  transcricao: TranscricaoResponse,
+  transcricao: InsightSource,
   index: number
 ): OportunidadeDetalhada {
   return {

@@ -5,9 +5,11 @@ import com.tlean07.fiap.challenge.dto.AnaliseFeedbackResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
 import com.tlean07.fiap.challenge.dto.TranscricaoImportResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoResponse;
+import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.dto.PageResponse;
 import com.tlean07.fiap.challenge.service.RateLimitService;
 import com.tlean07.fiap.challenge.service.TranscricaoService;
+import com.tlean07.fiap.challenge.service.TranscricaoInsightsService;
 import com.tlean07.fiap.challenge.security.SecurityUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,11 +27,14 @@ import java.util.List;
 public class TranscricaoController {
 
     private final TranscricaoService transcricaoService;
+    private final TranscricaoInsightsService transcricaoInsightsService;
     private final RateLimitService rateLimitService;
 
     public TranscricaoController(TranscricaoService transcricaoService,
+                                 TranscricaoInsightsService transcricaoInsightsService,
                                  RateLimitService rateLimitService) {
         this.transcricaoService = transcricaoService;
+        this.transcricaoInsightsService = transcricaoInsightsService;
         this.rateLimitService = rateLimitService;
     }
 
@@ -75,6 +80,11 @@ public class TranscricaoController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(transcricaoService.listarPaginado(page, size));
+    }
+
+    @GetMapping("/insights")
+    public ResponseEntity<List<TranscricaoInsightsResponse>> listarInsights() {
+        return ResponseEntity.ok(transcricaoInsightsService.listarTodos());
     }
 
     @GetMapping("/{id}")

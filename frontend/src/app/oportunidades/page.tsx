@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, readCachedInsights } from "@/lib/api";
 import {
   extrairOportunidadesDetalhadas,
   type OportunidadeDetalhada,
 } from "@/lib/insightDetails";
-import type { TranscricaoResponse, TipoOportunidade } from "@/lib/types";
+import type { TranscricaoInsightsResponse, TipoOportunidade } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -23,17 +23,18 @@ const TIPO_COLORS: Record<TipoOportunidade, string> = {
 };
 
 export default function OportunidadesPage() {
-  const [oportunidades, setOportunidades] = useState<OportunidadeDetalhada[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialInsights] = useState<TranscricaoInsightsResponse[] | null>(() => readCachedInsights());
+  const [oportunidades, setOportunidades] = useState<OportunidadeDetalhada[]>(() =>
+    ordenarOportunidades(initialInsights ?? [])
+  );
+  const [loading, setLoading] = useState(!initialInsights);
   const [filtroTipo, setFiltroTipo] = useState<TipoOportunidade | "">("");
 
   useEffect(() => {
     api.transcricoes
-      .listar()
-      .then((transcricoes: TranscricaoResponse[]) => {
-        const todas = extrairOportunidadesDetalhadas(transcricoes);
-        todas.sort((a, b) => b.ocorrencias - a.ocorrencias);
-        setOportunidades(todas);
+      .insights()
+      .then((transcricoes) => {
+        setOportunidades(ordenarOportunidades(transcricoes));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -153,4 +154,9 @@ export default function OportunidadesPage() {
       </main>
     </>
   );
+}
+
+function ordenarOportunidades(transcricoes: TranscricaoInsightsResponse[]) {
+  return extrairOportunidadesDetalhadas(transcricoes)
+    .sort((a, b) => b.ocorrencias - a.ocorrencias);
 }

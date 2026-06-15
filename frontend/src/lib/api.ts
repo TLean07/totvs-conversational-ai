@@ -4,8 +4,10 @@ let accessToken: string | null = null;
 let currentUser: import("./types").AuthUser | null = null;
 let refreshing: Promise<import("./types").AuthResponse | null> | null = null;
 let dashboardCache: { data: import("./types").DashboardResponse; cachedAt: number } | null = null;
+let insightsCache: { data: import("./types").TranscricaoInsightsResponse[]; cachedAt: number } | null = null;
 
 const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
+const INSIGHTS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 export function readCachedDashboard() {
   if (!dashboardCache || Date.now() - dashboardCache.cachedAt > DASHBOARD_CACHE_TTL_MS) {
@@ -14,8 +16,16 @@ export function readCachedDashboard() {
   return dashboardCache.data;
 }
 
+export function readCachedInsights() {
+  if (!insightsCache || Date.now() - insightsCache.cachedAt > INSIGHTS_CACHE_TTL_MS) {
+    return null;
+  }
+  return insightsCache.data;
+}
+
 function clearDashboardCache() {
   dashboardCache = null;
+  insightsCache = null;
 }
 
 function setSession(session: import("./types").AuthResponse | null) {
@@ -164,6 +174,11 @@ export const api = {
       request<import("./types").PageResponse<import("./types").TranscricaoResponse>>(
         `/transcricoes/paged?page=${page}&size=${size}`
       ),
+    insights: async () => {
+      const data = await request<import("./types").TranscricaoInsightsResponse[]>("/transcricoes/insights");
+      insightsCache = { data, cachedAt: Date.now() };
+      return data;
+    },
     buscar: (id: string) =>
       request<import("./types").TranscricaoResponse>(`/transcricoes/${id}`),
     criar: (data: {

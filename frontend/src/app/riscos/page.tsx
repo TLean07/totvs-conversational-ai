@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { api, readCachedInsights } from "@/lib/api";
 import {
   extrairRiscosDetalhados,
   type RiscoDetalhado,
 } from "@/lib/insightDetails";
-import type { TranscricaoResponse, TipoRisco, Severidade } from "@/lib/types";
+import type { TranscricaoInsightsResponse, TipoRisco, Severidade } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import SeveridadeBadge from "@/components/SeveridadeBadge";
 import Link from "next/link";
@@ -28,18 +28,17 @@ const TIPO_COLORS: Record<TipoRisco, string> = {
 const SEV_ORDER: Record<Severidade, number> = { ALTO: 0, MEDIO: 1, BAIXO: 2 };
 
 export default function RiscosPage() {
-  const [riscos, setRiscos] = useState<RiscoDetalhado[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialInsights] = useState<TranscricaoInsightsResponse[] | null>(() => readCachedInsights());
+  const [riscos, setRiscos] = useState<RiscoDetalhado[]>(() => ordenarRiscos(initialInsights ?? []));
+  const [loading, setLoading] = useState(!initialInsights);
   const [filtroTipo, setFiltroTipo] = useState<TipoRisco | "">("");
   const [filtroSev, setFiltroSev] = useState<Severidade | "">("");
 
   useEffect(() => {
     api.transcricoes
-      .listar()
-      .then((transcricoes: TranscricaoResponse[]) => {
-        const todos = extrairRiscosDetalhados(transcricoes);
-        todos.sort((a, b) => SEV_ORDER[a.severidade] - SEV_ORDER[b.severidade]);
-        setRiscos(todos);
+      .insights()
+      .then((transcricoes) => {
+        setRiscos(ordenarRiscos(transcricoes));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -177,4 +176,9 @@ export default function RiscosPage() {
       </main>
     </>
   );
+}
+
+function ordenarRiscos(transcricoes: TranscricaoInsightsResponse[]) {
+  return extrairRiscosDetalhados(transcricoes)
+    .sort((a, b) => SEV_ORDER[a.severidade] - SEV_ORDER[b.severidade]);
 }
