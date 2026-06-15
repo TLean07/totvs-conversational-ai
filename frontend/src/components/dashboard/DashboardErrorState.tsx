@@ -19,7 +19,7 @@ export default function DashboardErrorState({ message, onRetry }: DashboardError
             </svg>
           </div>
           <h1 className="text-xl font-semibold text-slate-900">Erro ao carregar dashboard</h1>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500">{message || "Os dados nao estao disponiveis no momento."}</p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500">{message || "Os dados não estão disponíveis no momento."}</p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <button
               type="button"

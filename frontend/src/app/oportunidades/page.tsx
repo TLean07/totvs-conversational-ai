@@ -71,7 +71,7 @@ export default function OportunidadesPage() {
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Bases consolidadas</p>
               <p className="mt-1 text-2xl font-bold text-blue-900">{basesConsolidadas}</p>
-              <p className="mt-1 text-xs text-blue-700">JSON/documento unico usado nesta visao.</p>
+              <p className="mt-1 text-xs text-blue-700">JSON/documento único usado nesta visão.</p>
             </div>
           </section>
         )}
@@ -122,7 +122,7 @@ export default function OportunidadesPage() {
                   </span>
                   {op.score != null && (
                     <span className="text-xs font-medium text-slate-400">
-                      {Math.round(op.score * 100)}% confianca
+                      {Math.round(op.score * 100)}% confiança
                     </span>
                   )}
                 </div>
@@ -138,7 +138,7 @@ export default function OportunidadesPage() {
                 )}
                 {op.ocorrencias > 1 && (
                   <p className="mb-3 text-xs text-slate-400">
-                    Cobertura interna: {op.ocorrencias} ocorrencia{op.ocorrencias === 1 ? "" : "s"} agrupada{op.ocorrencias === 1 ? "" : "s"}.
+                    Cobertura interna: {op.ocorrencias} ocorrência{op.ocorrencias === 1 ? "" : "s"} agrupada{op.ocorrencias === 1 ? "" : "s"}.
                   </p>
                 )}
                 <p className="text-sm text-slate-700 leading-relaxed mb-3">{op.recomendacao}</p>

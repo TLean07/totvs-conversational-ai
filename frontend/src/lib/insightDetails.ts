@@ -116,13 +116,13 @@ function riscoConsolidadoParaDetalhe(
   return {
     id: `${transcricao.id}-risco-consolidado-${index}`,
     transcricaoId: transcricao.id,
-    cliente: transcricao.cliente || "Cliente nao informado",
+    cliente: transcricao.cliente || "Cliente não informado",
     categoria: risco.categoria || "Risco",
     tipo: normalizarTipoRisco(risco.categoria),
     severidade: risco.severidade || "MEDIO",
     ocorrencias: Math.max(1, risco.ocorrencias || 0),
     evidencias: limitarEvidencias(risco.evidencias),
-    recomendacao: risco.recomendacao || "Priorizar revisao comercial e acompanhar a evolucao do cliente.",
+    recomendacao: risco.recomendacao || "Priorizar revisão comercial e acompanhar a evolução do cliente.",
     legado: false,
   };
 }
@@ -135,7 +135,7 @@ function riscoLegadoParaDetalhe(
   return {
     id: `${transcricao.id}-risco-legado-${index}`,
     transcricaoId: transcricao.id,
-    cliente: transcricao.cliente || "Cliente nao informado",
+    cliente: transcricao.cliente || "Cliente não informado",
     categoria: risco.tipo,
     tipo: risco.tipo,
     severidade: risco.severidade,
@@ -156,13 +156,13 @@ function oportunidadeConsolidadaParaDetalhe(
   return {
     id: `${transcricao.id}-oportunidade-consolidada-${index}`,
     transcricaoId: transcricao.id,
-    cliente: transcricao.cliente || "Cliente nao informado",
+    cliente: transcricao.cliente || "Cliente não informado",
     categoria: oportunidade.categoria || "Oportunidade",
     tipo: normalizarTipoOportunidade(oportunidade.categoria),
     score: oportunidade.score ?? 0,
     ocorrencias: Math.max(1, oportunidade.ocorrencias || 0),
     evidencias: limitarEvidencias(oportunidade.evidencias),
-    recomendacao: oportunidade.recomendacao || "Validar aderencia da oportunidade e encaminhar proxima acao comercial.",
+    recomendacao: oportunidade.recomendacao || "Validar aderência da oportunidade e encaminhar próxima ação comercial.",
     legado: false,
   };
 }
@@ -175,7 +175,7 @@ function oportunidadeLegadaParaDetalhe(
   return {
     id: `${transcricao.id}-oportunidade-legada-${index}`,
     transcricaoId: transcricao.id,
-    cliente: transcricao.cliente || "Cliente nao informado",
+    cliente: transcricao.cliente || "Cliente não informado",
     categoria: oportunidade.tipo,
     tipo: oportunidade.tipo,
     score: oportunidade.score ?? 0,
@@ -183,7 +183,7 @@ function oportunidadeLegadaParaDetalhe(
     evidencias: [oportunidade.descricao].filter(Boolean),
     recomendacao: oportunidade.produtoRelacionado
       ? `Validar interesse em ${oportunidade.produtoRelacionado} e estimar proposta.`
-      : "Transformar o sinal comercial em proxima acao com responsavel definido.",
+      : "Transformar o sinal comercial em próxima ação com responsável definido.",
     legado: true,
   };
 }

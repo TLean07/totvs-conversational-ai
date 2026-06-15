@@ -18,7 +18,7 @@ export default function DashboardSkeleton() {
             Carregando dashboard
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            Estamos buscando indicadores, alertas e analises mais recentes da sua operacao.
+            Estamos buscando indicadores, alertas e análises mais recentes da sua operação.
           </p>
           <div className="mt-6 overflow-hidden rounded-full bg-slate-100">
             <div className="h-2 w-1/2 animate-pulse rounded-full bg-gradient-to-r from-[#1f5d9d] to-[#2b6cb0]" />

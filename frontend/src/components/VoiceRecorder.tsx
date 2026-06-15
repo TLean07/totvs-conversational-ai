@@ -129,7 +129,7 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
         </svg>
-        Navegador nao suporta gravacao de voz. Use Chrome ou Edge.
+        Navegador não suporta gravação de voz. Use Chrome ou Edge.
       </div>
     );
   }
@@ -144,7 +144,7 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
             className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white rounded-xl hover:bg-rose-600 transition-all duration-200 font-semibold text-sm shadow-lg shadow-rose-500/25"
           >
             <div className="w-3 h-3 bg-white rounded-sm" />
-            Parar Gravacao
+            Parar Gravação
           </button>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <div className="w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse" />
@@ -166,7 +166,7 @@ export default function VoiceRecorder({ onTranscript, currentText }: VoiceRecord
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
           </svg>
-          Gravar Reuniao
+          Gravar Reunião
         </button>
       )}
     </div>

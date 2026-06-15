@@ -66,12 +66,12 @@ function TranscricoesPageInner() {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm("Tem certeza que deseja excluir esta transcricao? Esta acao nao pode ser desfeita.")) {
+    if (confirm("Tem certeza que deseja excluir esta transcrição? Esta ação não pode ser desfeita.")) {
       try {
         await api.transcricoes.deletar(id);
         loadData();
       } catch {
-        alert("Erro ao excluir transcricao. Tente novamente.");
+        alert("Erro ao excluir transcrição. Tente novamente.");
       }
     }
   };
@@ -83,7 +83,7 @@ function TranscricoesPageInner() {
       await api.transcricoes.reprocessar(id);
       loadData();
     } catch {
-      alert("Nao foi possivel reprocessar esta transcricao agora.");
+      alert("Não foi possível reprocessar esta transcrição agora.");
     }
   };
 
@@ -107,7 +107,7 @@ function TranscricoesPageInner() {
       setSubmitError(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel analisar agora. A LeanIA pode estar iniciando; tente novamente em instantes."
+          : "Não foi possível analisar agora. A LeanIA pode estar iniciando; tente novamente em instantes."
       );
     } finally {
       setSubmitting(false);
@@ -117,7 +117,7 @@ function TranscricoesPageInner() {
   const handleImportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile) {
-      setImportError("Selecione um arquivo JSON no formato de transcricao TOTVS.");
+      setImportError("Selecione um arquivo JSON no formato de transcrição TOTVS.");
       return;
     }
     setImportLoading(true);
@@ -130,7 +130,7 @@ function TranscricoesPageInner() {
       setPageIndex(0);
       loadData(0);
     } catch (error) {
-      setImportError(error instanceof Error ? error.message : "Nao foi possivel importar o JSON.");
+      setImportError(error instanceof Error ? error.message : "Não foi possível importar o JSON.");
     } finally {
       setImportLoading(false);
     }
@@ -139,7 +139,7 @@ function TranscricoesPageInner() {
   const handleAudioSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!audioFile) {
-      setAudioError("Selecione um audio de reuniao em .wav, .mp3 ou .m4a.");
+      setAudioError("Selecione um áudio de reunião em .wav, .mp3 ou .m4a.");
       return;
     }
     setAudioLoading(true);
@@ -161,7 +161,7 @@ function TranscricoesPageInner() {
       setAudioError(
         error instanceof Error
           ? error.message
-          : "Transcricao automatica indisponivel no momento. Voce ainda pode importar texto ou JSON."
+          : "Transcrição automática indisponível no momento. Você ainda pode importar texto ou JSON."
       );
     } finally {
       setAudioLoading(false);
@@ -175,8 +175,8 @@ function TranscricoesPageInner() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Transcricoes</h1>
-              <p className="text-sm text-slate-500 mt-1">Gerencie e analise transcricoes de reunioes</p>
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Transcrições</h1>
+              <p className="text-sm text-slate-500 mt-1">Gerencie e análise transcrições de reuniões</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <button
@@ -197,7 +197,7 @@ function TranscricoesPageInner() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 003-3V5.25a3 3 0 10-6 0v7.5a3 3 0 003 3z" />
                 </svg>
-                {showAudioImport ? "Fechar Audio" : "Enviar Audio"}
+                {showAudioImport ? "Fechar Áudio" : "Enviar Áudio"}
               </button>
               <button
                 type="button"
@@ -217,7 +217,7 @@ function TranscricoesPageInner() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5h10.5A2.25 2.25 0 0019.5 17.25V6.75A2.25 2.25 0 0017.25 4.5H6.75A2.25 2.25 0 004.5 6.75v10.5A2.25 2.25 0 006.75 19.5z" />
                 </svg>
-                {showImport ? "Fechar Importacao" : "Importar JSON TOTVS"}
+                {showImport ? "Fechar Importação" : "Importar JSON TOTVS"}
               </button>
               <button
                 type="button"
@@ -246,7 +246,7 @@ function TranscricoesPageInner() {
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    Nova Transcricao
+                    Nova Transcrição
                   </>
                 )}
               </button>
@@ -319,12 +319,12 @@ function TranscricoesPageInner() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
-                  Importacao JSON TOTVS
+                  Importação JSON TOTVS
                 </div>
-                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricoes por JSON</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcrições por JSON</h2>
                 <p className="text-sm text-slate-500 leading-6 max-w-2xl">
-                  Envie um JSON no formato de transcricao TOTVS. Cada objeto de reuniao com
-                  <span className="font-semibold"> ANON_TRANSCRICAO</span> vira uma transcricao separada e entra na fila de analise.
+                  Envie um JSON no formato de transcrição TOTVS. Cada objeto de reunião com
+                  <span className="font-semibold"> ANON_TRANSCRICAO</span> vira uma transcrição separada e entra na fila de análise.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
@@ -352,10 +352,10 @@ function TranscricoesPageInner() {
                 )}
               </div>
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <p className="text-sm font-semibold text-emerald-900">Importacao por reuniao</p>
+                <p className="text-sm font-semibold text-emerald-900">Importação por reunião</p>
                 <p className="mt-1 text-xs leading-5 text-emerald-800">
-                  Arrays, objetos unicos, listas dentro de chaves arbitrarias e objetos JSON consecutivos sao aceitos.
-                  Reunioes repetidas pelo mesmo ID_MEETING sao ignoradas e informadas no resumo.
+                  Arrays, objetos únicos, listas dentro de chaves arbitrarias e objetos JSON consecutivos são aceitos.
+                  Reuniões repetidas pelo mesmo ID_MEETING são ignoradas e informadas no resumo.
                 </p>
               </div>
             </div>
@@ -376,12 +376,12 @@ function TranscricoesPageInner() {
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M4.5 19.5h15" />
                     </svg>
-                    Importar para analise
+                    Importar para análise
                   </>
                 )}
               </button>
               <p className="text-sm text-slate-500">
-                Cada transcricao salva entra como <span className="font-semibold">PROCESSANDO</span> e aparece separadamente na listagem e no dashboard.
+                Cada transcrição salva entra como <span className="font-semibold">PROCESSANDO</span> e aparece separadamente na listagem e no dashboard.
               </p>
             </div>
 
@@ -394,7 +394,7 @@ function TranscricoesPageInner() {
             {importResult && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <p className="font-semibold">
-                  Foram encontradas {importResult.found} transcricoes no arquivo. {importResult.imported} foram importadas separadamente.
+                  Foram encontradas {importResult.found} transcrições no arquivo. {importResult.imported} foram importadas separadamente.
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <div className="rounded-lg bg-white/70 px-3 py-2"><span className="block text-xs">Encontradas</span><strong>{importResult.found}</strong></div>
@@ -407,7 +407,7 @@ function TranscricoesPageInner() {
                 </p>
                 {importResult.imported > 0 && (
                   <a href="#transcription-list" className="mt-3 inline-flex rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
-                    Ver transcricoes importadas
+                    Ver transcrições importadas
                   </a>
                 )}
                 {importResult.items.length > 0 && (
@@ -443,17 +443,17 @@ function TranscricoesPageInner() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-100">
-                  Transcricao automatica opcional
+                  Transcrição automática opcional
                 </div>
-                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Enviar audio da reuniao</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Enviar áudio da reunião</h2>
                 <p className="text-sm text-slate-500 leading-6 max-w-2xl">
-                  O backend envia o audio ao ai-service. Quando o Parakeet estiver habilitado, ele gera a transcricao e a LeanIA analisa o texto em seguida.
+                  O backend envia o áudio ao ai-service. Quando o Parakeet estiver habilitado, ele gera a transcrição e a LeanIA analisa o texto em seguida.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
                 <p className="font-semibold text-slate-700">Formatos e limites</p>
                 <p className="mt-1 text-xs leading-5">
-                  Aceita .wav, .mp3 e .m4a. Limite padrao: 100 MB e ate 60 minutos. Se a transcricao automatica falhar, use texto ou JSON.
+                  Aceita .wav, .mp3 e .m4a. Limite padrão: 100 MB e até 60 minutos. Se a transcrição automática falhar, use texto ou JSON.
                 </p>
               </div>
             </div>
@@ -476,7 +476,7 @@ function TranscricoesPageInner() {
                   value={audioForm.vendedor}
                   onChange={(e) => setAudioForm({ ...audioForm, vendedor: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                  placeholder="Responsavel comercial"
+                  placeholder="Responsável comercial"
                 />
               </div>
               <div>
@@ -492,7 +492,7 @@ function TranscricoesPageInner() {
             </div>
 
             <div className="mt-5">
-              <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo de audio</label>
+              <label className="block text-sm font-medium text-slate-600 mb-1.5">Arquivo de áudio</label>
               <input
                 type="file"
                 accept=".wav,.mp3,.m4a,audio/wav,audio/mpeg,audio/mp4,audio/x-m4a"
@@ -527,24 +527,24 @@ function TranscricoesPageInner() {
                 )}
               </button>
               <p className="text-sm text-slate-500">
-                Parakeet e opcional. Texto e JSON continuam disponiveis como fallback.
+                Parakeet é opcional. Texto e JSON continuam disponíveis como alternativa.
               </p>
             </div>
 
             {audioError && (
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                <p className="font-semibold">Transcricao automatica indisponivel.</p>
+                <p className="font-semibold">Transcrição automática indisponível.</p>
                 <p className="mt-1">{audioError}</p>
-                <p className="mt-2 text-xs">Cole a transcricao manualmente ou importe o JSON da TOTVS para continuar sem bloquear o sistema.</p>
+                <p className="mt-2 text-xs">Cole a transcrição manualmente ou importe o JSON da TOTVS para continuar sem bloquear o sistema.</p>
               </div>
             )}
 
             {audioResult && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                <p className="font-semibold">Audio transcrito e enviado para analise da LeanIA.</p>
+                <p className="font-semibold">Áudio transcrito e enviado para análise da LeanIA.</p>
                 <p className="mt-1">
-                  Modelo: {audioResult.transcriptionModel || "provider automatico"}.
-                  {audioResult.audioDurationSeconds ? ` Duracao: ${Math.round(audioResult.audioDurationSeconds)}s.` : ""}
+                  Modelo: {audioResult.transcriptionModel || "provider automático"}.
+                  {audioResult.audioDurationSeconds ? ` Duração: ${Math.round(audioResult.audioDurationSeconds)}s.` : ""}
                 </p>
               </div>
             )}
@@ -553,8 +553,8 @@ function TranscricoesPageInner() {
 
         {showForm && (
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
-            <h2 className="text-lg font-semibold text-slate-800 mb-1">Enviar Nova Transcricao</h2>
-            <p className="text-sm text-slate-400 mb-6">Preencha os dados da reuniao e cole a transcricao</p>
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">Enviar Nova Transcrição</h2>
+            <p className="text-sm text-slate-400 mb-6">Preencha os dados da reunião e cole a transcrição</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
               <div>
                 <label className="block text-sm font-medium text-slate-600 mb-1.5">Cliente</label>
@@ -583,11 +583,11 @@ function TranscricoesPageInner() {
                   value={form.participantes}
                   onChange={(e) => setForm({ ...form, participantes: e.target.value })}
                   className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-                  placeholder="Joao Silva, Maria Santos"
+                  placeholder="João Silva, Maria Santos"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-600 mb-1.5">Duracao (min)</label>
+                <label className="block text-sm font-medium text-slate-600 mb-1.5">Duração (min)</label>
                 <input
                   type="number"
                   value={form.duracaoMinutos}
@@ -600,7 +600,7 @@ function TranscricoesPageInner() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium text-slate-600">
-                  Transcricao da Reuniao <span className="text-rose-500">*</span>
+                  Transcrição da Reunião <span className="text-rose-500">*</span>
                 </label>
                 <VoiceRecorder
                   currentText={form.textoOriginal}
@@ -613,7 +613,7 @@ function TranscricoesPageInner() {
                 rows={8}
                 onChange={(e) => setForm({ ...form, textoOriginal: e.target.value })}
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all resize-none"
-                placeholder="Cole aqui o texto da transcricao ou clique em 'Gravar Reuniao' para transcrever em tempo real..."
+                placeholder="Cole aqui o texto da transcrição ou clique em 'Gravar Reunião' para transcrever em tempo real..."
               />
             </div>
             <div className="flex items-center gap-4">
@@ -638,13 +638,13 @@ function TranscricoesPageInner() {
               </button>
               {submitting && (
                 <p className="text-sm text-slate-400">
-                  A LeanIA esta processando. Se o modelo gratuito estiver frio, o fallback local assume automaticamente.
+                  A LeanIA está processando. Se o modelo gratuito estiver indisponível, a alternativa local assume automaticamente.
                 </p>
               )}
             </div>
             {submitError && (
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                <p className="font-semibold">Nao foi possivel concluir a analise.</p>
+                <p className="font-semibold">Não foi possível concluir a análise.</p>
                 <p className="mt-1">{submitError}</p>
                 <button
                   type="submit"
@@ -664,15 +664,15 @@ function TranscricoesPageInner() {
               <div className="w-12 h-12 rounded-full border-4 border-slate-200" />
               <div className="w-12 h-12 rounded-full border-4 border-blue-500 border-t-transparent animate-spin absolute top-0" />
             </div>
-            <p className="text-slate-400 text-sm">Carregando transcricoes...</p>
+            <p className="text-slate-400 text-sm">Carregando transcrições...</p>
           </div>
         ) : transcricoes.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-16 text-center">
             <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
-            <p className="text-slate-500 font-medium">Nenhuma transcricao encontrada</p>
-            <p className="text-sm text-slate-400 mt-1">Clique em &apos;Nova Transcricao&apos; para comecar</p>
+            <p className="text-slate-500 font-medium">Nenhuma transcrição encontrada</p>
+            <p className="text-sm text-slate-400 mt-1">Clique em &após;Nova Transcrição&após; para comecar</p>
           </div>
         ) : (() => {
           const filtradas = transcricoes.filter((t) => {
@@ -687,13 +687,13 @@ function TranscricoesPageInner() {
             {filtradas.length !== transcricoes.length && (
               <p className="text-xs text-slate-400 mb-3">
                 Mostrando <span className="font-semibold text-slate-600">{filtradas.length}</span> de{" "}
-                <span className="font-semibold text-slate-600">{transcricoes.length}</span> transcricoes
+                <span className="font-semibold text-slate-600">{transcricoes.length}</span> transcrições
               </p>
             )}
           <div id="transcription-list" className="space-y-4">
             {filtradas.length === 0 ? (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-                <p className="text-slate-500 font-medium">Nenhuma transcricao para este filtro</p>
+                <p className="text-slate-500 font-medium">Nenhuma transcrição para este filtro</p>
                 <p className="text-sm text-slate-400 mt-1">Tente ajustar os filtros acima</p>
               </div>
             ) : filtradas.map((t) => (
@@ -710,7 +710,7 @@ function TranscricoesPageInner() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors truncate">
-                          {t.cliente || `Transcricao #${t.id}`}
+                          {t.cliente || `Transcrição #${t.id}`}
                         </h3>
                         {t.vendedor && (
                           <p className="text-xs text-slate-400 truncate">Vendedor: {t.vendedor}</p>
@@ -725,7 +725,7 @@ function TranscricoesPageInner() {
                         <SentimentBadge sentimento={t.analise.sentimentoGeral as Sentimento} />
                       )}
                       <span className="text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap bg-blue-50 text-blue-700 ring-1 ring-blue-100">
-                        {t.origemTranscricao === "parakeet" ? "Audio Parakeet" : t.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
+                        {t.origemTranscricao === "parakeet" ? "Áudio Parakeet" : t.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
                       </span>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold whitespace-nowrap ${
                         t.status === "PROCESSADA" ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
@@ -743,7 +743,7 @@ function TranscricoesPageInner() {
                     <button
                       onClick={(e) => handleDelete(e, t.id)}
                       className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors ml-auto lg:ml-2"
-                      title="Excluir Transcricao"
+                      title="Excluir Transcrição"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -793,7 +793,7 @@ function TranscricoesPageInner() {
           {pageData && pageData.totalPages > 1 && (
             <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
               <span className="text-slate-500">
-                Pagina {pageData.page + 1} de {pageData.totalPages} - {pageData.totalElements} transcricoes
+                Página {pageData.page + 1} de {pageData.totalPages} - {pageData.totalElements} transcrições
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -810,7 +810,7 @@ function TranscricoesPageInner() {
                   onClick={() => setPageIndex((p) => p + 1)}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 disabled:opacity-50"
                 >
-                  Proxima
+                  Próxima
                 </button>
               </div>
             </div>

@@ -49,9 +49,9 @@ const RISK_COLORS: Record<string, string> = {
 
 const RISK_LABELS: Record<string, string> = {
   CHURN: "Churn",
-  CONCORRENCIA: "Concorrencia",
-  INSATISFACAO: "Insatisfacao",
-  PERDA_CONFIANCA: "Confianca",
+  CONCORRENCIA: "Concorrência",
+  INSATISFACAO: "Insatisfação",
+  PERDA_CONFIANCA: "Confiança",
 };
 
 const OPORTUNIDADE_COLORS: Record<string, string> = {
@@ -173,7 +173,7 @@ export default function DashboardPage() {
       await api.alertas.marcarVisto(id);
       await loadData("refresh");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Nao foi possivel atualizar o alerta.");
+      setActionError(err instanceof Error ? err.message : "Não foi possível atualizar o alerta.");
     } finally {
       setProcessingAlertId(null);
     }
@@ -186,7 +186,7 @@ export default function DashboardPage() {
       await api.alertas.marcarResolvido(id);
       await loadData("refresh");
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Nao foi possivel resolver o alerta.");
+      setActionError(err instanceof Error ? err.message : "Não foi possível resolver o alerta.");
     } finally {
       setProcessingAlertId(null);
     }
@@ -234,7 +234,7 @@ export default function DashboardPage() {
   if (loading && !data) return <DashboardSkeleton />;
 
   if (error || !data) {
-    return <DashboardErrorState message={error || "Dados indisponiveis"} onRetry={() => loadData("initial")} />;
+    return <DashboardErrorState message={error || "Dados indisponíveis"} onRetry={() => loadData("initial")} />;
   }
 
   return (
@@ -251,7 +251,7 @@ export default function DashboardPage() {
 
         <section aria-label="Indicadores principais" className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           <StatsCard
-            title="Transcricoes"
+            title="Transcrições"
             value={data.totalTranscricoes}
             subtitle="Total registrado"
             color="blue"
@@ -269,7 +269,7 @@ export default function DashboardPage() {
           <StatsCard
             title="Bases consolidadas"
             value={basesConsolidadas}
-            subtitle="JSONs/documentos unicos"
+            subtitle="JSONs/documentos únicos"
             color="blue"
             icon={metricIcon("M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5")}
           />
@@ -303,7 +303,7 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
             <p className="text-sm font-semibold text-rose-700">Riscos consolidados</p>
             <p className="mt-2 text-3xl font-bold text-rose-800">{data.totalRiscos}</p>
-            <p className="mt-1 text-sm text-rose-700/80">Categorias de risco agrupadas para priorizacao.</p>
+            <p className="mt-1 text-sm text-rose-700/80">Categorias de risco agrupadas para priorização.</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/60">
             <p className="text-sm font-semibold text-slate-600">Oportunidades consolidadas</p>
@@ -313,12 +313,12 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
             <p className="text-sm font-semibold text-blue-700">Alertas consolidados</p>
             <p className="mt-2 text-3xl font-bold text-blue-900">{alertasConsolidados}</p>
-            <p className="mt-1 text-sm text-blue-700/80">Alertas acionaveis sem duplicar ocorrencias internas.</p>
+            <p className="mt-1 text-sm text-blue-700/80">Alertas acionáveis sem duplicar ocorrências internas.</p>
           </div>
         </section>
 
         <section className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ChartCard title="Distribuicao de sentimento" description="Sentimento consolidado por transcricao analisada.">
+          <ChartCard title="Distribuição de sentimento" description="Sentimento consolidado por transcrição analisada.">
             {sentimentoData.length > 0 ? (
               <>
                 <div className="h-72" aria-hidden="true">
@@ -334,16 +334,16 @@ export default function DashboardPage() {
                   </ResponsiveContainer>
                 </div>
                 <p className="sr-only">
-                  Distribuicao de sentimento consolidada: {sentimentoData.map((item) => `${item.name} ${item.value}`).join(", ")}.
+                  Distribuição de sentimento consolidada: {sentimentoData.map((item) => `${item.name} ${item.value}`).join(", ")}.
                 </p>
                 <ChartLegend data={sentimentoData} colors={SENTIMENT_COLORS} />
               </>
             ) : (
-              <EmptyState compact title="Sem sentimentos ainda" description="Envie transcricoes para a LeanIA gerar a distribuicao." />
+              <EmptyState compact title="Sem sentimentos ainda" description="Envie transcrições para a LeanIA gerar a distribuição." />
             )}
           </ChartCard>
 
-          <ChartCard title="Riscos por tipo" description="Categorias consolidadas de risco, sem duplicar ocorrencias internas.">
+          <ChartCard title="Riscos por tipo" description="Categorias consolidadas de risco, sem duplicar ocorrências internas.">
             {riscoData.length > 0 ? (
               <>
                 <div className="h-72" aria-hidden="true">
@@ -366,14 +366,14 @@ export default function DashboardPage() {
                 </p>
               </>
             ) : (
-              <EmptyState compact title="Sem riscos identificados" description="Os riscos aparecem aqui quando uma analise detectar sinais criticos." />
+              <EmptyState compact title="Sem riscos identificados" description="Os riscos aparecem aqui quando uma análise detectar sinais críticos." />
             )}
           </ChartCard>
         </section>
 
         <ChartCard
           title="Oportunidades por tipo"
-          description="Categorias comerciais consolidadas, sem duplicar ocorrencias internas."
+          description="Categorias comerciais consolidadas, sem duplicar ocorrências internas."
           className="mb-8"
         >
           {oportunidadeData.length > 0 ? (
@@ -401,13 +401,13 @@ export default function DashboardPage() {
             <EmptyState
               compact
               title="Sem oportunidades registradas"
-              description="Quando uma reuniao indicar upsell, cross-sell ou novo produto, a oportunidade aparece neste grafico."
+              description="Quando uma reunião indicar upsell, cross-sell ou novo produto, a oportunidade aparece neste gráfico."
             />
           )}
         </ChartCard>
 
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <ChartCard title="Alertas recentes" description="Ultimos alertas gerados pela LeanIA para acompanhamento imediato.">
+          <ChartCard title="Alertas recentes" description="Últimos alertas gerados pela LeanIA para acompanhamento imediato.">
             <div className="mb-4 flex justify-end">
               <Link href="/alertas" className="text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline">
                 Ver todos
@@ -421,7 +421,7 @@ export default function DashboardPage() {
             />
           </ChartCard>
 
-          <ChartCard title="Transcricoes recentes" description="Filtre reunioes analisadas por cliente, sentimento e status.">
+          <ChartCard title="Transcrições recentes" description="Filtre reuniões analisadas por cliente, sentimento e status.">
             <div className="mb-4 grid gap-3">
               <label className="text-sm font-semibold text-slate-700" htmlFor="dashboard-client-filter">
                 Buscar cliente
@@ -477,7 +477,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
                 <span>
-                  {transcricoesFiltradas.length} de {data.ultimasTranscricoes.length} reunioes
+                  {transcricoesFiltradas.length} de {data.ultimasTranscricoes.length} reuniões
                 </span>
                 {activeFilterCount > 0 && (
                   <button type="button" onClick={clearFilters} className="font-semibold text-blue-700 hover:text-blue-800 hover:underline">
@@ -498,7 +498,7 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-2">
                         <span className="truncate text-sm font-semibold text-slate-900 group-hover:text-blue-800">
-                          {transcricao.cliente || `Transcricao #${transcricao.id}`}
+                          {transcricao.cliente || `Transcrição #${transcricao.id}`}
                         </span>
                         {transcricao.analise && <SentimentBadge sentimento={transcricao.analise.sentimentoGeral as Sentimento} />}
                       </div>
@@ -508,7 +508,7 @@ export default function DashboardPage() {
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
                       <span className="rounded-full bg-slate-100 px-2 py-1">{transcricao.status}</span>
                       <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
-                        {transcricao.origemTranscricao === "parakeet" ? "Audio Parakeet" : transcricao.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
+                        {transcricao.origemTranscricao === "parakeet" ? "Áudio Parakeet" : transcricao.origemTranscricao === "json" ? "JSON TOTVS" : "Manual"}
                       </span>
                       {transcricao.transcriptionModel && <span>Modelo: {transcricao.transcriptionModel}</span>}
                       {transcricao.vendedor && <span>Vendedor: {transcricao.vendedor}</span>}
@@ -516,16 +516,16 @@ export default function DashboardPage() {
                   </Link>
                 ))}
                 {transcricoesFiltradas.length === 0 && (
-                  <EmptyState compact title="Nenhuma reuniao encontrada" description="Ajuste os filtros ou limpe a busca para ver mais transcricoes." />
+                  <EmptyState compact title="Nenhuma reunião encontrada" description="Ajuste os filtros ou limpe a busca para ver mais transcrições." />
                 )}
               </div>
             ) : (
               <EmptyState
-                title="Nenhuma transcricao registrada"
-                description="Envie uma reuniao para alimentar a LeanIA e iniciar o acompanhamento do dashboard."
+                title="Nenhuma transcrição registrada"
+                description="Envie uma reunião para alimentar a LeanIA e iniciar o acompanhamento do dashboard."
                 action={
                   <Link href="/transcricoes" className="rounded-xl bg-[#1f5d9d] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#184b80]">
-                    Enviar transcricao
+                    Enviar transcrição
                   </Link>
                 }
               />

@@ -13,9 +13,9 @@ import Link from "next/link";
 
 const TIPO_LABELS: Record<TipoRisco, string> = {
   CHURN: "Churn",
-  CONCORRENCIA: "Concorrencia",
-  INSATISFACAO: "Insatisfacao",
-  PERDA_CONFIANCA: "Perda de Confianca",
+  CONCORRENCIA: "Concorrência",
+  INSATISFACAO: "Insatisfação",
+  PERDA_CONFIANCA: "Perda de Confiança",
 };
 
 const TIPO_COLORS: Record<TipoRisco, string> = {
@@ -76,18 +76,18 @@ export default function RiscosPage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Riscos consolidados</p>
               <p className="mt-1 text-2xl font-bold text-slate-900">{filtrados.length}</p>
-              <p className="mt-1 text-xs text-slate-500">Cada card agrupa evidencias semelhantes.</p>
+              <p className="mt-1 text-xs text-slate-500">Cada card agrupa evidências semelhantes.</p>
             </div>
             <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Bases consolidadas</p>
               <p className="mt-1 text-2xl font-bold text-blue-900">{basesConsolidadas}</p>
-              <p className="mt-1 text-xs text-blue-700">JSON/documento unico usado nesta visao.</p>
+              <p className="mt-1 text-xs text-blue-700">JSON/documento único usado nesta visão.</p>
             </div>
           </section>
         )}
 
         <div className="flex gap-2 mb-3 flex-wrap">
-          {([["", "Todos os tipos"], ["CHURN", "Churn"], ["CONCORRENCIA", "Concorrencia"], ["INSATISFACAO", "Insatisfacao"], ["PERDA_CONFIANCA", "Perda de Confianca"]] as [TipoRisco | "", string][]).map(([val, label]) => (
+          {([["", "Todos os tipos"], ["CHURN", "Churn"], ["CONCORRENCIA", "Concorrência"], ["INSATISFACAO", "Insatisfação"], ["PERDA_CONFIANCA", "Perda de Confiança"]] as [TipoRisco | "", string][]).map(([val, label]) => (
             <button
               key={val}
               onClick={() => setFiltroTipo(val)}
@@ -103,7 +103,7 @@ export default function RiscosPage() {
         </div>
 
         <div className="flex gap-2 mb-6 flex-wrap">
-          {([["", "Todas severidades"], ["ALTO", "Alto"], ["MEDIO", "Medio"], ["BAIXO", "Baixo"]] as [Severidade | "", string][]).map(([val, label]) => (
+          {([["", "Todas severidades"], ["ALTO", "Alto"], ["MEDIO", "Médio"], ["BAIXO", "Baixo"]] as [Severidade | "", string][]).map(([val, label]) => (
             <button
               key={val}
               onClick={() => setFiltroSev(val)}
@@ -160,7 +160,7 @@ export default function RiscosPage() {
                 )}
                 {r.ocorrencias > 1 && (
                   <p className="mb-3 text-xs text-slate-400">
-                    Cobertura interna: {r.ocorrencias} ocorrencia{r.ocorrencias === 1 ? "" : "s"} agrupada{r.ocorrencias === 1 ? "" : "s"}.
+                    Cobertura interna: {r.ocorrencias} ocorrência{r.ocorrencias === 1 ? "" : "s"} agrupada{r.ocorrencias === 1 ? "" : "s"}.
                   </p>
                 )}
                 <p className="text-sm text-slate-700 leading-relaxed mb-3">{r.recomendacao}</p>

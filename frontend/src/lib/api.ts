@@ -52,7 +52,7 @@ async function request<T>(path: string, options?: RequestInit, retry = true): Pr
     if (!refreshed) {
       setSession(null);
       redirectToLogin();
-      throw new Error("Sessao expirada. Faca login novamente.");
+      throw new Error("Sessão expirada. Faça login novamente.");
     }
   }
 
@@ -83,7 +83,7 @@ async function request<T>(path: string, options?: RequestInit, retry = true): Pr
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(error.error || "Erro na requisicao");
+    throw new Error(error.error || "Erro na requisição");
   }
 
   if (res.status === 204) {

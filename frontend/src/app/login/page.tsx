@@ -26,7 +26,7 @@ export default function LoginPage() {
       await api.auth.login(email, password);
       router.replace("/");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Nao foi possivel entrar");
+      setError(e instanceof Error ? e.message : "Não foi possível entrar");
     } finally {
       setLoading(false);
     }
@@ -61,10 +61,10 @@ export default function LoginPage() {
               Ambiente seguro
             </div>
             <h1 className="text-4xl font-bold leading-tight text-[#10294a]">
-              Inteligencia conversacional para times que precisam agir rapido.
+              Inteligência conversacional para times que precisam agir rápido.
             </h1>
             <p className="mt-4 max-w-lg text-base leading-7 text-slate-600">
-              Acesse transcricoes, alertas e analises comerciais com seguranca, rastreabilidade e controles por usuario.
+              Acesse transcrições, alertas e análises comerciais com segurança, rastreabilidade e controles por usuário.
             </p>
             <div className="mt-8 grid max-w-lg grid-cols-3 gap-3">
               <div className="rounded-lg bg-white p-4 shadow-sm ring-1 ring-slate-200">
@@ -88,7 +88,7 @@ export default function LoginPage() {
             <Image src="/totvs-logo.png" alt="TOTVS" width={146} height={36} className="h-9 w-auto object-contain" />
             <h2 className="mt-6 text-2xl font-bold text-[#10294a]">Entrar na plataforma</h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              Use suas credenciais para acessar o painel de inteligencia conversacional.
+              Use suas credenciais para acessar o painel de inteligência conversacional.
             </p>
           </div>
 

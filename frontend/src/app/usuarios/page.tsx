@@ -7,12 +7,12 @@ import type { UserResponse, UserRole } from "@/lib/types";
 
 const roleLabels: Record<UserRole, string> = {
   ADMIN: "Administrador",
-  USER: "Usuario",
+  USER: "Usuário",
 };
 
 const roleDescriptions: Record<UserRole, string> = {
-  ADMIN: "Gerencia usuarios e acessa todas as areas",
-  USER: "Acessa transcricoes, analises e alertas",
+  ADMIN: "Gerencia usuários e acessa todas as áreas",
+  USER: "Acessa transcrições, análises e alertas",
 };
 
 type StatusFilter = "todos" | "ativos" | "inativos";
@@ -83,7 +83,7 @@ export default function UsuariosPage() {
     api.users
       .listar()
       .then(setUsuarios)
-      .catch((e) => setError(e instanceof Error ? e.message : "Erro ao carregar usuarios"))
+      .catch((e) => setError(e instanceof Error ? e.message : "Erro ao carregar usuários"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -122,9 +122,9 @@ export default function UsuariosPage() {
       const created = await api.users.criar(form);
       setUsuarios((current) => [created, ...current]);
       setForm({ name: "", email: "", password: "", role: "USER" });
-      setSuccess("Usuario criado com sucesso.");
+      setSuccess("Usuário criado com sucesso.");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro ao criar usuario");
+      setError(e instanceof Error ? e.message : "Erro ao criar usuário");
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +146,7 @@ export default function UsuariosPage() {
       );
       setPendingAction(null);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Nao foi possivel atualizar o usuario");
+      setError(e instanceof Error ? e.message : "Não foi possível atualizar o usuário");
     }
   };
 
@@ -164,12 +164,12 @@ export default function UsuariosPage() {
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="mb-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-200/70">
           <div className="bg-gradient-to-r from-[#16355f] via-[#1f5d9d] to-[#2a78bf] px-6 py-7 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">Administracao</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">Administração</p>
             <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Usuarios</h1>
+                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Usuários</h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-50">
-                  Gerencie acessos, perfis e status dos usuarios que usam a plataforma TOTVS Conversational Intelligence.
+                  Gerencie acessos, perfis e status dos usuários que usam a plataforma TOTVS Conversational Intelligence.
                 </p>
               </div>
               <button
@@ -187,7 +187,7 @@ export default function UsuariosPage() {
             <SummaryCard title="Total" value={stats.total} description="Acessos cadastrados" tone="slate" />
             <SummaryCard title="Ativos" value={stats.active} description="Podem acessar o painel" tone="emerald" />
             <SummaryCard title="Inativos" value={stats.inactive} description="Bloqueados para login" tone="blue" />
-            <SummaryCard title="Admins" value={stats.admins} description="Permissoes elevadas" tone="violet" />
+            <SummaryCard title="Admins" value={stats.admins} description="Permissões elevadas" tone="violet" />
           </div>
         </header>
 
@@ -210,9 +210,9 @@ export default function UsuariosPage() {
                 <UserIcon path="M18 7.5v3m0 0v3m0-3h3m-3 0h-3M6.75 6.75a3.75 3.75 0 117.5 0 3.75 3.75 0 01-7.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Novo usuario</h2>
+                <h2 className="text-lg font-bold text-slate-900">Novo usuário</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Crie uma conta com senha temporaria e perfil de acesso.
+                  Crie uma conta com senha temporária e perfil de acesso.
                 </p>
               </div>
             </div>
@@ -243,14 +243,14 @@ export default function UsuariosPage() {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
-                  placeholder="usuario@empresa.com"
+                  placeholder="usuário@empresa.com"
                   className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#2b6cb0] focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 />
               </div>
 
               <div>
                 <label htmlFor="user-password" className="mb-1.5 block text-sm font-semibold text-slate-700">
-                  Senha temporaria
+                  Senha temporária
                 </label>
                 <input
                   id="user-password"
@@ -260,7 +260,7 @@ export default function UsuariosPage() {
                   required
                   minLength={12}
                   maxLength={128}
-                  placeholder="Minimo de 12 caracteres"
+                  placeholder="Mínimo de 12 caracteres"
                   className="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#2b6cb0] focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                 />
                 <p className="mt-1.5 text-xs text-slate-500">Use uma senha forte e compartilhe por canal seguro.</p>
@@ -276,7 +276,7 @@ export default function UsuariosPage() {
                   onChange={(e) => setForm({ ...form, role: e.target.value as UserRole })}
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-[#2b6cb0] focus:ring-4 focus:ring-blue-500/10"
                 >
-                  <option value="USER">Usuario</option>
+                  <option value="USER">Usuário</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
                 <p className="mt-1.5 text-xs text-slate-500">{roleDescriptions[form.role]}</p>
@@ -296,7 +296,7 @@ export default function UsuariosPage() {
               ) : (
                 <>
                   <UserIcon path="M12 4.5v15m7.5-7.5h-15" className="h-4 w-4" />
-                  Criar usuario
+                  Criar usuário
                 </>
               )}
             </button>
@@ -308,7 +308,7 @@ export default function UsuariosPage() {
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Acessos cadastrados</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    {filteredUsers.length} de {usuarios.length} usuarios exibidos
+                    {filteredUsers.length} de {usuarios.length} usuários exibidos
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -338,7 +338,7 @@ export default function UsuariosPage() {
                   >
                     <option value="">Todos perfis</option>
                     <option value="ADMIN">Administradores</option>
-                    <option value="USER">Usuarios</option>
+                    <option value="USER">Usuários</option>
                   </select>
                 </div>
               </div>
@@ -357,7 +357,7 @@ export default function UsuariosPage() {
               <div className="border-b border-amber-200 bg-amber-50 px-5 py-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <p className="text-sm text-amber-900">
-                    Confirmar {pendingAction.nextActive ? "ativacao" : "desativacao"} de{" "}
+                    Confirmar {pendingAction.nextActive ? "ativação" : "desativação"} de{" "}
                     <span className="font-bold">{pendingAction.name}</span>?
                   </p>
                   <div className="flex gap-2">
@@ -393,7 +393,7 @@ export default function UsuariosPage() {
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 ring-1 ring-slate-200">
                   <UserIcon path="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
                 </div>
-                <p className="font-semibold text-slate-700">Nenhum usuario encontrado</p>
+                <p className="font-semibold text-slate-700">Nenhum usuário encontrado</p>
                 <p className="mt-1 text-sm text-slate-500">Ajuste os filtros ou crie um novo acesso.</p>
               </div>
             ) : (
@@ -418,7 +418,7 @@ export default function UsuariosPage() {
                               <h3 className="truncate text-sm font-bold text-slate-900">{usuario.name}</h3>
                               {isCurrentUser && (
                                 <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
-                                  Voce
+                                  Você
                                 </span>
                               )}
                               <span
@@ -450,7 +450,7 @@ export default function UsuariosPage() {
                               className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white"
                             >
                               <UserIcon path="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L21 21M5.636 5.636L3 3" className="h-4 w-4" />
-                              {isCurrentUser ? "Usuario atual" : "Desativar"}
+                              {isCurrentUser ? "Usuário atual" : "Desativar"}
                             </button>
                           ) : (
                             <button
@@ -459,7 +459,7 @@ export default function UsuariosPage() {
                               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
                             >
                               <UserIcon path="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" className="h-4 w-4" />
-                              Ativar usuario
+                              Ativar usuário
                             </button>
                           )}
                         </div>

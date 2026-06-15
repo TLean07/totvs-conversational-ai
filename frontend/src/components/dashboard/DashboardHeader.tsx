@@ -17,7 +17,7 @@ export default function DashboardHeader({ lastUpdated, refreshing, onRefresh }: 
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-100">TOTVS Conversational Intelligence</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Dashboard executivo</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-50">
-              Visao consolidada de sentimentos, riscos, oportunidades e alertas gerados pela LeanIA.
+              Visão consolidada de sentimentos, riscos, oportunidades e alertas gerados pela LeanIA.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -25,7 +25,7 @@ export default function DashboardHeader({ lastUpdated, refreshing, onRefresh }: 
               href="/transcricoes"
               className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#1f5d9d] shadow-sm transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f5d9d]"
             >
-              Nova transcricao
+              Nova transcrição
             </Link>
             <button
               type="button"
@@ -39,7 +39,7 @@ export default function DashboardHeader({ lastUpdated, refreshing, onRefresh }: 
         </div>
       </div>
       <div className="flex flex-col gap-3 px-6 py-4 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <span>Use os indicadores para priorizar contas em risco e acompanhar a saude das reunioes.</span>
+        <span>Use os indicadores para priorizar contas em risco e acompanhar a saúde das reuniões.</span>
         <span className="font-medium text-slate-600">
           Atualizado: {lastUpdated ? lastUpdated.toLocaleString("pt-BR") : "agora"}
         </span>

@@ -46,13 +46,13 @@ export default function AlertasPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Alertas</h1>
-            <p className="text-sm text-slate-500 mt-1">Notificacoes geradas pela LeanIA</p>
+            <p className="text-sm text-slate-500 mt-1">Notificações geradas pela LeanIA</p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
             <div className="flex items-center gap-1.5">
               <span className="text-xs font-medium text-slate-400">Severidade:</span>
               {(["", "ALTO", "MEDIO", "BAIXO"] as const).map((s) => {
-                const labels: Record<string, string> = { "": "Todas", ALTO: "Alta", MEDIO: "Media", BAIXO: "Baixa" };
+                const labels: Record<string, string> = { "": "Todas", ALTO: "Alta", MEDIO: "Média", BAIXO: "Baixa" };
                 const activeColors: Record<string, string> = { "": "bg-slate-700 text-white", ALTO: "bg-rose-500 text-white", MEDIO: "bg-amber-500 text-white", BAIXO: "bg-sky-500 text-white" };
                 const active = filtroSeveridade === s;
                 return (
@@ -121,7 +121,7 @@ export default function AlertasPage() {
                   <p className="mt-1 text-xs text-amber-700">Grupos consolidados gerados pela LeanIA.</p>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ocorrencias cobertas</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ocorrências cobertas</p>
                   <p className="mt-1 text-2xl font-bold text-slate-900">
                     {filtrados.reduce((total, alerta) => total + Math.max(0, alerta.ocorrencias || 0), 0)}
                   </p>
@@ -132,7 +132,7 @@ export default function AlertasPage() {
                   <p className="mt-1 text-2xl font-bold text-rose-900">
                     {filtrados.filter((alerta) => alerta.prioridade === "ALTO").length}
                   </p>
-                  <p className="mt-1 text-xs text-rose-700">Alertas que pedem acao imediata.</p>
+                  <p className="mt-1 text-xs text-rose-700">Alertas que pedem ação imediata.</p>
                 </div>
               </div>
               {filtrados.length !== alertas.length && (
