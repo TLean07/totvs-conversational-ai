@@ -17,9 +17,13 @@ public interface TranscricaoRepository extends MongoRepository<Transcricao, Stri
     Page<Transcricao> findAllByOrderByDataCriacaoDesc(Pageable pageable);
     List<Transcricao> findByOwnerIdOrderByDataCriacaoDesc(String ownerId);
     Page<Transcricao> findByOwnerIdOrderByDataCriacaoDesc(String ownerId, Pageable pageable);
+    List<Transcricao> findTop5ByOrderByDataCriacaoDesc();
+    List<Transcricao> findTop5ByOwnerIdOrderByDataCriacaoDesc(String ownerId);
     List<Transcricao> findByOwnerIdAndStatus(String ownerId, StatusTranscricao status);
     List<Transcricao> findByOwnerIdAndClienteContainingIgnoreCase(String ownerId, String cliente);
     java.util.Optional<Transcricao> findByIdAndOwnerId(String id, String ownerId);
     boolean existsByMeetingId(String meetingId);
+    long countByStatus(StatusTranscricao status);
     long countByOwnerId(String ownerId);
+    long countByOwnerIdAndStatus(String ownerId, StatusTranscricao status);
 }

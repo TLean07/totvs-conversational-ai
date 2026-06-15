@@ -771,6 +771,17 @@ public class TranscricaoService {
                 .toList();
     }
 
+    public List<TranscricaoResponse> listarRecentesDashboard() {
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        List<Transcricao> transcricoes = user.isAdmin()
+                ? transcricaoRepository.findTop5ByOrderByDataCriacaoDesc()
+                : transcricaoRepository.findTop5ByOwnerIdOrderByDataCriacaoDesc(user.id());
+
+        return transcricoes.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public PageResponse<TranscricaoResponse> listarPaginado(int page, int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(50, size));

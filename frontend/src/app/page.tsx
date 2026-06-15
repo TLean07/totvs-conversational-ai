@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import { api, readCachedDashboard } from "@/lib/api";
 import type { DashboardResponse, Sentimento, StatusTranscricao } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import StatsCard from "@/components/StatsCard";
@@ -125,8 +125,9 @@ function metricIcon(path: string) {
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialDashboard] = useState<DashboardResponse | null>(() => readCachedDashboard());
+  const [data, setData] = useState<DashboardResponse | null>(initialDashboard);
+  const [loading, setLoading] = useState(!initialDashboard);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -163,8 +164,8 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    loadData("initial");
-  }, [loadData]);
+    loadData(initialDashboard ? "refresh" : "initial");
+  }, [initialDashboard, loadData]);
 
   const handleMarcarVisto = async (id: string) => {
     setProcessingAlertId(id);

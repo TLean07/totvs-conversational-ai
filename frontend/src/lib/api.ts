@@ -3,8 +3,25 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 let accessToken: string | null = null;
 let currentUser: import("./types").AuthUser | null = null;
 let refreshing: Promise<import("./types").AuthResponse | null> | null = null;
+let dashboardCache: { data: import("./types").DashboardResponse; cachedAt: number } | null = null;
+
+const DASHBOARD_CACHE_TTL_MS = 5 * 60 * 1000;
+
+export function readCachedDashboard() {
+  if (!dashboardCache || Date.now() - dashboardCache.cachedAt > DASHBOARD_CACHE_TTL_MS) {
+    return null;
+  }
+  return dashboardCache.data;
+}
+
+function clearDashboardCache() {
+  dashboardCache = null;
+}
 
 function setSession(session: import("./types").AuthResponse | null) {
+  if (!session || (currentUser && currentUser.id !== session.user.id)) {
+    clearDashboardCache();
+  }
   accessToken = session?.accessToken ?? null;
   currentUser = session?.user ?? null;
 }
@@ -135,7 +152,11 @@ export const api = {
       }),
   },
 
-  dashboard: () => request<import("./types").DashboardResponse>("/dashboard"),
+  dashboard: async () => {
+    const data = await request<import("./types").DashboardResponse>("/dashboard");
+    dashboardCache = { data, cachedAt: Date.now() };
+    return data;
+  },
 
   transcricoes: {
     listar: () => request<import("./types").TranscricaoResponse[]>("/transcricoes"),

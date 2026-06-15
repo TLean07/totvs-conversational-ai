@@ -4,12 +4,19 @@ import com.tlean07.fiap.challenge.enums.Severidade;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
 @Document(collection = "alertas")
+@CompoundIndexes({
+        @CompoundIndex(name = "status_priority_created", def = "{'status': 1, 'prioridade': 1, 'dataCriacao': -1}"),
+        @CompoundIndex(name = "owner_status_priority_created",
+                def = "{'ownerId': 1, 'status': 1, 'prioridade': 1, 'dataCriacao': -1}")
+})
 @Getter
 @Setter
 @NoArgsConstructor

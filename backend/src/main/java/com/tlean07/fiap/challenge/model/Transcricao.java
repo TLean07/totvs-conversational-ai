@@ -3,6 +3,8 @@ package com.tlean07.fiap.challenge.model;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -10,6 +12,10 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import java.time.LocalDateTime;
 
 @Document(collection = "transcricoes")
+@CompoundIndexes({
+        @CompoundIndex(name = "owner_created_desc", def = "{'ownerId': 1, 'dataCriacao': -1}"),
+        @CompoundIndex(name = "owner_status", def = "{'ownerId': 1, 'status': 1}")
+})
 @Getter
 @Setter
 @NoArgsConstructor

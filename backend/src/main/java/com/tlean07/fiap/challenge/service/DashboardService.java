@@ -41,8 +41,8 @@ public class DashboardService {
     public DashboardResponse getDashboard() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<AnaliseResultado> analises = user.isAdmin()
-                ? analiseRepository.findAll()
-                : analiseRepository.findAllByOwnerIdOrderByDataAnaliseDesc(user.id());
+                ? analiseRepository.findAllForDashboard()
+                : analiseRepository.findAllByOwnerIdForDashboard(user.id());
 
         Map<String, Long> sentimentoDistribuicao = new java.util.LinkedHashMap<>();
         Map<String, Long> riscoPorTipo = new java.util.LinkedHashMap<>();
@@ -98,8 +98,8 @@ public class DashboardService {
                         ? transcricaoRepository.count()
                         : transcricaoRepository.countByOwnerId(user.id()))
                 .transcricoesProcessadas(user.isAdmin()
-                        ? transcricaoRepository.findByStatus(StatusTranscricao.PROCESSADA).size()
-                        : transcricaoRepository.findByOwnerIdAndStatus(user.id(), StatusTranscricao.PROCESSADA).size())
+                        ? transcricaoRepository.countByStatus(StatusTranscricao.PROCESSADA)
+                        : transcricaoRepository.countByOwnerIdAndStatus(user.id(), StatusTranscricao.PROCESSADA))
                 .totalOportunidades(totalOportunidades)
                 .totalRiscos(totalRiscos)
                 .alertasNovos(alertasNovos)
@@ -114,8 +114,8 @@ public class DashboardService {
                 .sentimentoDistribuicao(sentimentoDistribuicao)
                 .riscoPorTipo(riscoPorTipo)
                 .oportunidadePorTipo(oportunidadePorTipo)
-                .alertasRecentes(alertaService.listarNovos().stream().limit(10).toList())
-                .ultimasTranscricoes(transcricaoService.listarTodas().stream().limit(5).toList())
+                .alertasRecentes(alertaService.listarNovosDashboard())
+                .ultimasTranscricoes(transcricaoService.listarRecentesDashboard())
                 .build();
     }
 

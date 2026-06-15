@@ -159,6 +159,18 @@ public class AlertaService {
                 .toList();
     }
 
+    public List<AlertaResponse> listarNovosDashboard() {
+        AuthenticatedUser user = SecurityUtils.currentUser();
+        List<Alerta> alertas = user.isAdmin()
+                ? alertaRepository.findTop10ByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta.NOVO)
+                : alertaRepository.findTop10ByOwnerIdAndStatusOrderByPrioridadeAscDataCriacaoDesc(
+                        user.id(), StatusAlerta.NOVO);
+
+        return alertas.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     public List<AlertaResponse> listarTodos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Alerta> alertas = user.isAdmin()
