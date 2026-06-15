@@ -1,6 +1,7 @@
 package com.tlean07.fiap.challenge.service;
 
 import com.tlean07.fiap.challenge.dto.DashboardResponse;
+import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
@@ -25,17 +26,20 @@ public class DashboardService {
     private final AlertaRepository alertaRepository;
     private final AlertaService alertaService;
     private final TranscricaoService transcricaoService;
+    private final TranscricaoInsightsService transcricaoInsightsService;
 
     public DashboardService(TranscricaoRepository transcricaoRepository,
                             AnaliseResultadoRepository analiseRepository,
                             AlertaRepository alertaRepository,
                             AlertaService alertaService,
-                            TranscricaoService transcricaoService) {
+                            TranscricaoService transcricaoService,
+                            TranscricaoInsightsService transcricaoInsightsService) {
         this.transcricaoRepository = transcricaoRepository;
         this.analiseRepository = analiseRepository;
         this.alertaRepository = alertaRepository;
         this.alertaService = alertaService;
         this.transcricaoService = transcricaoService;
+        this.transcricaoInsightsService = transcricaoInsightsService;
     }
 
     public DashboardResponse getDashboard() {
@@ -43,6 +47,7 @@ public class DashboardService {
         List<AnaliseResultado> analises = user.isAdmin()
                 ? analiseRepository.findAllForDashboard()
                 : analiseRepository.findAllByOwnerIdForDashboard(user.id());
+        List<TranscricaoInsightsResponse> insights = transcricaoInsightsService.listarTodos();
 
         Map<String, Long> sentimentoDistribuicao = new java.util.LinkedHashMap<>();
         Map<String, Long> riscoPorTipo = new java.util.LinkedHashMap<>();
@@ -63,8 +68,6 @@ public class DashboardService {
             MetricasAgregadas metricas = analise.getMetricasAgregadas();
             if (metricas != null && metricas.getPartesAnalisadas() > 0) {
                 increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
-                totalOportunidades += consolidatedOpportunityCount(analise);
-                totalRiscos += consolidatedRiskCount(analise);
                 totalPartes += metricas.getTotalPartes();
                 partesAnalisadas += metricas.getPartesAnalisadas();
                 partesNegativas += metricas.getPartesNegativas();
@@ -74,16 +77,30 @@ public class DashboardService {
                 mencoesCriticas += metricas.getMencoesCriticas();
                 alertasConsolidados += metricas.getAlertasConsolidados();
 
-                safeList(analise.getRiscosConsolidados()).forEach(risco ->
-                        increment(riscoPorTipo, normalizeRiskKey(risco.getCategoria()), 1));
-                safeList(analise.getOportunidadesConsolidadas()).forEach(oportunidade ->
-                        increment(oportunidadePorTipo, normalizeOpportunityKey(oportunidade.getCategoria()), 1));
             } else {
                 increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
-                safeList(analise.getRiscos()).forEach(risco -> increment(riscoPorTipo, risco.getTipo().name(), 1));
-                safeList(analise.getOportunidades()).forEach(oportunidade -> increment(oportunidadePorTipo, oportunidade.getTipo().name(), 1));
-                totalOportunidades += safeList(analise.getOportunidades()).size();
-                totalRiscos += safeList(analise.getRiscos()).size();
+            }
+        }
+
+        for (TranscricaoInsightsResponse insight : insights) {
+            if (!safeList(insight.getRiscosConsolidados()).isEmpty()) {
+                totalRiscos += insight.getRiscosConsolidados().size();
+                insight.getRiscosConsolidados().forEach(risco ->
+                        increment(riscoPorTipo, normalizeRiskKey(risco.getCategoria()), 1));
+            } else {
+                totalRiscos += safeList(insight.getRiscos()).size();
+                safeList(insight.getRiscos()).forEach(risco ->
+                        increment(riscoPorTipo, risco.getTipo().name(), 1));
+            }
+
+            if (!safeList(insight.getOportunidadesConsolidadas()).isEmpty()) {
+                totalOportunidades += insight.getOportunidadesConsolidadas().size();
+                insight.getOportunidadesConsolidadas().forEach(oportunidade ->
+                        increment(oportunidadePorTipo, normalizeOpportunityKey(oportunidade.getCategoria()), 1));
+            } else {
+                totalOportunidades += safeList(insight.getOportunidades()).size();
+                safeList(insight.getOportunidades()).forEach(oportunidade ->
+                        increment(oportunidadePorTipo, oportunidade.getTipo().name(), 1));
             }
         }
 
@@ -141,16 +158,6 @@ public class DashboardService {
         if (normalized.contains("UPSELL") || normalized.contains("MODULO") || normalized.contains("LICENCA")) return "UPSELL";
         if (normalized.contains("CROSS")) return "CROSS_SELL";
         return "NOVO_PRODUTO";
-    }
-
-    private long consolidatedRiskCount(AnaliseResultado analise) {
-        List<?> consolidados = safeList(analise.getRiscosConsolidados());
-        return consolidados.isEmpty() ? safeList(analise.getRiscos()).size() : consolidados.size();
-    }
-
-    private long consolidatedOpportunityCount(AnaliseResultado analise) {
-        List<?> consolidadas = safeList(analise.getOportunidadesConsolidadas());
-        return consolidadas.isEmpty() ? safeList(analise.getOportunidades()).size() : consolidadas.size();
     }
 
     private <T> List<T> safeList(List<T> values) {

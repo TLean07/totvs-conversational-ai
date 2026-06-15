@@ -28,6 +28,10 @@ function clearDashboardCache() {
   insightsCache = null;
 }
 
+function invalidateTranscriptionCaches() {
+  clearDashboardCache();
+}
+
 function setSession(session: import("./types").AuthResponse | null) {
   if (!session || (currentUser && currentUser.id !== session.user.id)) {
     clearDashboardCache();
@@ -142,7 +146,7 @@ export const api = {
 
   users: {
     listar: () => request<import("./types").UserResponse[]>("/users"),
-    criar: (data: {
+    criar: async (data: {
       email: string;
       name: string;
       password: string;
@@ -192,12 +196,21 @@ export const api = {
       request<import("./types").TranscricaoResponse>("/transcricoes", {
         method: "POST",
         body: JSON.stringify(data),
+      }).then((response) => {
+        invalidateTranscriptionCaches();
+        return response;
       }),
     deletar: (id: string) =>
-      request<void>(`/transcricoes/${id}`, { method: "DELETE" }),
+      request<void>(`/transcricoes/${id}`, { method: "DELETE" }).then((response) => {
+        invalidateTranscriptionCaches();
+        return response;
+      }),
     reprocessar: (id: string) =>
       request<import("./types").TranscricaoResponse>(`/transcricoes/${id}/reprocessar`, {
         method: "POST",
+      }).then((response) => {
+        invalidateTranscriptionCaches();
+        return response;
       }),
     importarTotvsJson: (file: File, limit = 25, offset = 0) => {
       const formData = new FormData();
@@ -208,7 +221,10 @@ export const api = {
           method: "POST",
           body: formData,
         }
-      );
+      ).then((response) => {
+        invalidateTranscriptionCaches();
+        return response;
+      });
     },
     importarAudio: (data: {
       file: File;
@@ -224,6 +240,9 @@ export const api = {
       return request<import("./types").TranscricaoResponse>("/transcricoes/audio", {
         method: "POST",
         body: formData,
+      }).then((response) => {
+        invalidateTranscriptionCaches();
+        return response;
       });
     },
     feedback: (id: string, data: { util: boolean; ajuste?: string }) =>

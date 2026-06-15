@@ -1,10 +1,13 @@
 package com.tlean07.fiap.challenge.service;
 
 import com.tlean07.fiap.challenge.dto.DashboardResponse;
+import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.enums.Sentimento;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.enums.UserRole;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
+import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
+import com.tlean07.fiap.challenge.model.RiscoConsolidado;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
@@ -38,6 +41,8 @@ class DashboardServiceTest {
     private AlertaService alertaService;
     @Mock
     private TranscricaoService transcricaoService;
+    @Mock
+    private TranscricaoInsightsService transcricaoInsightsService;
 
     @InjectMocks
     private DashboardService dashboardService;
@@ -56,6 +61,14 @@ class DashboardServiceTest {
                 AnaliseResultado.builder().sentimentoGeral(Sentimento.POSITIVO).build()));
         when(transcricaoRepository.count()).thenReturn(12L);
         when(transcricaoRepository.countByStatus(StatusTranscricao.PROCESSADA)).thenReturn(9L);
+        when(transcricaoInsightsService.listarTodos()).thenReturn(List.of(
+                TranscricaoInsightsResponse.builder()
+                        .riscosConsolidados(List.of(
+                                RiscoConsolidado.builder().categoria("Churn").build(),
+                                RiscoConsolidado.builder().categoria("Concorrencia").build()))
+                        .oportunidadesConsolidadas(List.of(
+                                OportunidadeConsolidada.builder().categoria("Upsell").build()))
+                        .build()));
         when(alertaService.listarNovosDashboard()).thenReturn(List.of());
         when(transcricaoService.listarRecentesDashboard()).thenReturn(List.of());
 
@@ -63,6 +76,8 @@ class DashboardServiceTest {
 
         assertEquals(12L, response.getTotalTranscricoes());
         assertEquals(9L, response.getTranscricoesProcessadas());
+        assertEquals(2L, response.getTotalRiscos());
+        assertEquals(1L, response.getTotalOportunidades());
         assertEquals(2L, response.getSentimentoDistribuicao().get("POSITIVO"));
         assertEquals(1L, response.getSentimentoDistribuicao().get("NEGATIVO"));
         verify(analiseRepository).findAllForDashboard();
@@ -80,6 +95,7 @@ class DashboardServiceTest {
         when(transcricaoRepository.countByOwnerId("user-7")).thenReturn(4L);
         when(transcricaoRepository.countByOwnerIdAndStatus("user-7", StatusTranscricao.PROCESSADA))
                 .thenReturn(3L);
+        when(transcricaoInsightsService.listarTodos()).thenReturn(List.of());
         when(alertaService.listarNovosDashboard()).thenReturn(List.of());
         when(transcricaoService.listarRecentesDashboard()).thenReturn(List.of());
 

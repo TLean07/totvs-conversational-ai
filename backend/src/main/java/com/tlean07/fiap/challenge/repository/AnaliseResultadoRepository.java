@@ -29,9 +29,9 @@ public interface AnaliseResultadoRepository extends MongoRepository<AnaliseResul
     @Query(value = "{ 'ownerId': ?0 }", fields = DASHBOARD_FIELDS)
     List<AnaliseResultado> findAllByOwnerIdForDashboard(String ownerId);
 
-    @Query(value = "{}", fields = INSIGHT_FIELDS)
+    @Query(value = "{}", fields = INSIGHT_FIELDS, sort = "{ 'dataAnalise': -1 }")
     List<AnaliseResultado> findAllForInsights();
 
-    @Query(value = "{ 'ownerId': ?0 }", fields = INSIGHT_FIELDS)
+    @Query(value = "{ 'ownerId': ?0 }", fields = INSIGHT_FIELDS, sort = "{ 'dataAnalise': -1 }")
     List<AnaliseResultado> findAllByOwnerIdForInsights(String ownerId);
 }
