@@ -149,6 +149,19 @@ export interface TranscricaoResponse {
   cliente: string;
   vendedor: string;
   origemTranscricao: string | null;
+  meetingId: string | null;
+  meetingDate: string | null;
+  format: string | null;
+  meetingStatus: string | null;
+  duration: string | null;
+  codt: string | null;
+  external: boolean | null;
+  createdAtSource: string | null;
+  transcriptionText: string | null;
+  sourceFileName: string | null;
+  importBatchId: string | null;
+  importedAt: string | null;
+  missingMeetingId: boolean;
   audioFileName: string | null;
   transcriptionModel: string | null;
   transcriptionLanguage: string | null;
@@ -198,8 +211,25 @@ export interface DashboardResponse {
 }
 
 export interface TranscricaoImportResponse {
+  success: boolean;
+  sourceFile: string;
+  batchId: string;
+  found: number;
+  imported: number;
+  skipped: number;
+  failed: number;
+  items: TranscricaoImportItemResponse[];
   totalRegistros: number;
   importados: number;
   ignorados: number;
   avisos: string[];
+}
+
+export interface TranscricaoImportItemResponse {
+  index: number;
+  meetingId: string;
+  transcriptionId: string | null;
+  status: "IMPORTED" | "SKIPPED_DUPLICATE" | "FAILED";
+  reason: string | null;
+  warnings: string[];
 }

@@ -30,6 +30,21 @@ public class Transcricao {
     private String cliente;
     private String vendedor;
     private String origemTranscricao;
+    @Indexed(unique = true, sparse = true)
+    private String meetingId;
+    private String meetingDate;
+    private String format;
+    private String meetingStatus;
+    private String duration;
+    private String codt;
+    private Boolean external;
+    private String createdAtSource;
+    private String transcriptionText;
+    private String sourceFileName;
+    @Indexed
+    private String importBatchId;
+    private LocalDateTime importedAt;
+    private boolean missingMeetingId;
     private String audioFileName;
     private String transcriptionModel;
     private String transcriptionLanguage;

@@ -26,9 +26,17 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.FORBIDDEN, "Acesso negado");
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, java.time.format.DateTimeParseException.class})
-    public ResponseEntity<Map<String, Object>> handleBadRequest() {
-        return error(HttpStatus.BAD_REQUEST, "Requisicao invalida");
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleBadRequest(IllegalArgumentException ex) {
+        String message = ex.getMessage() == null || ex.getMessage().isBlank()
+                ? "Requisicao invalida"
+                : ex.getMessage();
+        return error(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(java.time.format.DateTimeParseException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidDate() {
+        return error(HttpStatus.BAD_REQUEST, "Data informada em formato invalido");
     }
 
     @ExceptionHandler(ResponseStatusException.class)

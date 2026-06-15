@@ -55,6 +55,7 @@ public class TranscricaoService {
     private final TranscricaoAnalysisJob analysisJob;
     private final AudioTranscriptionService audioTranscriptionService;
     private final AuditService auditService;
+    private final TranscricaoImportService transcricaoImportService;
 
     public TranscricaoService(TranscricaoRepository transcricaoRepository,
                               AnaliseResultadoRepository analiseRepository,
@@ -63,7 +64,8 @@ public class TranscricaoService {
                               AnaliseService analiseService,
                               TranscricaoAnalysisJob analysisJob,
                               AudioTranscriptionService audioTranscriptionService,
-                              AuditService auditService) {
+                              AuditService auditService,
+                              TranscricaoImportService transcricaoImportService) {
         this.transcricaoRepository = transcricaoRepository;
         this.analiseRepository = analiseRepository;
         this.feedbackRepository = feedbackRepository;
@@ -72,6 +74,7 @@ public class TranscricaoService {
         this.analysisJob = analysisJob;
         this.audioTranscriptionService = audioTranscriptionService;
         this.auditService = auditService;
+        this.transcricaoImportService = transcricaoImportService;
     }
 
     public TranscricaoResponse criarEAnalisar(TranscricaoRequest request) {
@@ -106,76 +109,7 @@ public class TranscricaoService {
     }
 
     public TranscricaoImportResponse importarTotvsJson(MultipartFile file, int limit, int offset) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo JSON obrigatorio");
-        }
-        String ownerId = SecurityUtils.currentUser().id();
-        List<String> avisos = new ArrayList<>();
-        ImportCounters counters = processTotvsJsonAsSingleDocument(file, ownerId);
-
-        if (counters.ignorados > 0) {
-            avisos.add(counters.ignorados + " registro(s) foram ignorados por formato invalido ou transcricao vazia.");
-        }
-        avisos.add("Foi criada 1 transcricao consolidada para este JSON, evitando centenas de documentos na colecao transcricoes.");
-        avisos.add("Os registros do JSON foram tratados como partes da mesma transcricao TOTVS.");
-        avisos.add("A LeanIA analisa estatisticas e trechos representativos da transcricao consolidada.");
-        avisos.add("O JSON bruto nao e salvo inteiro no MongoDB porque documentos MongoDB possuem limite de 16 MB.");
-
-        auditService.record("transcricao.import.totvs", ownerId, file.getOriginalFilename(), "records=" + counters.totalRegistros + ";documents=1");
-        return TranscricaoImportResponse.builder()
-                .totalRegistros(counters.totalRegistros)
-                .importados(counters.importados)
-                .ignorados(counters.ignorados)
-                .avisos(avisos)
-                .build();
-    }
-
-    private ImportCounters processTotvsJsonAsSingleDocument(MultipartFile file, String ownerId) {
-        ImportCounters counters = new ImportCounters();
-        TotvsImportSummary summary = new TotvsImportSummary(file.getOriginalFilename());
-
-        try (JsonParser parser = OBJECT_MAPPER.getFactory().createParser(file.getInputStream())) {
-            JsonToken token;
-            while ((token = parser.nextToken()) != null) {
-                if (token == JsonToken.START_OBJECT) {
-                    JsonNode node = OBJECT_MAPPER.readTree(parser);
-                    counters.totalRegistros++;
-                    processTotvsJsonRecordIntoSummary(node, counters, summary);
-                }
-            }
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Nao foi possivel ler o arquivo JSON");
-        }
-
-        if (summary.validRecords == 0) {
-            throw new IllegalArgumentException("Nenhuma transcricao valida foi encontrada no JSON");
-        }
-
-        Transcricao transcricao = Transcricao.builder()
-                .ownerId(ownerId)
-                .textoOriginal(summary.buildText())
-                .cliente("Transcricao TOTVS - " + safeFileName(file.getOriginalFilename()))
-                .vendedor("TOTVS JSON")
-                .origemTranscricao("json")
-                .participantes(summary.buildParticipants())
-                .duracaoMinutos(summary.totalDurationMinutes)
-                .status(StatusTranscricao.PENDENTE)
-                .dataCriacao(LocalDateTime.now())
-                .metricasAgregadas(summary.buildMetrics())
-                .resumoExecutivo(summary.buildExecutiveSummary())
-                .riscosConsolidados(summary.buildConsolidatedRisks())
-                .oportunidadesConsolidadas(summary.buildConsolidatedOpportunities())
-                .alertasConsolidados(summary.buildConsolidatedAlerts())
-                .itensCriticos(summary.criticalItems)
-                .build();
-        String isoDate = toIsoLocalDateTime(summary.firstDate);
-        if (isoDate != null) {
-            transcricao.setDataReuniao(LocalDateTime.parse(isoDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-        }
-        salvarEEnfileirar(transcricao, ownerId, "transcricao.import.totvs.document");
-        counters.importados = 1;
-
-        return counters;
+        return transcricaoImportService.importar(file, SecurityUtils.currentUser().id());
     }
 
     public TranscricaoResponse importarAudio(MultipartFile file, String cliente, String vendedor, String participantes) {
@@ -972,6 +906,19 @@ public class TranscricaoService {
                 .cliente(t.getCliente())
                 .vendedor(t.getVendedor())
                 .origemTranscricao(t.getOrigemTranscricao())
+                .meetingId(t.getMeetingId())
+                .meetingDate(t.getMeetingDate())
+                .format(t.getFormat())
+                .meetingStatus(t.getMeetingStatus())
+                .duration(t.getDuration())
+                .codt(t.getCodt())
+                .external(t.getExternal())
+                .createdAtSource(t.getCreatedAtSource())
+                .transcriptionText(t.getTranscriptionText())
+                .sourceFileName(t.getSourceFileName())
+                .importBatchId(t.getImportBatchId())
+                .importedAt(t.getImportedAt())
+                .missingMeetingId(t.isMissingMeetingId())
                 .audioFileName(t.getAudioFileName())
                 .transcriptionModel(t.getTranscriptionModel())
                 .transcriptionLanguage(t.getTranscriptionLanguage())

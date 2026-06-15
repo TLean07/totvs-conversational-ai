@@ -323,14 +323,15 @@ function TranscricoesPageInner() {
                 </div>
                 <h2 className="text-lg font-semibold text-slate-800 mt-3 mb-1">Importar transcricoes por JSON</h2>
                 <p className="text-sm text-slate-500 leading-6 max-w-2xl">
-                  Envie um JSON no formato de transcricao TOTVS. O sistema le os campos reconhecidos,
-                  cria <span className="font-semibold">1 transcricao consolidada por arquivo</span> e coloca a LeanIA para analisar em segundo plano.
+                  Envie um JSON no formato de transcricao TOTVS. Cada objeto de reuniao com
+                  <span className="font-semibold"> ANON_TRANSCRICAO</span> vira uma transcricao separada e entra na fila de analise.
                 </p>
               </div>
               <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600 lg:max-w-sm">
                 <p className="font-semibold text-slate-700">Campos reconhecidos</p>
                 <p className="mt-1 text-xs leading-5">
-                  ID_MEETING, DT_MEETING, DURACAO_MEETING, CODT, ANON_TRANSCRICAO, UF, CNAE, NOME_UNIDADE, NOME_SEGMENTO, FAIXA_FATURAMENTO_CLIENTE_EC e NOTA_NPS.
+                  ID_MEETING, DT_MEETING, FORMATO_MEETING, STATUS_MEETING, DURACAO_MEETING, CODT,
+                  FLG_EXTERNO, DT_CRIACAO e ANON_TRANSCRICAO.
                 </p>
               </div>
             </div>
@@ -351,10 +352,10 @@ function TranscricoesPageInner() {
                 )}
               </div>
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                <p className="text-sm font-semibold text-emerald-900">Modo economico ativado</p>
+                <p className="text-sm font-semibold text-emerald-900">Importacao por reuniao</p>
                 <p className="mt-1 text-xs leading-5 text-emerald-800">
-                  Cada arquivo JSON vira uma unica transcricao no MongoDB. Os registros internos sao tratados como partes do mesmo
-                  material, e a LeanIA recebe estatisticas, distribuicoes e trechos representativos sem criar centenas de documentos.
+                  Arrays, objetos unicos, listas dentro de chaves arbitrarias e objetos JSON consecutivos sao aceitos.
+                  Reunioes repetidas pelo mesmo ID_MEETING sao ignoradas e informadas no resumo.
                 </p>
               </div>
             </div>
@@ -380,7 +381,7 @@ function TranscricoesPageInner() {
                 )}
               </button>
               <p className="text-sm text-slate-500">
-                A transcricao consolidada entra como <span className="font-semibold">PROCESSANDO</span> e depois aparece no dashboard.
+                Cada transcricao salva entra como <span className="font-semibold">PROCESSANDO</span> e aparece separadamente na listagem e no dashboard.
               </p>
             </div>
 
@@ -393,11 +394,38 @@ function TranscricoesPageInner() {
             {importResult && (
               <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                 <p className="font-semibold">
-                  {importResult.importados} transcricao consolidada criada para este arquivo.
+                  Foram encontradas {importResult.found} transcricoes no arquivo. {importResult.imported} foram importadas separadamente.
                 </p>
-                <p className="mt-1">
-                  Registros lidos no JSON: {importResult.totalRegistros}. Registros ignorados: {importResult.ignorados}.
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-lg bg-white/70 px-3 py-2"><span className="block text-xs">Encontradas</span><strong>{importResult.found}</strong></div>
+                  <div className="rounded-lg bg-white/70 px-3 py-2"><span className="block text-xs">Importadas</span><strong>{importResult.imported}</strong></div>
+                  <div className="rounded-lg bg-white/70 px-3 py-2"><span className="block text-xs">Duplicadas</span><strong>{importResult.skipped}</strong></div>
+                  <div className="rounded-lg bg-white/70 px-3 py-2"><span className="block text-xs">Com erro</span><strong>{importResult.failed}</strong></div>
+                </div>
+                <p className="mt-3 text-xs">
+                  Arquivo: <span className="font-semibold">{importResult.sourceFile}</span>. Lote: <span className="font-mono">{importResult.batchId}</span>.
                 </p>
+                {importResult.imported > 0 && (
+                  <a href="#transcription-list" className="mt-3 inline-flex rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
+                    Ver transcricoes importadas
+                  </a>
+                )}
+                {importResult.items.length > 0 && (
+                  <div className="mt-3 max-h-56 overflow-y-auto rounded-lg border border-emerald-200 bg-white/70">
+                    {importResult.items.map((item) => (
+                      <div key={`${item.index}-${item.meetingId}`} className="flex flex-col gap-1 border-b border-emerald-100 px-3 py-2 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="font-mono text-xs">ID_MEETING: {item.meetingId}</span>
+                        {item.status === "IMPORTED" && item.transcriptionId ? (
+                          <a href={`/transcricoes/${item.transcriptionId}`} className="text-xs font-semibold text-emerald-700 hover:underline">Importada - abrir</a>
+                        ) : item.status === "SKIPPED_DUPLICATE" ? (
+                          <span className="text-xs font-semibold text-amber-700">Ignorada por duplicidade</span>
+                        ) : (
+                          <span className="text-xs font-semibold text-rose-700">Erro: {item.reason || "falha desconhecida"}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {importResult.avisos.length > 0 && (
                   <ul className="mt-2 list-disc pl-5 text-xs leading-5">
                     {importResult.avisos.map((aviso) => (
@@ -662,7 +690,7 @@ function TranscricoesPageInner() {
                 <span className="font-semibold text-slate-600">{transcricoes.length}</span> transcricoes
               </p>
             )}
-          <div className="space-y-4">
+          <div id="transcription-list" className="space-y-4">
             {filtradas.length === 0 ? (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
                 <p className="text-slate-500 font-medium">Nenhuma transcricao para este filtro</p>
@@ -686,6 +714,9 @@ function TranscricoesPageInner() {
                         </h3>
                         {t.vendedor && (
                           <p className="text-xs text-slate-400 truncate">Vendedor: {t.vendedor}</p>
+                        )}
+                        {t.meetingId && (
+                          <p className="text-xs text-slate-400 truncate">ID_MEETING: {t.meetingId}</p>
                         )}
                       </div>
                     </div>

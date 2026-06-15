@@ -20,5 +20,6 @@ public interface TranscricaoRepository extends MongoRepository<Transcricao, Stri
     List<Transcricao> findByOwnerIdAndStatus(String ownerId, StatusTranscricao status);
     List<Transcricao> findByOwnerIdAndClienteContainingIgnoreCase(String ownerId, String cliente);
     java.util.Optional<Transcricao> findByIdAndOwnerId(String id, String ownerId);
+    boolean existsByMeetingId(String meetingId);
     long countByOwnerId(String ownerId);
 }
