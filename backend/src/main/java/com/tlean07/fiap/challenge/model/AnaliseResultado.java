@@ -1,6 +1,7 @@
 package com.tlean07.fiap.challenge.model;
 
 import com.tlean07.fiap.challenge.enums.Sentimento;
+import com.tlean07.fiap.challenge.model.converter.JsonMapConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
@@ -10,6 +11,7 @@ import org.hibernate.annotations.FetchMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -69,6 +71,26 @@ public class AnaliseResultado {
 
     @Column(name = "DATA_ANALISE")
     private LocalDateTime dataAnalise;
+
+    /** Proxima acao comercial sugerida pela LeanIA. */
+    @Column(name = "PROXIMA_ACAO", length = 500)
+    private String proximaAcao;
+
+    /** Ex.: "Misto (Satisfeito com Backoffice / Frustrado com RH)". */
+    @Column(name = "SENTIMENTO_DETALHE", length = 300)
+    private String sentimentoDetalhe;
+
+    /** Elogios, reclamacoes, duvidas da jornada, proximos passos e observacoes (JSON). */
+    @Lob
+    @Convert(converter = JsonMapConverter.class)
+    @Column(name = "INSIGHTS_JSON")
+    private Map<String, Object> insightsAdicionais;
+
+    /** Indicadores da conversa: locutores, participacao, perguntas, escuta ativa (JSON). */
+    @Lob
+    @Convert(converter = JsonMapConverter.class)
+    @Column(name = "INDICADORES_JSON")
+    private Map<String, Object> indicadoresQualidade;
 
     @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)

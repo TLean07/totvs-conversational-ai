@@ -8,16 +8,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class AnaliseService {
 
     private static final Logger log = LoggerFactory.getLogger(AnaliseService.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final LeanIAService leanIAService;
     private final LeanIALearningService leanIALearningService;
@@ -55,6 +60,11 @@ public class AnaliseService {
                 .oportunidadesConsolidadas(resolveConsolidatedOpportunities(transcricao, dto))
                 .alertasConsolidados(resolveConsolidatedAlerts(transcricao, dto))
                 .itensCriticos(resolveCriticalItems(transcricao, dto))
+                .proximaAcao(truncate(dto.getProximaAcao(), 500))
+                .sentimentoDetalhe(truncate(dto.getSentimentoDetalhe(), 300))
+                .insightsAdicionais(toMap(dto.getInsightsAdicionais()))
+                .indicadoresQualidade(dto.getIndicadoresQualidade() == null
+                        ? new LinkedHashMap<>() : new LinkedHashMap<>(dto.getIndicadoresQualidade()))
                 .dataAnalise(LocalDateTime.now())
                 .build();
 
@@ -215,6 +225,18 @@ public class AnaliseService {
         return value == null ? 0 : Math.max(0, value);
     }
 
+    private String truncate(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toMap(Object value) {
+        if (value == null) {
+            return new LinkedHashMap<>();
+        }
+        return MAPPER.convertValue(value, LinkedHashMap.class);
+    }
+
     /**
      * As colecoes e o componente embutido vindos de uma Transcricao carregada pelo Hibernate
      * nao podem ser reaproveitados por referencia em outra entidade (HHH "shared references").
@@ -290,6 +312,10 @@ public class AnaliseService {
                 .oportunidadesConsolidadas(nullSafe(a.getOportunidadesConsolidadas()))
                 .alertasConsolidados(nullSafe(a.getAlertasConsolidados()))
                 .itensCriticos(nullSafe(a.getItensCriticos()))
+                .proximaAcao(a.getProximaAcao())
+                .sentimentoDetalhe(a.getSentimentoDetalhe())
+                .insightsAdicionais(a.getInsightsAdicionais() == null ? Map.of() : a.getInsightsAdicionais())
+                .indicadoresQualidade(a.getIndicadoresQualidade() == null ? Map.of() : a.getIndicadoresQualidade())
                 .build();
     }
 }

@@ -8,14 +8,22 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Porta de entrada da LeanIA. Tenta o microsservico Python (que pode usar o modelo local de
+ * sentimento do Hugging Face) e, se ele nao responder, roda o {@link LeanIALocalAnalyzer},
+ * que implementa as mesmas regras em Java. O resultado tem o mesmo contrato nos dois casos.
+ */
 @Service
 public class LeanIAService {
 
@@ -23,20 +31,25 @@ public class LeanIAService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final LeanIALocalAnalyzer localAnalyzer;
     private final String aiServiceUrl;
     private final String aiServiceToken;
     private final int maxRetries;
 
     public LeanIAService(ObjectMapper objectMapper,
                          RestTemplateBuilder restTemplateBuilder,
+                         LeanIALocalAnalyzer localAnalyzer,
                          @Value("${ai.service.url:http://localhost:8000}") String aiServiceUrl,
                          @Value("${ai.service.token:}") String aiServiceToken,
-                         @Value("${ai.service.max-retries:1}") int maxRetries) {
+                         @Value("${ai.service.max-retries:1}") int maxRetries,
+                         @Value("${ai.service.read-timeout-seconds:120}") int readTimeoutSeconds) {
+        // Reunioes reais tem ~35 mil caracteres; o modelo de sentimento leva mais de 30 s em CPU.
         this.restTemplate = restTemplateBuilder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(30))
+                .setConnectTimeout(Duration.ofSeconds(10))
+                .setReadTimeout(Duration.ofSeconds(Math.max(30, readTimeoutSeconds)))
                 .build();
         this.objectMapper = objectMapper;
+        this.localAnalyzer = localAnalyzer;
         this.aiServiceUrl = aiServiceUrl;
         this.aiServiceToken = aiServiceToken;
         this.maxRetries = Math.max(0, maxRetries);
@@ -48,7 +61,8 @@ public class LeanIAService {
 
         for (int attempt = 1; attempt <= attempts; attempt++) {
             try {
-                return callLeanIA(textoTranscricao, contexto);
+                AiAnalysisDTO remoto = callLeanIA(textoTranscricao, contexto);
+                return completarComMotorLocal(remoto, textoTranscricao, contexto);
             } catch (Exception e) {
                 lastError = e;
                 log.warn("LeanIA indisponivel na tentativa {}/{}: {}",
@@ -56,9 +70,9 @@ public class LeanIAService {
             }
         }
 
-        log.warn("Usando fallback local gratuito da LeanIA. Motivo: {}",
+        log.warn("Usando motor local da LeanIA. Motivo: {}",
                 lastError == null ? "desconhecido" : lastError.getClass().getSimpleName());
-        return fallbackAnalysis(textoTranscricao);
+        return localAnalyzer.analisar(textoTranscricao, contexto);
     }
 
     private AiAnalysisDTO callLeanIA(String textoTranscricao, LeanIAContextDTO contexto) throws Exception {
@@ -72,7 +86,7 @@ public class LeanIAService {
             headers.set("X-Request-ID", requestId);
         }
 
-        Map<String, Object> body = new java.util.HashMap<>();
+        Map<String, Object> body = new HashMap<>();
         body.put("texto", textoTranscricao);
         if (contexto != null) {
             body.put("contexto", contexto);
@@ -89,53 +103,32 @@ public class LeanIAService {
         return objectMapper.readValue(response.getBody(), AiAnalysisDTO.class);
     }
 
-    private AiAnalysisDTO fallbackAnalysis(String textoTranscricao) {
-        String texto = textoTranscricao == null ? "" : textoTranscricao.toLowerCase();
-        boolean negativo = containsAny(texto, "problema", "erro", "lento", "trava", "cancelar", "trocar", "nao renovar");
-        boolean positivo = containsAny(texto, "otimo", "excelente", "satisfeito", "funciona bem", "aprovamos");
-        boolean concorrente = containsAny(texto, "sap", "oracle", "senior", "linx", "sankhya");
-
-        String sentimento = positivo && negativo ? "MISTO" : negativo ? "NEGATIVO" : positivo ? "POSITIVO" : "NEUTRO";
-
-        AiAnalysisDTO.AiAnalysisDTOBuilder builder = AiAnalysisDTO.builder()
-                .sentimentoGeral(sentimento)
-                .resumo("Analise basica gerada localmente pela LeanIA porque o provedor gratuito nao respondeu. Revise os insights antes de tomar decisao comercial.")
-                .personaIdentificada("Nao identificado")
-                .budgetIdentificado(extractBudget(textoTranscricao))
-                .scoreConfiancaVendedor(negativo ? 0.35 : positivo ? 0.75 : 0.5)
-                .produtos(List.of())
-                .oportunidades(List.of())
-                .riscos(List.of());
-
-        if (negativo || concorrente) {
-            AiAnalysisDTO.RiscoDTO risco = AiAnalysisDTO.RiscoDTO.builder()
-                    .tipo(concorrente ? "CONCORRENCIA" : "INSATISFACAO")
-                    .descricao("Fallback local da LeanIA detectou sinais que exigem acompanhamento do cliente.")
-                    .severidade(concorrente ? "ALTO" : "MEDIO")
-                    .concorrenteMencionado(concorrente ? "Concorrente mencionado" : null)
-                    .build();
-            builder.riscos(List.of(risco));
+    /**
+     * Um ai-service de versao anterior nao devolve os blocos novos (proxima acao, insights,
+     * indicadores). Nesse caso o motor local preenche so o que faltou, sem sobrescrever o resto.
+     */
+    private AiAnalysisDTO completarComMotorLocal(AiAnalysisDTO remoto, String texto, LeanIAContextDTO contexto) {
+        if (remoto == null) {
+            return localAnalyzer.analisar(texto, contexto);
         }
-
-        return builder.build();
-    }
-
-    private boolean containsAny(String text, String... terms) {
-        for (String term : terms) {
-            if (text.contains(term)) {
-                return true;
-            }
+        boolean faltaAlgo = remoto.getProximaAcao() == null || remoto.getInsightsAdicionais() == null
+                || remoto.getIndicadoresQualidade() == null || remoto.getSentimentoDetalhe() == null;
+        if (!faltaAlgo) {
+            return remoto;
         }
-        return false;
-    }
-
-    private String extractBudget(String text) {
-        if (text == null || text.isBlank()) {
-            return "Nao identificado";
+        AiAnalysisDTO local = localAnalyzer.analisar(texto, contexto);
+        if (remoto.getProximaAcao() == null) {
+            remoto.setProximaAcao(local.getProximaAcao());
         }
-        java.util.regex.Matcher matcher = java.util.regex.Pattern
-                .compile("R\\$\\s*[\\d.,]+|[\\d.,]+\\s*(mil|reais|milhao|milhoes)", java.util.regex.Pattern.CASE_INSENSITIVE)
-                .matcher(text);
-        return matcher.find() ? matcher.group() : "Nao identificado";
+        if (remoto.getSentimentoDetalhe() == null) {
+            remoto.setSentimentoDetalhe(local.getSentimentoDetalhe());
+        }
+        if (remoto.getInsightsAdicionais() == null) {
+            remoto.setInsightsAdicionais(local.getInsightsAdicionais());
+        }
+        if (remoto.getIndicadoresQualidade() == null) {
+            remoto.setIndicadoresQualidade(local.getIndicadoresQualidade());
+        }
+        return remoto;
     }
 }

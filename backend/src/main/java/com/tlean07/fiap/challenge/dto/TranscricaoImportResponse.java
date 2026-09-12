@@ -10,6 +10,8 @@ import java.util.List;
 public class TranscricaoImportResponse {
     private boolean success;
     private String sourceFile;
+    /** "JSON" ou "CSV", conforme detectado no conteudo do arquivo. */
+    private String sourceFormat;
     private String batchId;
     private int found;
     private int imported;

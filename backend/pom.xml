@@ -55,6 +55,13 @@
             <artifactId>caffeine</artifactId>
         </dependency>
 
+        <!-- Leitura de CSV (importacao TOTVS) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+
         <!-- Jackson para JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

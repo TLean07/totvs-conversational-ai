@@ -429,6 +429,80 @@ export default function TranscricaoDetailPage() {
               </div>
             </div>
 
+            {/* Proxima acao + insights (LeanIA v2) */}
+            {(analise.proximaAcao || analise.sentimentoDetalhe) && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h2 className="text-base font-semibold text-slate-700 mb-3">Próxima ação sugerida</h2>
+                {analise.proximaAcao && (
+                  <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-900">
+                    {analise.proximaAcao}
+                  </p>
+                )}
+                {analise.sentimentoDetalhe && (
+                  <p className="mt-3 text-sm text-slate-500">
+                    <span className="font-semibold text-slate-600">Sentimento por área: </span>
+                    {analise.sentimentoDetalhe}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {analise.insightsAdicionais && (
+              (() => {
+                const ins = analise.insightsAdicionais;
+                const blocos: { titulo: string; itens: string[] | undefined; cor: string }[] = [
+                  { titulo: "Próximos passos combinados", itens: ins.proximosPassos, cor: "text-blue-700" },
+                  { titulo: "Dúvidas da jornada de compra", itens: ins.duvidasJornada, cor: "text-violet-700" },
+                  { titulo: "Reclamações", itens: ins.reclamacoes, cor: "text-red-700" },
+                  { titulo: "Elogios", itens: ins.elogios, cor: "text-emerald-700" },
+                  { titulo: "Observações", itens: ins.observacoes, cor: "text-amber-700" },
+                ].filter((b) => b.itens && b.itens.length > 0);
+                if (blocos.length === 0) return null;
+                return (
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                    <h2 className="text-base font-semibold text-slate-700 mb-1">Além do óbvio</h2>
+                    <p className="text-xs text-slate-500 mb-4">O que mais o cliente disse e que vale registrar no CRM.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {blocos.map((b) => (
+                        <div key={b.titulo} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                          <h3 className={`text-xs font-semibold uppercase tracking-wide ${b.cor}`}>{b.titulo}</h3>
+                          <ul className="mt-2 space-y-1.5">
+                            {b.itens!.map((item, i) => (
+                              <li key={i} className="text-sm text-slate-600 leading-relaxed">• {item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+
+            {analise.indicadoresQualidade && analise.indicadoresQualidade.turnos != null && (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h2 className="text-base font-semibold text-slate-700 mb-1">Qualidade da conversa</h2>
+                <p className="text-xs text-slate-500 mb-4">Indicadores medidos na transcrição.</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    ["Escuta ativa", analise.indicadoresQualidade.escutaAtiva ?? "-"],
+                    ["Vendedor falou", `${analise.indicadoresQualidade.participacaoVendedorPct ?? 0}%`],
+                    ["Cliente falou", `${analise.indicadoresQualidade.participacaoClientePct ?? 0}%`],
+                    ["Perguntas do vendedor", String(analise.indicadoresQualidade.perguntasVendedor ?? 0)],
+                    ["Perguntas do cliente", String(analise.indicadoresQualidade.perguntasCliente ?? 0)],
+                    ["Locutores", String(analise.indicadoresQualidade.locutores ?? 0)],
+                    ["Turnos", String(analise.indicadoresQualidade.turnos ?? 0)],
+                    ["Palavras", String(analise.indicadoresQualidade.palavras ?? 0)],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-700">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Produtos */}
             {analise.produtos.length > 0 && (
               <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">

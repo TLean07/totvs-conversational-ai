@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -25,6 +26,31 @@ public class AiAnalysisDTO {
     private List<OportunidadeConsolidadaDTO> oportunidadesConsolidadas;
     private List<AlertaConsolidadoDTO> alertasConsolidados;
     private List<ItemCriticoDTO> itensCriticos;
+
+    // Campos adicionais da LeanIA v2 (opcionais: o contrato antigo continua valido)
+    private String proximaAcao;
+    private String sentimentoDetalhe;
+    private InsightsDTO insightsAdicionais;
+    private Map<String, Object> indicadoresQualidade;
+
+    /** "Alem do obvio" (briefing, pagina 16): elogios, reclamacoes, duvidas da jornada, proximos passos. */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class InsightsDTO {
+        @Builder.Default
+        private List<String> elogios = new ArrayList<>();
+        @Builder.Default
+        private List<String> reclamacoes = new ArrayList<>();
+        @Builder.Default
+        private List<String> duvidasJornada = new ArrayList<>();
+        @Builder.Default
+        private List<String> proximosPassos = new ArrayList<>();
+        @Builder.Default
+        private List<String> observacoes = new ArrayList<>();
+    }
 
     @Getter
     @Setter

@@ -119,6 +119,31 @@ public class Transcricao {
     @Column(name = "TRANSCRIPTION_PROCESSING_MS")
     private Integer transcriptionProcessingTimeMs;
 
+    // Metadados do cliente vindos do JSON/CSV da TOTVS (usados em filtros e no dashboard)
+    @Column(name = "UF", length = 10)
+    private String uf;
+
+    @Column(name = "CNAE", length = 20)
+    private String cnae;
+
+    @Column(name = "NOME_UNIDADE", length = 200)
+    private String nomeUnidade;
+
+    @Column(name = "NOME_SEGMENTO", length = 200)
+    private String nomeSegmento;
+
+    @Column(name = "FAIXA_FATURAMENTO", length = 200)
+    private String faixaFaturamento;
+
+    @Column(name = "TP_RECURSO", length = 50)
+    private String tipoRecurso;
+
+    @Column(name = "NOTA_NPS")
+    private Integer notaNps;
+
+    @Column(name = "DT_ULTIMA_PESQUISA", length = 50)
+    private String dataUltimaPesquisa;
+
     @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @Fetch(FetchMode.SELECT)

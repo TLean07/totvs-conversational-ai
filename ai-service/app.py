@@ -104,9 +104,12 @@ def validar_token_interno(x_internal_token: Annotated[str | None, Header()] = No
 
 
 def sanitizar_texto(texto: str) -> str:
-    texto = texto.replace("\x00", " ")
-    texto = re.sub(r"\s+", " ", texto).strip()
-    return texto
+    """Remove bytes nulos e espacos repetidos, mas preserva as quebras de linha:
+    e nelas que a LeanIA separa os turnos de cada [LOCUTOR N]."""
+    texto = texto.replace("\x00", " ").replace("\r\n", "\n").replace("\r", "\n")
+    texto = re.sub(r"[ \t\f\v]+", " ", texto)
+    texto = re.sub(r"\n{3,}", "\n\n", texto)
+    return texto.strip()
 
 
 def sanitize_filename(filename: str | None) -> str:

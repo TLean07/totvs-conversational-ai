@@ -258,6 +258,18 @@ export AI_SERVICE_TOKEN="token-interno-com-32-caracteres-ou-mais"
 
 O usuario de aluno da FIAP permite 20 sessoes simultaneas e encerra sessoes ociosas apos 30 minutos; o pool (HikariCP) ja esta configurado para isso.
 
+**Importacao TOTVS**: `POST /api/transcricoes/import/totvs` aceita o export em JSON (array, NDJSON ou objeto
+aninhado) e o CSV de reunioes (`reunioes_transcricoes_mockado.csv`, em ISO-8859-1 ou UTF-8, separado por `,` ou `;`).
+O formato e detectado pelo conteudo; UF, CNAE, unidade, segmento, faixa de faturamento, tipo de recurso e NPS sao
+persistidos junto com a transcricao.
+
+**LeanIA v2**: a analise identifica produtos TOTVS (atual/oportunidade), concorrentes, riscos, oportunidades com
+score, persona, budget, sentimento por area, proxima acao, insights "alem do obvio" (elogios, reclamacoes, duvidas
+da jornada, proximos passos, observacoes) e indicadores da conversa (participacao vendedor/cliente, perguntas,
+escuta ativa). O motor roda no `ai-service` Python e tem uma copia em Java no backend para quando o servico nao
+responde. O exemplo do briefing do Challenge e o teste de referencia (`LeanIALocalAnalyzerTest` e
+`ai-service/tests/test_analyzer.py`).
+
 O backend mantem um cache em memoria (Caffeine) das leituras de dashboard, listas, insights e alertas por usuario:
 dentro da janela `CACHE_TTL_SECONDS` (padrao 120 s) as chamadas repetidas nao tocam o Oracle, e qualquer escrita
 (nova transcricao, importacao, reprocessamento, exclusao, alerta visto, feedback) limpa o cache na hora.

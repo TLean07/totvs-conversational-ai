@@ -64,7 +64,9 @@ def load_settings() -> Settings:
             "AI_MODEL_NAME",
             "nlptown/bert-base-multilingual-uncased-sentiment",
         ),
-        max_chars=_int_env("AI_MAX_CHARS", 20000),
+        # Reunioes reais da TOTVS tem ~35 mil caracteres (ate 190 mil); o limite antigo de 20 mil
+        # rejeitava a maioria e empurrava o backend para o fallback local.
+        max_chars=_int_env("AI_MAX_CHARS", 250000),
         cache_enabled=_bool_env("AI_CACHE_ENABLED", True),
         cache_ttl_seconds=_int_env("AI_CACHE_TTL_SECONDS", 3600),
         cache_max_entries=_int_env("AI_CACHE_MAX_ENTRIES", 256),

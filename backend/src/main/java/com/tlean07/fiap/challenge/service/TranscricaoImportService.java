@@ -1,6 +1,7 @@
 package com.tlean07.fiap.challenge.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tlean07.fiap.challenge.dto.TranscricaoImportItemResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoImportResponse;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
@@ -8,11 +9,14 @@ import com.tlean07.fiap.challenge.model.Transcricao;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -25,6 +29,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+/**
+ * Importa reunioes do export TOTVS em JSON (array, NDJSON, objeto aninhado) ou CSV.
+ * Cada reuniao vira uma {@link Transcricao} com os metadados do cliente e entra na fila de analise.
+ */
 @Service
 public class TranscricaoImportService {
 
@@ -33,27 +41,44 @@ public class TranscricaoImportService {
     private static final List<DateTimeFormatter> SOURCE_DATE_FORMATS = List.of(
             DateTimeFormatter.ISO_LOCAL_DATE_TIME,
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"),
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
     );
+    private static final DateTimeFormatter[] SOURCE_DATE_ONLY = {
+            DateTimeFormatter.ISO_LOCAL_DATE, DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    };
 
     private final TotvsTranscriptionJsonParser parser;
+    private final TotvsTranscriptionCsvParser csvParser;
     private final TranscricaoRepository transcricaoRepository;
     private final TranscricaoAnalysisJob analysisJob;
     private final AuditService auditService;
 
+    @Autowired
     public TranscricaoImportService(TotvsTranscriptionJsonParser parser,
+                                    TotvsTranscriptionCsvParser csvParser,
                                     TranscricaoRepository transcricaoRepository,
                                     TranscricaoAnalysisJob analysisJob,
                                     AuditService auditService) {
         this.parser = parser;
+        this.csvParser = csvParser;
         this.transcricaoRepository = transcricaoRepository;
         this.analysisJob = analysisJob;
         this.auditService = auditService;
     }
 
+    /** Construtor de compatibilidade (testes antigos): CSV usa o mesmo ObjectMapper do JSON. */
+    public TranscricaoImportService(TotvsTranscriptionJsonParser parser,
+                                    TranscricaoRepository transcricaoRepository,
+                                    TranscricaoAnalysisJob analysisJob,
+                                    AuditService auditService) {
+        this(parser, new TotvsTranscriptionCsvParser(new ObjectMapper()), transcricaoRepository, analysisJob, auditService);
+    }
+
     public TranscricaoImportResponse importar(MultipartFile file, String ownerId) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo JSON obrigatorio");
+            throw new IllegalArgumentException("Arquivo JSON ou CSV obrigatorio");
         }
 
         String sourceFile = safeFileName(file.getOriginalFilename());
@@ -62,35 +87,31 @@ public class TranscricaoImportService {
         ImportResult result = new ImportResult(sourceFile, batchId);
         Set<String> meetingIdsInFile = new HashSet<>();
 
-        try {
-            TotvsTranscriptionJsonParser.ParseSummary summary = parser.parse(
-                    file.getInputStream(),
-                    (index, record) -> processRecord(
-                            index,
-                            record,
-                            ownerId,
-                            sourceFile,
-                            batchId,
-                            importedAt,
-                            meetingIdsInFile,
-                            result
-                    )
-            );
+        try (InputStream raw = file.getInputStream();
+             BufferedInputStream input = new BufferedInputStream(raw, 64 * 1024)) {
+            SourceFormat format = detectFormat(input, file);
+            result.format = format;
+            TotvsTranscriptionJsonParser.RecordConsumer consumer = (index, record) -> processRecord(
+                    index, record, ownerId, sourceFile, batchId, importedAt, meetingIdsInFile, result);
+            TotvsTranscriptionJsonParser.ParseSummary summary = format == SourceFormat.CSV
+                    ? csvParser.parse(input, consumer)
+                    : parser.parse(input, consumer);
             result.found = summary.found();
 
             if (!summary.transcriptionFieldFound()) {
-                throw new IllegalArgumentException("Nenhum campo ANON_TRANSCRICAO foi encontrado no arquivo JSON");
+                throw new IllegalArgumentException("Nenhum campo ANON_TRANSCRICAO foi encontrado no arquivo " + format);
             }
         } catch (IOException e) {
-            throw new IllegalArgumentException("Nao foi possivel ler o arquivo JSON. Verifique se o formato e valido.");
+            throw new IllegalArgumentException("Nao foi possivel ler o arquivo. Verifique se e um JSON ou CSV valido.");
         }
 
-        log.info("[TranscriptionImport] file={} found={}", sourceFile, result.found);
+        log.info("[TranscriptionImport] file={} format={} found={}", sourceFile, result.format, result.found);
         auditService.record(
                 "transcricao.import.totvs",
                 ownerId,
                 sourceFile,
                 "batchId=" + batchId
+                        + ";format=" + result.format
                         + ";found=" + result.found
                         + ";imported=" + result.imported
                         + ";skipped=" + result.skipped
@@ -98,6 +119,32 @@ public class TranscricaoImportService {
         );
 
         return result.toResponse();
+    }
+
+    /**
+     * Decide pelo conteudo, nao so pela extensao: JSON comeca com '{' ou '[' (ignorando BOM e espacos);
+     * qualquer outra coisa com cabecalho textual e tratada como CSV.
+     */
+    static SourceFormat detectFormat(BufferedInputStream input, MultipartFile file) throws IOException {
+        input.mark(4096);
+        byte[] head = input.readNBytes(4096);
+        input.reset();
+        int i = 0;
+        if (head.length >= 3 && (head[0] & 0xFF) == 0xEF && (head[1] & 0xFF) == 0xBB && (head[2] & 0xFF) == 0xBF) {
+            i = 3;
+        }
+        while (i < head.length && Character.isWhitespace(head[i])) {
+            i++;
+        }
+        if (i < head.length && (head[i] == '{' || head[i] == '[')) {
+            return SourceFormat.JSON;
+        }
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        String type = file.getContentType() == null ? "" : file.getContentType().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".json") || type.contains("json")) {
+            return SourceFormat.JSON;
+        }
+        return SourceFormat.CSV;
     }
 
     private void processRecord(int index,
@@ -145,6 +192,11 @@ public class TranscricaoImportService {
             warnings.add("INVALID_DT_CRIACAO");
         }
 
+        Integer notaNps = parseNps(jsonText(record, "NOTA_NPS"));
+        if (blankToNull(jsonText(record, "NOTA_NPS")) != null && notaNps == null) {
+            warnings.add("INVALID_NOTA_NPS");
+        }
+
         String duration = blankToNull(jsonText(record, "DURACAO_MEETING"));
         Transcricao transcricao = Transcricao.builder()
                 .ownerId(ownerId)
@@ -154,8 +206,8 @@ public class TranscricaoImportService {
                 .dataReuniao(parsedMeetingDate)
                 .duracaoMinutos(parseDurationMinutes(duration))
                 .cliente(buildCliente(record))
-                .vendedor("TOTVS JSON")
-                .origemTranscricao("json")
+                .vendedor("TOTVS " + (result.format == SourceFormat.CSV ? "CSV" : "JSON"))
+                .origemTranscricao(result.format == SourceFormat.CSV ? "csv" : "json")
                 .meetingId(meetingId)
                 .meetingDate(meetingDate)
                 .format(blankToNull(jsonText(record, "FORMATO_MEETING")))
@@ -164,6 +216,15 @@ public class TranscricaoImportService {
                 .codt(blankToNull(jsonText(record, "CODT")))
                 .external(jsonBoolean(record, "FLG_EXTERNO"))
                 .createdAtSource(createdAtSource)
+                .uf(truncate(blankToNull(jsonText(record, "UF")), 10))
+                .cnae(truncate(blankToNull(jsonText(record, "CNAE")), 20))
+                .nomeUnidade(truncate(blankToNull(jsonText(record, "NOME_UNIDADE")), 200))
+                .nomeSegmento(truncate(blankToNull(jsonText(record, "NOME_SEGMENTO")), 200))
+                .faixaFaturamento(truncate(firstNonBlank(jsonText(record, "FAIXA_FATURAMENTO_CLIENTE_EC"),
+                        jsonText(record, "FAIXA_FATURAMENTO_CLIENTE")), 200))
+                .tipoRecurso(truncate(blankToNull(jsonText(record, "TP_RECURSO")), 50))
+                .notaNps(notaNps)
+                .dataUltimaPesquisa(truncate(blankToNull(jsonText(record, "DT_ULTIMA_PESQUISA")), 50))
                 .sourceFileName(sourceFile)
                 .importBatchId(batchId)
                 .importedAt(importedAt)
@@ -231,12 +292,25 @@ public class TranscricaoImportService {
         return null;
     }
 
+    private Integer parseNps(String value) {
+        String text = blankToNull(value);
+        if (text == null) {
+            return null;
+        }
+        try {
+            int nps = (int) Math.round(Double.parseDouble(text.replace(',', '.')));
+            return nps < 0 || nps > 10 ? null : nps;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private String buildCliente(JsonNode record) {
         String codt = blankToNull(jsonText(record, "CODT"));
         String segmento = blankToNull(jsonText(record, "NOME_SEGMENTO"));
         String unidade = blankToNull(jsonText(record, "NOME_UNIDADE"));
         String base = codt == null ? "Cliente TOTVS" : "CODT " + codt;
-        if (segmento != null) {
+        if (segmento != null && !"None".equalsIgnoreCase(segmento)) {
             base += " - " + segmento;
         } else if (unidade != null) {
             base += " - " + unidade;
@@ -275,11 +349,19 @@ public class TranscricaoImportService {
         if (value == null || value.isBlank()) {
             return null;
         }
+        String text = value.trim();
         for (DateTimeFormatter formatter : SOURCE_DATE_FORMATS) {
             try {
-                return LocalDateTime.parse(value.trim(), formatter);
+                return LocalDateTime.parse(text, formatter);
             } catch (DateTimeParseException ignored) {
                 // Tenta o proximo formato conhecido sem interromper o lote.
+            }
+        }
+        for (DateTimeFormatter formatter : SOURCE_DATE_ONLY) {
+            try {
+                return java.time.LocalDate.parse(text, formatter).atStartOfDay();
+            } catch (DateTimeParseException ignored) {
+                // idem
             }
         }
         return null;
@@ -297,10 +379,29 @@ public class TranscricaoImportService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            String text = blankToNull(value);
+            if (text != null) {
+                return text;
+            }
+        }
+        return null;
+    }
+
+    private String truncate(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max);
+    }
+
+    enum SourceFormat {
+        JSON, CSV
+    }
+
     private static class ImportResult {
         private final String sourceFile;
         private final String batchId;
         private final List<TranscricaoImportItemResponse> items = new ArrayList<>();
+        private SourceFormat format = SourceFormat.JSON;
         private int found;
         private int imported;
         private int skipped;
@@ -324,6 +425,7 @@ public class TranscricaoImportService {
             return TranscricaoImportResponse.builder()
                     .success(imported > 0 || skipped > 0)
                     .sourceFile(sourceFile)
+                    .sourceFormat(format.name())
                     .batchId(batchId)
                     .found(found)
                     .imported(imported)

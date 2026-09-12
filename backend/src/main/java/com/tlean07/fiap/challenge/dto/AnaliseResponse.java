@@ -10,6 +10,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -35,4 +36,8 @@ public class AnaliseResponse {
     private List<OportunidadeConsolidada> oportunidadesConsolidadas;
     private List<AlertaConsolidado> alertasConsolidados;
     private List<ItemCritico> itensCriticos;
+    private String proximaAcao;
+    private String sentimentoDetalhe;
+    private Map<String, Object> insightsAdicionais;
+    private Map<String, Object> indicadoresQualidade;
 }

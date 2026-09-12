@@ -27,6 +27,20 @@ Configure em **Settings -> Variables and secrets**:
 
 LeanIA e o AI Service gratuito e adaptativo para analise de transcricoes de reunioes comerciais.
 
+## Motor de analise (v2)
+
+`analyzer.py` processa a transcricao em etapas: locutores (`[LOCUTOR N]:`) e turnos, papel de cada
+locutor (vendedor x cliente), sentencas e oracoes, anotacao de areas/produtos/concorrentes, sentimento
+por sentenca com lexico pt-BR (negacao, intensificadores, aspecto), e entao extrai produtos TOTVS
+(atual/oportunidade/concorrente), riscos (churn, concorrencia, insatisfacao, perda de confianca),
+oportunidades (upsell/cross-sell/novo produto com score), persona, budget, confianca no vendedor,
+proxima acao, insights "alem do obvio" (elogios, reclamacoes, duvidas da jornada, proximos passos,
+observacoes) e indicadores de qualidade da conversa (participacao, perguntas, escuta ativa).
+
+O exemplo do briefing do Challenge (pagina 15) e o teste de referencia: `python tests/test_analyzer.py`.
+`AI_MAX_CHARS` padrao subiu para 250000 porque as reunioes reais tem ~35 mil caracteres.
+O backend Java tem um motor equivalente (`LeanIALocalAnalyzer`) usado quando este servico nao responde.
+
 ## Transcricao opcional com Parakeet
 
 O endpoint `POST /transcrever` permite receber audio de reuniao e gerar uma transcricao antes da analise da LeanIA.

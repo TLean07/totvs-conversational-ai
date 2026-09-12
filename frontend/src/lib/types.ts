@@ -138,6 +138,34 @@ export interface AnaliseResponse {
   oportunidadesConsolidadas: OportunidadeConsolidada[];
   alertasConsolidados: AlertaConsolidado[];
   itensCriticos: ItemCritico[];
+  proximaAcao?: string | null;
+  sentimentoDetalhe?: string | null;
+  insightsAdicionais?: InsightsAdicionais | null;
+  indicadoresQualidade?: IndicadoresQualidade | null;
+}
+
+/** "Alem do obvio": elogios, reclamacoes, duvidas da jornada, proximos passos, observacoes. */
+export interface InsightsAdicionais {
+  elogios?: string[];
+  reclamacoes?: string[];
+  duvidasJornada?: string[];
+  proximosPassos?: string[];
+  observacoes?: string[];
+}
+
+/** Indicadores de qualidade da conversa (quem falou mais, perguntas, escuta ativa). */
+export interface IndicadoresQualidade {
+  locutores?: number;
+  turnos?: number;
+  sentencas?: number;
+  palavras?: number;
+  participacaoVendedorPct?: number;
+  participacaoClientePct?: number;
+  perguntasVendedor?: number;
+  perguntasCliente?: number;
+  escutaAtiva?: string;
+  tokensAnonimizados?: number;
+  qualidadeTranscricao?: string;
 }
 
 export interface TranscricaoResponse {
@@ -167,6 +195,14 @@ export interface TranscricaoResponse {
   transcriptionLanguage: string | null;
   audioDurationSeconds: number | null;
   transcriptionProcessingTimeMs: number | null;
+  uf?: string | null;
+  cnae?: string | null;
+  nomeUnidade?: string | null;
+  nomeSegmento?: string | null;
+  faixaFaturamento?: string | null;
+  tipoRecurso?: string | null;
+  notaNps?: number | null;
+  dataUltimaPesquisa?: string | null;
   transcriptionWarnings: string[];
   status: StatusTranscricao;
   dataCriacao: string;

@@ -140,3 +140,38 @@ marcar alerta (AlertaService), usuarios (UserService) e no fim de `TranscricaoAn
 sai de PROCESSANDO). Medido localmente com `logging.level.org.hibernate.SQL=DEBUG`: dashboard 8 consultas na
 1a chamada e 0 nas seguintes; `paged`, `alertas/novos` e `insights` idem; apos POST/PATCH/DELETE a chamada
 seguinte volta ao banco. Anotacoes sao inertes nos testes unitarios (Mockito), nada mudou nos construtores.
+
+## LeanIA v2 e importadores (2026-09-12)
+
+### Objetivo
+Reproduzir a "Entrega Esperada" do briefing (PDF, pagina 15) e os diferenciais da pagina 16 sem LLM pago.
+Texto do briefing -> Protheus (ATUAL), RM (OPORTUNIDADE), Senior (CONCORRENTE); risco CONCORRENCIA ALTO
+"para RH"; UPSELL Folha de Pagamento (TOTVS RM) score 0,9 e valor R$ 50.000,00; persona Gestor Operacional;
+budget R$ 50.000,00; sentimento MISTO "Satisfeito com Backoffice / Frustrado com RH"; observacoes sobre CFO,
+discricao do valor e ciclo de ROI. Validado por teste unitario (Python e Java) e pela API contra o Oracle.
+
+### Motor
+- `ai-service/analyzer.py` reescrito (pipeline por locutor/sentenca/oracao; catalogos de produtos, concorrentes
+  com desambiguacao por contexto, areas -> modulo/produto; lexico com negacao e intensificadores; churn so com
+  objeto de contrato/sistema; desejo de compra so em 1a pessoa e nao negado). ~230 ms por reuniao real.
+- `app.py`: `sanitizar_texto` preserva quebras de linha (os turnos dependem delas). `AI_MAX_CHARS` 20000 -> 250000
+  (o limite antigo rejeitava a maioria das reunioes reais e empurrava tudo para o fallback).
+- Backend: `LeanIALocalAnalyzer` (mesmas regras em Java) substitui o fallback de 40 linhas; `LeanIAService`
+  completa blocos que um ai-service antigo nao devolver; read timeout 30 s -> `ai.service.read-timeout-seconds` (120).
+- Contrato `AiAnalysisDTO` ganhou `proximaAcao`, `sentimentoDetalhe`, `insightsAdicionais`, `indicadoresQualidade`
+  (opcionais). Persistidos em ANALISES: PROXIMA_ACAO, SENTIMENTO_DETALHE, INSIGHTS_JSON, INDICADORES_JSON (CLOB via
+  `JsonMapConverter`). Frontend mostra "Proxima acao", "Alem do obvio" e "Qualidade da conversa".
+
+### Importadores
+- `/api/transcricoes/import/totvs` aceita JSON (array, NDJSON, aninhado) e CSV; o formato e detectado pelo conteudo.
+- `TotvsTranscriptionCsvParser` (commons-csv): UTF-8 com/sem BOM ou Windows-1252 (o CSV mock e ISO-8859-1),
+  delimitador `,`/`;`/tab, cabecalho normalizado, `FAIXA_FATURAMENTO_CLIENTE` -> alias `_EC`.
+- Metadados agora persistidos em TRANSCRICOES: UF, CNAE, NOME_UNIDADE, NOME_SEGMENTO, FAIXA_FATURAMENTO, TP_RECURSO,
+  NOTA_NPS, DT_ULTIMA_PESQUISA (migracao `db/oracle/migrations/002_metadados_e_leania_v2.sql`, ja aplicada no schema).
+- Dados de referencia: CSV mock = 500 reunioes com 4 textos repetidos; JSON real = 1.174 reunioes, 1.126 IDs unicos,
+  mediana 34 mil caracteres, RM/Fluig/integracao dominam, quase nenhum concorrente citado.
+
+### Pendencias
+- O Space do Hugging Face (`lean7-challenge.hf.space`) precisa receber o novo `ai-service` (push manual); ate la o
+  backend na Render usa o motor Java local quando o Space responder com o contrato antigo ou falhar.
+- App Android ignora os campos novos (Gson) e continua funcionando; nao exibe os blocos novos.

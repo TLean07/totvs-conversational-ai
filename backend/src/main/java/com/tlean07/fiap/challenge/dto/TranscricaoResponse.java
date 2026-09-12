@@ -43,6 +43,14 @@ public class TranscricaoResponse {
     private String transcriptionLanguage;
     private Double audioDurationSeconds;
     private Integer transcriptionProcessingTimeMs;
+    private String uf;
+    private String cnae;
+    private String nomeUnidade;
+    private String nomeSegmento;
+    private String faixaFaturamento;
+    private String tipoRecurso;
+    private Integer notaNps;
+    private String dataUltimaPesquisa;
     private List<String> transcriptionWarnings;
     private StatusTranscricao status;
     private LocalDateTime dataCriacao;
