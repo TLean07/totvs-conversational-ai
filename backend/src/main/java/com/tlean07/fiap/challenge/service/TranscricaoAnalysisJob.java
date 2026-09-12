@@ -146,16 +146,12 @@ public class TranscricaoAnalysisJob {
     }
 
     private void limparAnaliseAnterior(Transcricao transcricao) {
-        AnaliseResultado existente = transcricao.getAnaliseResultado();
-        if (existente != null && existente.getId() != null) {
-            alertaRepository.deleteByAnaliseId(existente.getId());
-            analiseRepository.deleteById(existente.getId());
-            transcricao.setAnaliseResultado(null);
-        }
+        // A associacao e LAZY: a analise anterior e localizada pelo repositorio, nunca pelo proxy
         analiseRepository.findByTranscricaoId(transcricao.getId()).ifPresent(analise -> {
             alertaRepository.deleteByAnaliseId(analise.getId());
             analiseRepository.delete(analise);
         });
+        transcricao.setAnaliseResultado(null);
     }
 
     private static void dormir(long ms) {

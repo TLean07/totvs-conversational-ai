@@ -773,10 +773,7 @@ public class TranscricaoService {
                 ? transcricaoRepository.findAllByOrderByDataCriacaoDesc()
                 : transcricaoRepository.findByOwnerIdOrderByDataCriacaoDesc(user.id());
 
-        return transcricoes
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return toListResponses(transcricoes);
     }
 
     @Cacheable(cacheNames = CacheNames.TRANSCRICOES, key = "@cacheKeys.user() + ':recentes'")
@@ -786,9 +783,7 @@ public class TranscricaoService {
                 ? transcricaoRepository.findTop5ByOrderByDataCriacaoDesc()
                 : transcricaoRepository.findTop5ByOwnerIdOrderByDataCriacaoDesc(user.id());
 
-        return transcricoes.stream()
-                .map(this::toResponse)
-                .toList();
+        return toListResponses(transcricoes);
     }
 
     @Cacheable(cacheNames = CacheNames.TRANSCRICOES, key = "@cacheKeys.user() + ':pagina:' + #page + ':' + #size")
@@ -802,7 +797,7 @@ public class TranscricaoService {
                 : transcricaoRepository.findByOwnerIdOrderByDataCriacaoDesc(user.id(), pageRequest);
 
         return PageResponse.<TranscricaoResponse>builder()
-                .content(result.getContent().stream().map(this::toResponse).toList())
+                .content(toListResponses(result.getContent()))
                 .page(result.getNumber())
                 .size(result.getSize())
                 .totalElements(result.getTotalElements())
@@ -824,10 +819,7 @@ public class TranscricaoService {
                 ? transcricaoRepository.findByClienteContainingIgnoreCase(cliente)
                 : transcricaoRepository.findByOwnerIdAndClienteContainingIgnoreCase(user.id(), cliente);
 
-        return transcricoes
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return toListResponses(transcricoes);
     }
 
     @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
@@ -853,11 +845,8 @@ public class TranscricaoService {
     @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public AnaliseFeedbackResponse registrarFeedback(String id, AnaliseFeedbackRequest request) {
         Transcricao transcricao = findVisibleTranscricao(id);
-        AnaliseResultado analise = transcricao.getAnaliseResultado();
-        if (analise == null) {
-            analise = analiseRepository.findByTranscricaoId(transcricao.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Transcricao ainda nao possui analise"));
-        }
+        AnaliseResultado analise = analiseRepository.findByTranscricaoId(transcricao.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Transcricao ainda nao possui analise"));
 
         AnaliseFeedback feedback = AnaliseFeedback.builder()
                 .ownerId(transcricao.getOwnerId())
@@ -913,10 +902,6 @@ public class TranscricaoService {
     }
 
     private void limparAnaliseEAlertas(Transcricao transcricao) {
-        if (transcricao.getAnaliseResultado() != null && transcricao.getAnaliseResultado().getId() != null) {
-            alertaRepository.deleteByAnaliseId(transcricao.getAnaliseResultado().getId());
-            analiseRepository.deleteById(transcricao.getAnaliseResultado().getId());
-        }
         analiseRepository.findByTranscricaoId(transcricao.getId()).ifPresent(analise -> {
             alertaRepository.deleteByAnaliseId(analise.getId());
             analiseRepository.delete(analise);
@@ -926,8 +911,95 @@ public class TranscricaoService {
         transcricao.setAnaliseResultado(null);
     }
 
+    /** Tamanho do trecho de texto devolvido nas listas (o detalhe devolve o texto inteiro). */
+    static final int LISTA_TRECHO_CHARS = 400;
+
+    /**
+     * Resposta enxuta para listas: trecho curto do texto, sem transcriptionText e com a analise
+     * resumida (escalares + produtos) vinda de duas consultas de projecao para a pagina inteira.
+     * A resposta completa (texto integral, riscos, oportunidades, alertas, itens criticos) fica
+     * para o detalhe da reuniao ({@link #toResponse(Transcricao)}).
+     */
+    List<TranscricaoResponse> toListResponses(List<Transcricao> transcricoes) {
+        if (transcricoes == null || transcricoes.isEmpty()) {
+            return List.of();
+        }
+        List<String> ids = transcricoes.stream().map(Transcricao::getId).toList();
+        Map<String, AnaliseResultadoRepository.ResumoRow> resumos = new LinkedHashMap<>();
+        for (AnaliseResultadoRepository.ResumoRow r : analiseRepository.findResumoByTranscricaoIdIn(ids)) {
+            resumos.putIfAbsent(r.getTranscricaoId(), r);
+        }
+        Map<String, List<ProdutoResponse>> produtos = new LinkedHashMap<>();
+        if (!resumos.isEmpty()) {
+            for (AnaliseResultadoRepository.ProdutoRow p : analiseRepository.findProdutoRowsByTranscricaoIdIn(ids)) {
+                ProdutoIdentificado pi = p.getProduto();
+                if (pi == null) {
+                    continue;
+                }
+                produtos.computeIfAbsent(p.getTranscricaoId(), k -> new ArrayList<>())
+                        .add(ProdutoResponse.builder()
+                                .nomeProduto(pi.getNomeProduto())
+                                .tipo(pi.getTipo())
+                                .contexto(pi.getContexto())
+                                .build());
+            }
+        }
+
+        List<TranscricaoResponse> out = new ArrayList<>(transcricoes.size());
+        for (Transcricao t : transcricoes) {
+            TranscricaoResponse.TranscricaoResponseBuilder builder = baseBuilder(t)
+                    .textoOriginal(trecho(t.getTextoOriginal()))
+                    .transcriptionText(null);
+            AnaliseResultadoRepository.ResumoRow r = resumos.get(t.getId());
+            if (r != null) {
+                builder.analise(AnaliseResponse.builder()
+                        .id(r.getId())
+                        .sentimentoGeral(r.getSentimentoGeral())
+                        .resumo(r.getResumo())
+                        .personaIdentificada(r.getPersonaIdentificada())
+                        .budgetIdentificado(r.getBudgetIdentificado())
+                        .scoreConfiancaVendedor(r.getScoreConfiancaVendedor())
+                        .scoreSentimento(r.getScoreSentimento())
+                        .proximaAcao(r.getProximaAcao())
+                        .sentimentoDetalhe(r.getSentimentoDetalhe())
+                        .dataAnalise(r.getDataAnalise())
+                        .metricasAgregadas(t.getMetricasAgregadas())
+                        .resumoExecutivo(t.getResumoExecutivo())
+                        .produtos(produtos.getOrDefault(t.getId(), List.of()))
+                        .oportunidades(List.of())
+                        .riscos(List.of())
+                        .alertas(List.of())
+                        .riscosConsolidados(t.getRiscosConsolidados())
+                        .oportunidadesConsolidadas(t.getOportunidadesConsolidadas())
+                        .alertasConsolidados(t.getAlertasConsolidados())
+                        .itensCriticos(t.getItensCriticos())
+                        .insightsAdicionais(Map.of())
+                        .indicadoresQualidade(Map.of())
+                        .build());
+            }
+            out.add(builder.build());
+        }
+        return out;
+    }
+
+    static String trecho(String texto) {
+        if (texto == null || texto.length() <= LISTA_TRECHO_CHARS) {
+            return texto;
+        }
+        return texto.substring(0, LISTA_TRECHO_CHARS) + "...";
+    }
+
+    /** Resposta completa de uma reuniao (detalhe): texto integral e analise inteira. */
     public TranscricaoResponse toResponse(Transcricao t) {
-        TranscricaoResponse.TranscricaoResponseBuilder builder = TranscricaoResponse.builder()
+        TranscricaoResponse.TranscricaoResponseBuilder builder = baseBuilder(t);
+        // A associacao com a analise e LAZY e a sessao JPA ja fechou: busca sempre pelo repositorio
+        analiseRepository.findByTranscricaoId(t.getId())
+                .ifPresent(a -> builder.analise(analiseService.toResponse(a)));
+        return builder.build();
+    }
+
+    private TranscricaoResponse.TranscricaoResponseBuilder baseBuilder(Transcricao t) {
+        return TranscricaoResponse.builder()
                 .id(t.getId())
                 .textoOriginal(t.getTextoOriginal())
                 .participantes(t.getParticipantes())
@@ -972,15 +1044,5 @@ public class TranscricaoService {
                 .oportunidadesConsolidadas(t.getOportunidadesConsolidadas())
                 .alertasConsolidados(t.getAlertasConsolidados())
                 .itensCriticos(t.getItensCriticos());
-
-        // Buscar analise se existir
-        if (t.getAnaliseResultado() != null) {
-            builder.analise(analiseService.toResponse(t.getAnaliseResultado()));
-        } else {
-            analiseRepository.findByTranscricaoId(t.getId())
-                    .ifPresent(a -> builder.analise(analiseService.toResponse(a)));
-        }
-
-        return builder.build();
     }
 }

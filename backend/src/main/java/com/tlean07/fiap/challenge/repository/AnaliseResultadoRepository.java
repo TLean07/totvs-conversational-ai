@@ -104,6 +104,47 @@ public interface AnaliseResultadoRepository extends JpaRepository<AnaliseResulta
     @Query("select cast(o.tipo as string) as chave, count(o) as total from AnaliseResultado a join a.oportunidades o where a.oportunidadesConsolidadas is empty and a.ownerId = :ownerId group by o.tipo")
     List<ContagemRow> contarOportunidadesSemConsolidadoPorTipo(@Param("ownerId") String ownerId);
 
+    /** Resumo da analise para listas de transcricoes (sem as tabelas filhas). */
+    interface ResumoRow {
+        String getId();
+
+        String getTranscricaoId();
+
+        Sentimento getSentimentoGeral();
+
+        String getResumo();
+
+        String getPersonaIdentificada();
+
+        String getBudgetIdentificado();
+
+        Double getScoreConfiancaVendedor();
+
+        Double getScoreSentimento();
+
+        String getProximaAcao();
+
+        String getSentimentoDetalhe();
+
+        java.time.LocalDateTime getDataAnalise();
+    }
+
+    @Query("select a.id as id, a.transcricaoId as transcricaoId, a.sentimentoGeral as sentimentoGeral, a.resumo as resumo,"
+            + " a.personaIdentificada as personaIdentificada, a.budgetIdentificado as budgetIdentificado,"
+            + " a.scoreConfiancaVendedor as scoreConfiancaVendedor, a.scoreSentimento as scoreSentimento,"
+            + " a.proximaAcao as proximaAcao, a.sentimentoDetalhe as sentimentoDetalhe, a.dataAnalise as dataAnalise"
+            + " from AnaliseResultado a where a.transcricaoId in :ids")
+    List<ResumoRow> findResumoByTranscricaoIdIn(@Param("ids") java.util.Collection<String> ids);
+
+    interface ProdutoRow {
+        String getTranscricaoId();
+
+        com.tlean07.fiap.challenge.model.ProdutoIdentificado getProduto();
+    }
+
+    @Query("select a.transcricaoId as transcricaoId, p as produto from AnaliseResultado a join a.produtosIdentificados p where a.transcricaoId in :ids")
+    List<ProdutoRow> findProdutoRowsByTranscricaoIdIn(@Param("ids") java.util.Collection<String> ids);
+
     interface RiscoRow {
         String getTranscricaoId();
 

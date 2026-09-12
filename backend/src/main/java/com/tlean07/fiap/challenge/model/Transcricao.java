@@ -207,8 +207,12 @@ public class Transcricao {
     @OrderColumn(name = "POSICAO")
     private List<ItemCritico> itensCriticos = new ArrayList<>();
 
-    /** Analise atual da transcricao (antigo DBRef). No script Oracle a FK e ON DELETE SET NULL. */
-    @OneToOne(fetch = FetchType.EAGER)
+    /**
+     * Analise atual da transcricao (antigo DBRef). No script Oracle a FK e ON DELETE SET NULL.
+     * LAZY: as listas nao devem arrastar a analise com suas 8 tabelas filhas; os servicos buscam a
+     * analise pelo repositorio quando precisam dela (as sessoes JPA fecham no repositorio).
+     */
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ANALISE_ID", foreignKey = @ForeignKey(name = "FK_TRANSCRICOES_ANALISE"))
     private AnaliseResultado analiseResultado;
 
