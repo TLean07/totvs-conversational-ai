@@ -225,3 +225,9 @@ listas: trecho de 400 caracteres, `transcriptionText` nulo, analise resumida (es
 `ResumoRow`/`ProdutoRow` para a pagina inteira. Detalhe (`/transcricoes/{id}`) continua completo. Local: 29 KB e 9
 consultas por pagina. Os clientes (web e Android) so leem sentimento, produtos e trecho nas listas.
 `GET /api/transcricoes` sem paginacao ainda carrega as 623 entidades (13 s local, 1,8 MB); nenhum cliente usa.
+(8) A Render `challenge-totvs-backend-oracle` roda em Oregon, ~180 ms do Oracle da FIAP: o custo passou a ser ida e volta,
+nao CPU. O detalhe de UMA reuniao levava 8 s porque cada CLOB era lido por locator em varias viagens. Hikari agora
+passa `oracle.jdbc.defaultLobPrefetchSize=1 MB` e `defaultRowPrefetch=100` ao driver (sintaxe
+`spring.datasource.hikari.data-source-properties[chave]=valor`; conferido no log DEBUG do Hikari). Producao apos tudo:
+pagina de 10 sem cache 4 s (era 17 s), com cache 0,3 s; detalhe 1,3-6,7 s sem cache; dashboard/insights/alertas < 1 s
+com o cache aquecido. Medir sempre uns 3 min depois do deploy: o CacheWarmer disputa a 0,1 vCPU (login sobe para 8 s).
