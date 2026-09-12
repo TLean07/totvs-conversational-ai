@@ -86,13 +86,15 @@ public class TranscricaoImportService {
         LocalDateTime importedAt = LocalDateTime.now();
         ImportResult result = new ImportResult(sourceFile, batchId);
         Set<String> meetingIdsInFile = new HashSet<>();
+        // Uma consulta para todo o lote em vez de uma por reuniao (1.174 idas ao banco numa importacao real)
+        Set<String> meetingIdsExistentes = carregarMeetingIdsExistentes();
 
         try (InputStream raw = file.getInputStream();
              BufferedInputStream input = new BufferedInputStream(raw, 64 * 1024)) {
             SourceFormat format = detectFormat(input, file);
             result.format = format;
             TotvsTranscriptionJsonParser.RecordConsumer consumer = (index, record) -> processRecord(
-                    index, record, ownerId, sourceFile, batchId, importedAt, meetingIdsInFile, result);
+                    index, record, ownerId, sourceFile, batchId, importedAt, meetingIdsInFile, meetingIdsExistentes, result);
             TotvsTranscriptionJsonParser.ParseSummary summary = format == SourceFormat.CSV
                     ? csvParser.parse(input, consumer)
                     : parser.parse(input, consumer);
@@ -147,6 +149,16 @@ public class TranscricaoImportService {
         return SourceFormat.CSV;
     }
 
+    private Set<String> carregarMeetingIdsExistentes() {
+        try {
+            Set<String> ids = transcricaoRepository.findAllMeetingIds();
+            return ids == null ? Set.of() : ids;
+        } catch (RuntimeException e) {
+            log.warn("[TranscriptionImport] nao foi possivel pre-carregar ids existentes: {}", e.getClass().getSimpleName());
+            return Set.of();
+        }
+    }
+
     private void processRecord(int index,
                                JsonNode record,
                                String ownerId,
@@ -154,6 +166,7 @@ public class TranscricaoImportService {
                                String batchId,
                                LocalDateTime importedAt,
                                Set<String> meetingIdsInFile,
+                               Set<String> meetingIdsExistentes,
                                ImportResult result) {
         String sourceMeetingId = blankToNull(jsonText(record, "ID_MEETING"));
         String meetingId = sourceMeetingId;
@@ -174,7 +187,8 @@ public class TranscricaoImportService {
         }
 
         if (!missingMeetingId
-                && (!meetingIdsInFile.add(meetingId) || transcricaoRepository.existsByMeetingId(meetingId))) {
+                && (!meetingIdsInFile.add(meetingId) || meetingIdsExistentes.contains(meetingId)
+                || (meetingIdsExistentes.isEmpty() && transcricaoRepository.existsByMeetingId(meetingId)))) {
             result.skipped++;
             result.items.add(item(index, meetingId, null, "SKIPPED_DUPLICATE", "ID_MEETING_ALREADY_EXISTS", warnings));
             log.info("[TranscriptionImport] skippedDuplicate meetingId={}", meetingId);

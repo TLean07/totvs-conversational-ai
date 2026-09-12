@@ -110,7 +110,7 @@ class TranscricaoImportServiceTest {
     @Test
     void skipsMeetingIdAlreadyStored() {
         TestContext context = context();
-        when(context.repository.existsByMeetingId("2")).thenReturn(true);
+        when(context.repository.findAllMeetingIds()).thenReturn(java.util.Set.of("2"));
         MultipartFile file = jsonFile("""
                 [
                   {"ID_MEETING":"1","ANON_TRANSCRICAO":"Primeira"},

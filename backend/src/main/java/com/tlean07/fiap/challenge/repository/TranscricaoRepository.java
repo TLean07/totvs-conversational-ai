@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface TranscricaoRepository extends JpaRepository<Transcricao, String> {
@@ -23,12 +24,24 @@ public interface TranscricaoRepository extends JpaRepository<Transcricao, String
     List<Transcricao> findTop5ByOrderByDataCriacaoDesc();
     List<Transcricao> findTop5ByOwnerIdOrderByDataCriacaoDesc(String ownerId);
 
-    /* Antes projetava apenas id/cliente/listas consolidadas; no Oracle a consulta base e a mesma. */
-    @Query("select t from Transcricao t order by t.dataCriacao desc")
-    List<Transcricao> findAllForInsights();
+    /** Projecao leve para o dashboard/insights: nao carrega os CLOBs de texto nem as listas. */
+    interface InsightRow {
+        String getId();
 
-    @Query("select t from Transcricao t where t.ownerId = :ownerId order by t.dataCriacao desc")
-    List<Transcricao> findAllByOwnerIdForInsights(@Param("ownerId") String ownerId);
+        String getCliente();
+    }
+
+    @Query("select t.id as id, t.cliente as cliente from Transcricao t order by t.dataCriacao desc")
+    List<InsightRow> findInsightRows();
+
+    @Query("select t.id as id, t.cliente as cliente from Transcricao t where t.ownerId = :ownerId order by t.dataCriacao desc")
+    List<InsightRow> findInsightRowsByOwnerId(@Param("ownerId") String ownerId);
+
+    /** Ids de reuniao ja importados, para a importacao checar duplicados em memoria. */
+    @Query("select t.meetingId from Transcricao t where t.meetingId is not null")
+    Set<String> findAllMeetingIds();
+
+    List<Transcricao> findTop100ByStatusOrderByDataCriacaoAsc(StatusTranscricao status);
 
     List<Transcricao> findByOwnerIdAndStatus(String ownerId, StatusTranscricao status);
     List<Transcricao> findByOwnerIdAndClienteContainingIgnoreCase(String ownerId, String cliente);

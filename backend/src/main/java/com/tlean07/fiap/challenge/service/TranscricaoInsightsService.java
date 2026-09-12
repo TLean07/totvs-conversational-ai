@@ -1,14 +1,13 @@
 package com.tlean07.fiap.challenge.service;
 
-import org.springframework.cache.annotation.Cacheable;
 import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
-import com.tlean07.fiap.challenge.model.Transcricao;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import com.tlean07.fiap.challenge.security.AuthenticatedUser;
 import com.tlean07.fiap.challenge.security.SecurityUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +15,11 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Insights por transcricao para o dashboard. As transcricoes entram por uma projecao (id e cliente):
+ * carregar a entidade inteira trazia o texto completo de cada reuniao (~35 mil caracteres) so para
+ * montar os graficos, o que travava o dashboard depois de uma importacao grande.
+ */
 @Service
 public class TranscricaoInsightsService {
 
@@ -31,9 +35,9 @@ public class TranscricaoInsightsService {
     @Cacheable(cacheNames = CacheNames.INSIGHTS, key = "@cacheKeys.user()")
     public List<TranscricaoInsightsResponse> listarTodos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
-        List<Transcricao> transcricoes = user.isAdmin()
-                ? transcricaoRepository.findAllForInsights()
-                : transcricaoRepository.findAllByOwnerIdForInsights(user.id());
+        List<TranscricaoRepository.InsightRow> transcricoes = user.isAdmin()
+                ? transcricaoRepository.findInsightRows()
+                : transcricaoRepository.findInsightRowsByOwnerId(user.id());
         List<AnaliseResultado> analises = user.isAdmin()
                 ? analiseRepository.findAllForInsights()
                 : analiseRepository.findAllByOwnerIdForInsights(user.id());
@@ -46,27 +50,19 @@ public class TranscricaoInsightsService {
                         (first, ignored) -> first));
 
         return transcricoes.stream()
-                .map(transcricao -> toResponse(transcricao, analisePorTranscricao.get(transcricao.getId())))
+                .map(row -> toResponse(row, analisePorTranscricao.get(row.getId())))
                 .toList();
     }
 
-    private TranscricaoInsightsResponse toResponse(Transcricao transcricao, AnaliseResultado analise) {
+    private TranscricaoInsightsResponse toResponse(TranscricaoRepository.InsightRow row, AnaliseResultado analise) {
         return TranscricaoInsightsResponse.builder()
-                .id(transcricao.getId())
-                .cliente(transcricao.getCliente())
-                .riscosConsolidados(prefer(
-                        analise == null ? null : analise.getRiscosConsolidados(),
-                        transcricao.getRiscosConsolidados()))
-                .oportunidadesConsolidadas(prefer(
-                        analise == null ? null : analise.getOportunidadesConsolidadas(),
-                        transcricao.getOportunidadesConsolidadas()))
+                .id(row.getId())
+                .cliente(row.getCliente())
+                .riscosConsolidados(analise == null ? List.of() : safeList(analise.getRiscosConsolidados()))
+                .oportunidadesConsolidadas(analise == null ? List.of() : safeList(analise.getOportunidadesConsolidadas()))
                 .riscos(analise == null ? List.of() : safeList(analise.getRiscos()))
                 .oportunidades(analise == null ? List.of() : safeList(analise.getOportunidades()))
                 .build();
-    }
-
-    private <T> List<T> prefer(List<T> primary, List<T> secondary) {
-        return primary != null && !primary.isEmpty() ? primary : safeList(secondary);
     }
 
     private <T> List<T> safeList(List<T> values) {

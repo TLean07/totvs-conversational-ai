@@ -10,7 +10,6 @@ import com.tlean07.fiap.challenge.model.Oportunidade;
 import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
 import com.tlean07.fiap.challenge.model.Risco;
 import com.tlean07.fiap.challenge.model.RiscoConsolidado;
-import com.tlean07.fiap.challenge.model.Transcricao;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import com.tlean07.fiap.challenge.security.AuthenticatedUser;
@@ -49,25 +48,15 @@ class TranscricaoInsightsServiceTest {
     @Test
     void returnsEveryTranscriptionAndPreservesConsolidatedAndLegacyInsights() {
         authenticate("admin-1", UserRole.ADMIN);
-        Transcricao first = Transcricao.builder()
-                .id("t-1")
-                .cliente("Cliente A")
+        TranscricaoRepository.InsightRow first = row("t-1", "Cliente A");
+        TranscricaoRepository.InsightRow second = row("t-2", "Cliente B");
+        AnaliseResultado firstAnalysis = AnaliseResultado.builder()
+                .transcricaoId("t-1")
                 .riscosConsolidados(List.of(RiscoConsolidado.builder()
                         .categoria("Churn")
                         .severidade(Severidade.ALTO)
                         .ocorrencias(2)
                         .build()))
-                .build();
-        Transcricao second = Transcricao.builder()
-                .id("t-2")
-                .cliente("Cliente B")
-                .oportunidadesConsolidadas(List.of(OportunidadeConsolidada.builder()
-                        .categoria("Upsell")
-                        .ocorrencias(3)
-                        .build()))
-                .build();
-        AnaliseResultado firstAnalysis = AnaliseResultado.builder()
-                .transcricaoId("t-1")
                 .riscos(List.of(Risco.builder()
                         .tipo(TipoRisco.CHURN)
                         .severidade(Severidade.ALTO)
@@ -75,11 +64,15 @@ class TranscricaoInsightsServiceTest {
                 .build();
         AnaliseResultado secondAnalysis = AnaliseResultado.builder()
                 .transcricaoId("t-2")
+                .oportunidadesConsolidadas(List.of(OportunidadeConsolidada.builder()
+                        .categoria("Upsell")
+                        .ocorrencias(3)
+                        .build()))
                 .oportunidades(List.of(Oportunidade.builder()
                         .tipo(TipoOportunidade.UPSELL)
                         .build()))
                 .build();
-        when(transcricaoRepository.findAllForInsights()).thenReturn(List.of(first, second));
+        when(transcricaoRepository.findInsightRows()).thenReturn(List.of(first, second));
         when(analiseRepository.findAllForInsights()).thenReturn(List.of(firstAnalysis, secondAnalysis));
 
         List<TranscricaoInsightsResponse> result = service.listarTodos();
@@ -94,14 +87,28 @@ class TranscricaoInsightsServiceTest {
     @Test
     void regularUserUsesOwnerFilteredProjectionQueries() {
         authenticate("user-7", UserRole.USER);
-        when(transcricaoRepository.findAllByOwnerIdForInsights("user-7")).thenReturn(List.of());
+        when(transcricaoRepository.findInsightRowsByOwnerId("user-7")).thenReturn(List.of());
         when(analiseRepository.findAllByOwnerIdForInsights("user-7")).thenReturn(List.of());
 
         List<TranscricaoInsightsResponse> result = service.listarTodos();
 
         assertTrue(result.isEmpty());
-        verify(transcricaoRepository).findAllByOwnerIdForInsights("user-7");
+        verify(transcricaoRepository).findInsightRowsByOwnerId("user-7");
         verify(analiseRepository).findAllByOwnerIdForInsights("user-7");
+    }
+
+    private static TranscricaoRepository.InsightRow row(String id, String cliente) {
+        return new TranscricaoRepository.InsightRow() {
+            @Override
+            public String getId() {
+                return id;
+            }
+
+            @Override
+            public String getCliente() {
+                return cliente;
+            }
+        };
     }
 
     private void authenticate(String id, UserRole role) {

@@ -186,3 +186,15 @@ entao GitHub Actions a cada 10 min estouraria os 2.000 min/mes gratuitos. Soluca
 Qualquer um dos dois de pe mantem o outro acordado; se ambos dormirem ao mesmo tempo, a primeira requisicao de
 usuario reacende a cadeia. Custo: ~720 das 750 horas/mes gratuitas da Render, entao nenhum outro servico free
 pode ficar ligado no mesmo workspace.
+
+### Importacao grande em producao: pool esgotado e PROCESSANDO presos (2026-09-12)
+
+Sintoma: importar o JSON de 1.174 reunioes na Render free deixou 561 transcricoes em PROCESSANDO e o dashboard
+carregando sem fim. Causa: 4 threads de analise contra um pool Oracle de 3 conexoes ("Connection is not available,
+waiting=4"); o job assincrono falhava ao abrir transacao e a transcricao nunca saia de PROCESSANDO; o dashboard
+ainda carregava o texto completo de todas as transcricoes (findAllForInsights) e esperava conexao.
+
+Correcoes: `ANALYSIS_THREADS` (padrao 2) < `ORACLE_POOL_SIZE` (5 na Render); `TranscricaoAnalysisJob` com
+retentativas em falha de banco, ERRO no fim e job de recuperacao a cada 3 min que reenfileira ate 100
+PROCESSANDO que nao estejam na fila desta instancia; insights via projecao `InsightRow` (id, cliente) sem CLOB;
+importacao pre-carrega `findAllMeetingIds()` (uma consulta por lote em vez de uma por reuniao).
