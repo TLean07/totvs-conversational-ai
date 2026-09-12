@@ -3,7 +3,9 @@ import logging
 import os
 import re
 import tempfile
+import threading
 import time
+import urllib.request
 import uuid
 from contextvars import ContextVar
 from pathlib import Path
@@ -58,6 +60,26 @@ app.add_middleware(
 provider = FreeAiProvider(settings)
 cache = TTLCache(settings.cache_ttl_seconds, settings.cache_max_entries)
 transcription_service = TranscriptionService(settings)
+
+# Keep-alive mutuo: o backend (Render free, hiberna em 15 min) pinga este Space e este Space pinga o
+# backend, de modo que qualquer um dos dois que estiver de pe mantem o outro acordado.
+KEEPALIVE_URL = os.getenv("KEEPALIVE_URL", "").strip()
+KEEPALIVE_INTERVAL_SECONDS = max(60, int(os.getenv("KEEPALIVE_INTERVAL_SECONDS", "600") or "600"))
+
+
+def _keepalive_loop() -> None:
+    while True:
+        time.sleep(KEEPALIVE_INTERVAL_SECONDS)
+        try:
+            with urllib.request.urlopen(KEEPALIVE_URL, timeout=120) as resp:
+                logger.debug("keep-alive ok: %s (%s)", KEEPALIVE_URL, resp.status)
+        except Exception as exc:  # backend dormindo ou rede instavel: tenta de novo no proximo ciclo
+            logger.info("keep-alive falhou para %s: %s", KEEPALIVE_URL, exc.__class__.__name__)
+
+
+if KEEPALIVE_URL:
+    threading.Thread(target=_keepalive_loop, name="keepalive", daemon=True).start()
+    logger.info("keep-alive ativo a cada %ss para %s", KEEPALIVE_INTERVAL_SECONDS, KEEPALIVE_URL)
 
 ALLOWED_AUDIO_EXTENSIONS = {".wav", ".mp3", ".m4a"}
 ALLOWED_AUDIO_TYPES = {

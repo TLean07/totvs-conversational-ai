@@ -175,3 +175,14 @@ discricao do valor e ciclo de ROI. Validado por teste unitario (Python e Java) e
 - O Space do Hugging Face (`lean7-challenge.hf.space`) precisa receber o novo `ai-service` (push manual); ate la o
   backend na Render usa o motor Java local quando o Space responder com o contrato antigo ou falhar.
 - App Android ignora os campos novos (Gson) e continua funcionando; nao exibe os blocos novos.
+
+### Keep-alive mutuo Render <-> Hugging Face (2026-09-12)
+
+Render free hiberna apos 15 min sem trafego (boot de ~2 min); o Space free dorme apos 48 h. O repositorio e privado,
+entao GitHub Actions a cada 10 min estouraria os 2.000 min/mes gratuitos. Solucao sem conta externa:
+`config/KeepAliveScheduler` (backend) chama `${ai.service.url}/health` a cada 10 min (`KEEPALIVE_ENABLED`,
+`KEEPALIVE_URL`, `KEEPALIVE_INTERVAL_MS`) e o `app.py` do ai-service pinga `KEEPALIVE_URL` (variavel do Space =
+`https://challenge-totvs-backend-oracle.onrender.com/health`) a cada `KEEPALIVE_INTERVAL_SECONDS` (600).
+Qualquer um dos dois de pe mantem o outro acordado; se ambos dormirem ao mesmo tempo, a primeira requisicao de
+usuario reacende a cadeia. Custo: ~720 das 750 horas/mes gratuitas da Render, entao nenhum outro servico free
+pode ficar ligado no mesmo workspace.

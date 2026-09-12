@@ -13,6 +13,7 @@ Configure em **Settings -> Variables and secrets**:
 
 | Nome | Tipo | Valor |
 |---|---|---|
+| `KEEPALIVE_URL` | Variable | `https://challenge-totvs-backend-oracle.onrender.com/health` (o Space pinga o backend a cada 10 min; o backend pinga o Space) |
 | `AI_SERVICE_TOKEN` | Secret | Mesmo valor configurado no backend Render |
 | `AI_SERVICE_REQUIRE_TOKEN` | Variable | `true` em producao, `false` para teste local |
 | `AI_CORS_ALLOWED_ORIGINS` | Variable | `https://challenge-totvs-backend.onrender.com` |
