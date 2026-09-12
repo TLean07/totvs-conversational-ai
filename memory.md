@@ -198,3 +198,9 @@ Correcoes: `ANALYSIS_THREADS` (padrao 2) < `ORACLE_POOL_SIZE` (5 na Render); `Tr
 retentativas em falha de banco, ERRO no fim e job de recuperacao a cada 3 min que reenfileira ate 100
 PROCESSANDO que nao estejam na fila desta instancia; insights via projecao `InsightRow` (id, cliente) sem CLOB;
 importacao pre-carrega `findAllMeetingIds()` (uma consulta por lote em vez de uma por reuniao).
+
+Licoes do mesmo incidente: (1) o Space tinha a variavel `AI_MAX_CHARS=20000` definida nas configuracoes, que
+sobrepoe o default do config.py; toda reuniao real voltava 422 e o backend caia no motor Java (variavel agora
+250000 via HfApi.add_space_variable). (2) `@Async` chamado de dentro da propria classe nao passa pelo proxy:
+a recuperacao rodava tudo em serie na thread `scheduling-1`; por isso `AnalysisRecoveryScheduler` e um bean
+separado que chama `analysisJob.processar`.

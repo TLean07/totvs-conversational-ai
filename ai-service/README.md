@@ -19,6 +19,7 @@ Configure em **Settings -> Variables and secrets**:
 | `AI_CORS_ALLOWED_ORIGINS` | Variable | `https://challenge-totvs-backend.onrender.com` |
 | `AI_PROVIDER` | Variable | `auto`, `transformers` ou `fallback` |
 | `AI_MODEL_NAME` | Variable | Modelo local gratuito de sentimento |
+| `AI_MAX_CHARS` | Variable | `250000` (reunioes reais tem ate 190 mil caracteres; com 20000 o Space devolve 422 e o backend cai no motor Java) |
 | `AI_CACHE_ENABLED` | Variable | `true` |
 | `TRANSCRIPTION_PROVIDER` | Variable | `manual`, `parakeet` ou `auto` |
 | `PARAKEET_ENABLED` | Variable | `false` por padrao; use `true` apenas quando o ambiente tiver o provider ASR instalado |

@@ -12,12 +12,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.CannotCreateTransactionException;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Resiliencia: falhas de banco (pool esgotado, sessao derrubada pela FIAP) sao tentadas de novo com
  * espera; se mesmo assim falhar, a transcricao vai para ERRO em vez de ficar em PROCESSANDO para
- * sempre. Um job de recuperacao periodico reenfileira o que ficou preso em PROCESSANDO (por exemplo,
- * apos um reinicio da instancia no meio de uma importacao grande).
+ * sempre. O {@link AnalysisRecoveryScheduler} reenfileira o que ficou preso em PROCESSANDO (por
+ * exemplo, apos um reinicio da instancia no meio de uma importacao grande).
  */
 @Service
 public class TranscricaoAnalysisJob {
@@ -116,32 +114,9 @@ public class TranscricaoAnalysisJob {
         }
     }
 
-    /**
-     * Reenfileira transcricoes que ficaram em PROCESSANDO sem estarem na fila desta instancia
-     * (reinicio, deploy ou pool esgotado durante uma importacao grande). Lotes pequenos, para
-     * nao competir com as requisicoes do site.
-     */
-    @Scheduled(fixedDelayString = "${analysis.recovery-interval-ms:180000}",
-            initialDelayString = "${analysis.recovery-initial-delay-ms:120000}")
-    public void recuperarPresas() {
-        List<Transcricao> presas;
-        try {
-            presas = transcricaoRepository.findTop100ByStatusOrderByDataCriacaoAsc(StatusTranscricao.PROCESSANDO);
-        } catch (Exception e) {
-            log.info("Recuperacao adiada, banco indisponivel: {}", e.getClass().getSimpleName());
-            return;
-        }
-        int reenfileiradas = 0;
-        for (Transcricao t : presas) {
-            if (pendentes.contains(t.getId())) {
-                continue;
-            }
-            processar(t.getId());
-            reenfileiradas++;
-        }
-        if (reenfileiradas > 0) {
-            log.info("Recuperacao: {} transcricao(oes) em PROCESSANDO reenfileirada(s)", reenfileiradas);
-        }
+    /** Se a transcricao ja esta enfileirada ou em execucao nesta instancia. */
+    public boolean isPendente(String transcricaoId) {
+        return pendentes.contains(transcricaoId);
     }
 
     private void limparAnaliseAnterior(Transcricao transcricao) {
