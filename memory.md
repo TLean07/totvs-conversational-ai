@@ -217,3 +217,11 @@ alertas (912 x 3 CLOB) = 20 s; localmente 1-2 s. Solucao: dashboard so com agreg
 CLOB), admins compartilham a chave de cache "ADMIN", TTL 10 min (toda escrita invalida) e `CacheWarmer` recalcula
 dashboard+insights como admin sintetico a cada 9,5 min e na subida; listas de alertas limitadas a 300.
 `/api/transcricoes/insights` (paginas /riscos e /oportunidades) continua pesado quando o cache cai por uma analise nova.
+(7) A lista paginada devolvia 1 MB por 10 reunioes (texto integral em `textoOriginal` E `transcriptionText`, mais a
+analise inteira com 8 tabelas filhas via `@OneToOne EAGER`): 17 s na Render por pagina sem cache. Agora
+`Transcricao.analiseResultado` e LAZY (ninguem le o proxy: `TranscricaoService`, `TranscricaoAnalysisJob` e feedback
+usam `analiseRepository.findByTranscricaoId`) e `TranscricaoService.toListResponses` monta a resposta enxuta das
+listas: trecho de 400 caracteres, `transcriptionText` nulo, analise resumida (escalares + produtos) por duas projecoes
+`ResumoRow`/`ProdutoRow` para a pagina inteira. Detalhe (`/transcricoes/{id}`) continua completo. Local: 29 KB e 9
+consultas por pagina. Os clientes (web e Android) so leem sentimento, produtos e trecho nas listas.
+`GET /api/transcricoes` sem paginacao ainda carrega as 623 entidades (13 s local, 1,8 MB); nenhum cliente usa.
