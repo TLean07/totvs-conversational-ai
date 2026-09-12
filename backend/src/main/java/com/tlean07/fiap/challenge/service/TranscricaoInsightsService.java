@@ -2,7 +2,10 @@ package com.tlean07.fiap.challenge.service;
 
 import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
-import com.tlean07.fiap.challenge.model.AnaliseResultado;
+import com.tlean07.fiap.challenge.model.Oportunidade;
+import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
+import com.tlean07.fiap.challenge.model.Risco;
+import com.tlean07.fiap.challenge.model.RiscoConsolidado;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import com.tlean07.fiap.challenge.security.AuthenticatedUser;
@@ -10,15 +13,15 @@ import com.tlean07.fiap.challenge.security.SecurityUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
- * Insights por transcricao para o dashboard. As transcricoes entram por uma projecao (id e cliente):
- * carregar a entidade inteira trazia o texto completo de cada reuniao (~35 mil caracteres) so para
- * montar os graficos, o que travava o dashboard depois de uma importacao grande.
+ * Insights por transcricao para o dashboard, montados a partir de cinco consultas leves:
+ * transcricoes (id, cliente) e as quatro tabelas filhas da analise (riscos, oportunidades e suas
+ * versoes consolidadas). Nenhuma entidade completa e carregada.
  */
 @Service
 public class TranscricaoInsightsService {
@@ -35,37 +38,41 @@ public class TranscricaoInsightsService {
     @Cacheable(cacheNames = CacheNames.INSIGHTS, key = "@cacheKeys.user()")
     public List<TranscricaoInsightsResponse> listarTodos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
-        List<TranscricaoRepository.InsightRow> transcricoes = user.isAdmin()
+        boolean admin = user.isAdmin();
+        String owner = user.id();
+
+        List<TranscricaoRepository.InsightRow> transcricoes = admin
                 ? transcricaoRepository.findInsightRows()
-                : transcricaoRepository.findInsightRowsByOwnerId(user.id());
-        List<AnaliseResultado> analises = user.isAdmin()
-                ? analiseRepository.findAllForInsights()
-                : analiseRepository.findAllByOwnerIdForInsights(user.id());
+                : transcricaoRepository.findInsightRowsByOwnerId(owner);
 
-        Map<String, AnaliseResultado> analisePorTranscricao = analises.stream()
-                .filter(analise -> analise.getTranscricaoId() != null)
-                .collect(Collectors.toMap(
-                        AnaliseResultado::getTranscricaoId,
-                        Function.identity(),
-                        (first, ignored) -> first));
+        Map<String, List<Risco>> riscos = new HashMap<>();
+        for (AnaliseResultadoRepository.RiscoRow r : admin ? analiseRepository.findRiscoRows() : analiseRepository.findRiscoRowsByOwnerId(owner)) {
+            riscos.computeIfAbsent(r.getTranscricaoId(), k -> new ArrayList<>()).add(r.getRisco());
+        }
+        Map<String, List<Oportunidade>> oportunidades = new HashMap<>();
+        for (AnaliseResultadoRepository.OportunidadeRow o : admin ? analiseRepository.findOportunidadeRows() : analiseRepository.findOportunidadeRowsByOwnerId(owner)) {
+            oportunidades.computeIfAbsent(o.getTranscricaoId(), k -> new ArrayList<>()).add(o.getOportunidade());
+        }
+        Map<String, List<RiscoConsolidado>> riscosConsolidados = new HashMap<>();
+        for (AnaliseResultadoRepository.RiscoConsolidadoRow r : admin ? analiseRepository.findRiscoConsolidadoRows() : analiseRepository.findRiscoConsolidadoRowsByOwnerId(owner)) {
+            riscosConsolidados.computeIfAbsent(r.getTranscricaoId(), k -> new ArrayList<>()).add(r.getRisco());
+        }
+        Map<String, List<OportunidadeConsolidada>> oportunidadesConsolidadas = new HashMap<>();
+        for (AnaliseResultadoRepository.OportunidadeConsolidadaRow o : admin ? analiseRepository.findOportunidadeConsolidadaRows() : analiseRepository.findOportunidadeConsolidadaRowsByOwnerId(owner)) {
+            oportunidadesConsolidadas.computeIfAbsent(o.getTranscricaoId(), k -> new ArrayList<>()).add(o.getOportunidade());
+        }
 
-        return transcricoes.stream()
-                .map(row -> toResponse(row, analisePorTranscricao.get(row.getId())))
-                .toList();
-    }
-
-    private TranscricaoInsightsResponse toResponse(TranscricaoRepository.InsightRow row, AnaliseResultado analise) {
-        return TranscricaoInsightsResponse.builder()
-                .id(row.getId())
-                .cliente(row.getCliente())
-                .riscosConsolidados(analise == null ? List.of() : safeList(analise.getRiscosConsolidados()))
-                .oportunidadesConsolidadas(analise == null ? List.of() : safeList(analise.getOportunidadesConsolidadas()))
-                .riscos(analise == null ? List.of() : safeList(analise.getRiscos()))
-                .oportunidades(analise == null ? List.of() : safeList(analise.getOportunidades()))
-                .build();
-    }
-
-    private <T> List<T> safeList(List<T> values) {
-        return values == null ? List.of() : values;
+        List<TranscricaoInsightsResponse> resultado = new ArrayList<>(transcricoes.size());
+        for (TranscricaoRepository.InsightRow row : transcricoes) {
+            resultado.add(TranscricaoInsightsResponse.builder()
+                    .id(row.getId())
+                    .cliente(row.getCliente())
+                    .riscosConsolidados(riscosConsolidados.getOrDefault(row.getId(), List.of()))
+                    .oportunidadesConsolidadas(oportunidadesConsolidadas.getOrDefault(row.getId(), List.of()))
+                    .riscos(riscos.getOrDefault(row.getId(), List.of()))
+                    .oportunidades(oportunidades.getOrDefault(row.getId(), List.of()))
+                    .build());
+        }
+        return resultado;
     }
 }

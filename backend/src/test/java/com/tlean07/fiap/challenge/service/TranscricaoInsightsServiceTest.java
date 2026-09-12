@@ -5,7 +5,6 @@ import com.tlean07.fiap.challenge.enums.Severidade;
 import com.tlean07.fiap.challenge.enums.TipoOportunidade;
 import com.tlean07.fiap.challenge.enums.TipoRisco;
 import com.tlean07.fiap.challenge.enums.UserRole;
-import com.tlean07.fiap.challenge.model.AnaliseResultado;
 import com.tlean07.fiap.challenge.model.Oportunidade;
 import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
 import com.tlean07.fiap.challenge.model.Risco;
@@ -50,30 +49,15 @@ class TranscricaoInsightsServiceTest {
         authenticate("admin-1", UserRole.ADMIN);
         TranscricaoRepository.InsightRow first = row("t-1", "Cliente A");
         TranscricaoRepository.InsightRow second = row("t-2", "Cliente B");
-        AnaliseResultado firstAnalysis = AnaliseResultado.builder()
-                .transcricaoId("t-1")
-                .riscosConsolidados(List.of(RiscoConsolidado.builder()
-                        .categoria("Churn")
-                        .severidade(Severidade.ALTO)
-                        .ocorrencias(2)
-                        .build()))
-                .riscos(List.of(Risco.builder()
-                        .tipo(TipoRisco.CHURN)
-                        .severidade(Severidade.ALTO)
-                        .build()))
-                .build();
-        AnaliseResultado secondAnalysis = AnaliseResultado.builder()
-                .transcricaoId("t-2")
-                .oportunidadesConsolidadas(List.of(OportunidadeConsolidada.builder()
-                        .categoria("Upsell")
-                        .ocorrencias(3)
-                        .build()))
-                .oportunidades(List.of(Oportunidade.builder()
-                        .tipo(TipoOportunidade.UPSELL)
-                        .build()))
-                .build();
         when(transcricaoRepository.findInsightRows()).thenReturn(List.of(first, second));
-        when(analiseRepository.findAllForInsights()).thenReturn(List.of(firstAnalysis, secondAnalysis));
+        when(analiseRepository.findRiscoRows()).thenReturn(List.of(
+                riscoRow("t-1", Risco.builder().tipo(TipoRisco.CHURN).severidade(Severidade.ALTO).build())));
+        when(analiseRepository.findOportunidadeRows()).thenReturn(List.of(
+                oportunidadeRow("t-2", Oportunidade.builder().tipo(TipoOportunidade.UPSELL).build())));
+        when(analiseRepository.findRiscoConsolidadoRows()).thenReturn(List.of(
+                riscoConsolidadoRow("t-1", RiscoConsolidado.builder().categoria("Churn").severidade(Severidade.ALTO).ocorrencias(2).build())));
+        when(analiseRepository.findOportunidadeConsolidadaRows()).thenReturn(List.of(
+                oportunidadeConsolidadaRow("t-2", OportunidadeConsolidada.builder().categoria("Upsell").ocorrencias(3).build())));
 
         List<TranscricaoInsightsResponse> result = service.listarTodos();
 
@@ -88,13 +72,40 @@ class TranscricaoInsightsServiceTest {
     void regularUserUsesOwnerFilteredProjectionQueries() {
         authenticate("user-7", UserRole.USER);
         when(transcricaoRepository.findInsightRowsByOwnerId("user-7")).thenReturn(List.of());
-        when(analiseRepository.findAllByOwnerIdForInsights("user-7")).thenReturn(List.of());
 
         List<TranscricaoInsightsResponse> result = service.listarTodos();
 
         assertTrue(result.isEmpty());
         verify(transcricaoRepository).findInsightRowsByOwnerId("user-7");
-        verify(analiseRepository).findAllByOwnerIdForInsights("user-7");
+        verify(analiseRepository).findRiscoRowsByOwnerId("user-7");
+    }
+
+    private static AnaliseResultadoRepository.RiscoRow riscoRow(String id, Risco risco) {
+        return new AnaliseResultadoRepository.RiscoRow() {
+            @Override public String getTranscricaoId() { return id; }
+            @Override public Risco getRisco() { return risco; }
+        };
+    }
+
+    private static AnaliseResultadoRepository.OportunidadeRow oportunidadeRow(String id, Oportunidade o) {
+        return new AnaliseResultadoRepository.OportunidadeRow() {
+            @Override public String getTranscricaoId() { return id; }
+            @Override public Oportunidade getOportunidade() { return o; }
+        };
+    }
+
+    private static AnaliseResultadoRepository.RiscoConsolidadoRow riscoConsolidadoRow(String id, RiscoConsolidado r) {
+        return new AnaliseResultadoRepository.RiscoConsolidadoRow() {
+            @Override public String getTranscricaoId() { return id; }
+            @Override public RiscoConsolidado getRisco() { return r; }
+        };
+    }
+
+    private static AnaliseResultadoRepository.OportunidadeConsolidadaRow oportunidadeConsolidadaRow(String id, OportunidadeConsolidada o) {
+        return new AnaliseResultadoRepository.OportunidadeConsolidadaRow() {
+            @Override public String getTranscricaoId() { return id; }
+            @Override public OportunidadeConsolidada getOportunidade() { return o; }
+        };
     }
 
     private static TranscricaoRepository.InsightRow row(String id, String cliente) {

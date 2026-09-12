@@ -1,25 +1,26 @@
 package com.tlean07.fiap.challenge.service;
 
-import org.springframework.cache.annotation.Cacheable;
 import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.DashboardResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
-import com.tlean07.fiap.challenge.model.AnaliseResultado;
-import com.tlean07.fiap.challenge.model.MetricasAgregadas;
-import com.tlean07.fiap.challenge.repository.*;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
+import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository.DashboardRow;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import com.tlean07.fiap.challenge.security.AuthenticatedUser;
 import com.tlean07.fiap.challenge.security.SecurityUtils;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
+/**
+ * Numeros do dashboard. Le so projecoes (sentimento e metricas por analise; listas por tabela filha):
+ * carregar as entidades completas de centenas de analises levava minutos no plano free.
+ */
 @Service
 public class DashboardService {
 
@@ -47,9 +48,9 @@ public class DashboardService {
     @Cacheable(cacheNames = CacheNames.DASHBOARD, key = "@cacheKeys.user()")
     public DashboardResponse getDashboard() {
         AuthenticatedUser user = SecurityUtils.currentUser();
-        List<AnaliseResultado> analises = user.isAdmin()
-                ? analiseRepository.findAllForDashboard()
-                : analiseRepository.findAllByOwnerIdForDashboard(user.id());
+        List<DashboardRow> analises = user.isAdmin()
+                ? analiseRepository.findDashboardRows()
+                : analiseRepository.findDashboardRowsByOwnerId(user.id());
         List<TranscricaoInsightsResponse> insights = transcricaoInsightsService.listarTodos();
 
         Map<String, Long> sentimentoDistribuicao = new java.util.LinkedHashMap<>();
@@ -67,21 +68,17 @@ public class DashboardService {
         long mencoesCriticas = 0;
         long alertasConsolidados = 0;
 
-        for (AnaliseResultado analise : analises) {
-            MetricasAgregadas metricas = analise.getMetricasAgregadas();
-            if (metricas != null && metricas.getPartesAnalisadas() > 0) {
-                increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
-                totalPartes += metricas.getTotalPartes();
-                partesAnalisadas += metricas.getPartesAnalisadas();
-                partesNegativas += metricas.getPartesNegativas();
-                partesPositivas += metricas.getPartesPositivas();
-                partesNeutras += metricas.getPartesNeutras();
-                churnsPotenciais += metricas.getChurnsPotenciais();
-                mencoesCriticas += metricas.getMencoesCriticas();
-                alertasConsolidados += metricas.getAlertasConsolidados();
-
-            } else {
-                increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
+        for (DashboardRow analise : analises) {
+            increment(sentimentoDistribuicao, analise.getSentimentoGeral() == null ? "NEUTRO" : analise.getSentimentoGeral().name(), 1);
+            if (valor(analise.getPartesAnalisadas()) > 0) {
+                totalPartes += valor(analise.getTotalPartes());
+                partesAnalisadas += valor(analise.getPartesAnalisadas());
+                partesNegativas += valor(analise.getPartesNegativas());
+                partesPositivas += valor(analise.getPartesPositivas());
+                partesNeutras += valor(analise.getPartesNeutras());
+                churnsPotenciais += valor(analise.getChurnsPotenciais());
+                mencoesCriticas += valor(analise.getMencoesCriticas());
+                alertasConsolidados += valor(analise.getAlertasConsolidados());
             }
         }
 
@@ -137,6 +134,10 @@ public class DashboardService {
                 .alertasRecentes(alertaService.listarNovosDashboard())
                 .ultimasTranscricoes(transcricaoService.listarRecentesDashboard())
                 .build();
+    }
+
+    private static long valor(Integer v) {
+        return v == null ? 0 : v;
     }
 
     private void increment(Map<String, Long> map, String key, long value) {

@@ -2,6 +2,10 @@ package com.tlean07.fiap.challenge.repository;
 
 import com.tlean07.fiap.challenge.enums.Sentimento;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
+import com.tlean07.fiap.challenge.model.Oportunidade;
+import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
+import com.tlean07.fiap.challenge.model.Risco;
+import com.tlean07.fiap.challenge.model.RiscoConsolidado;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,18 +30,93 @@ public interface AnaliseResultadoRepository extends JpaRepository<AnaliseResulta
     List<AnaliseResultado> findTop100ByOwnerIdOrderByDataAnaliseDesc(String ownerId);
 
     /*
-     * No MongoDB estas consultas projetavam apenas alguns campos. No Oracle as listas
-     * ficam em tabelas filhas carregadas em lote, entao a consulta base e a mesma.
+     * Projecoes para o dashboard e os insights. Carregar a entidade inteira (CLOBs + 8 tabelas filhas)
+     * para centenas de analises levava minutos no plano free; aqui cada consulta traz so as colunas ou
+     * a tabela filha que os graficos usam.
      */
-    @Query("select a from AnaliseResultado a")
-    List<AnaliseResultado> findAllForDashboard();
 
-    @Query("select a from AnaliseResultado a where a.ownerId = :ownerId")
-    List<AnaliseResultado> findAllByOwnerIdForDashboard(@Param("ownerId") String ownerId);
+    interface DashboardRow {
+        Sentimento getSentimentoGeral();
 
-    @Query("select a from AnaliseResultado a order by a.dataAnalise desc")
-    List<AnaliseResultado> findAllForInsights();
+        Integer getTotalPartes();
 
-    @Query("select a from AnaliseResultado a where a.ownerId = :ownerId order by a.dataAnalise desc")
-    List<AnaliseResultado> findAllByOwnerIdForInsights(@Param("ownerId") String ownerId);
+        Integer getPartesAnalisadas();
+
+        Integer getPartesNegativas();
+
+        Integer getPartesPositivas();
+
+        Integer getPartesNeutras();
+
+        Integer getChurnsPotenciais();
+
+        Integer getMencoesCriticas();
+
+        Integer getAlertasConsolidados();
+    }
+
+    String DASHBOARD_SELECT = "select a.sentimentoGeral as sentimentoGeral,"
+            + " a.metricasAgregadas.totalPartes as totalPartes,"
+            + " a.metricasAgregadas.partesAnalisadas as partesAnalisadas,"
+            + " a.metricasAgregadas.partesNegativas as partesNegativas,"
+            + " a.metricasAgregadas.partesPositivas as partesPositivas,"
+            + " a.metricasAgregadas.partesNeutras as partesNeutras,"
+            + " a.metricasAgregadas.churnsPotenciais as churnsPotenciais,"
+            + " a.metricasAgregadas.mencoesCriticas as mencoesCriticas,"
+            + " a.metricasAgregadas.alertasConsolidados as alertasConsolidados"
+            + " from AnaliseResultado a";
+
+    @Query(DASHBOARD_SELECT)
+    List<DashboardRow> findDashboardRows();
+
+    @Query(DASHBOARD_SELECT + " where a.ownerId = :ownerId")
+    List<DashboardRow> findDashboardRowsByOwnerId(@Param("ownerId") String ownerId);
+
+    interface RiscoRow {
+        String getTranscricaoId();
+
+        Risco getRisco();
+    }
+
+    interface OportunidadeRow {
+        String getTranscricaoId();
+
+        Oportunidade getOportunidade();
+    }
+
+    interface RiscoConsolidadoRow {
+        String getTranscricaoId();
+
+        RiscoConsolidado getRisco();
+    }
+
+    interface OportunidadeConsolidadaRow {
+        String getTranscricaoId();
+
+        OportunidadeConsolidada getOportunidade();
+    }
+
+    @Query("select a.transcricaoId as transcricaoId, r as risco from AnaliseResultado a join a.riscos r")
+    List<RiscoRow> findRiscoRows();
+
+    @Query("select a.transcricaoId as transcricaoId, r as risco from AnaliseResultado a join a.riscos r where a.ownerId = :ownerId")
+    List<RiscoRow> findRiscoRowsByOwnerId(@Param("ownerId") String ownerId);
+
+    @Query("select a.transcricaoId as transcricaoId, o as oportunidade from AnaliseResultado a join a.oportunidades o")
+    List<OportunidadeRow> findOportunidadeRows();
+
+    @Query("select a.transcricaoId as transcricaoId, o as oportunidade from AnaliseResultado a join a.oportunidades o where a.ownerId = :ownerId")
+    List<OportunidadeRow> findOportunidadeRowsByOwnerId(@Param("ownerId") String ownerId);
+
+    @Query("select a.transcricaoId as transcricaoId, r as risco from AnaliseResultado a join a.riscosConsolidados r")
+    List<RiscoConsolidadoRow> findRiscoConsolidadoRows();
+
+    @Query("select a.transcricaoId as transcricaoId, r as risco from AnaliseResultado a join a.riscosConsolidados r where a.ownerId = :ownerId")
+    List<RiscoConsolidadoRow> findRiscoConsolidadoRowsByOwnerId(@Param("ownerId") String ownerId);
+
+    @Query("select a.transcricaoId as transcricaoId, o as oportunidade from AnaliseResultado a join a.oportunidadesConsolidadas o")
+    List<OportunidadeConsolidadaRow> findOportunidadeConsolidadaRows();
+
+    @Query("select a.transcricaoId as transcricaoId, o as oportunidade from AnaliseResultado a join a.oportunidadesConsolidadas o where a.ownerId = :ownerId")
+    List<OportunidadeConsolidadaRow> findOportunidadeConsolidadaRowsByOwnerId(@Param("ownerId") String ownerId);
 }

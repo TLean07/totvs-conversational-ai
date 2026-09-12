@@ -5,7 +5,6 @@ import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.enums.Sentimento;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.enums.UserRole;
-import com.tlean07.fiap.challenge.model.AnaliseResultado;
 import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
 import com.tlean07.fiap.challenge.model.RiscoConsolidado;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
@@ -55,10 +54,8 @@ class DashboardServiceTest {
     @Test
     void adminUsesDashboardSpecificQueriesWithoutLoadingFullCollections() {
         authenticate("admin-1", UserRole.ADMIN);
-        when(analiseRepository.findAllForDashboard()).thenReturn(List.of(
-                AnaliseResultado.builder().sentimentoGeral(Sentimento.POSITIVO).build(),
-                AnaliseResultado.builder().sentimentoGeral(Sentimento.NEGATIVO).build(),
-                AnaliseResultado.builder().sentimentoGeral(Sentimento.POSITIVO).build()));
+        when(analiseRepository.findDashboardRows()).thenReturn(List.of(
+                row(Sentimento.POSITIVO), row(Sentimento.NEGATIVO), row(Sentimento.POSITIVO)));
         when(transcricaoRepository.count()).thenReturn(12L);
         when(transcricaoRepository.countByStatus(StatusTranscricao.PROCESSADA)).thenReturn(9L);
         when(transcricaoInsightsService.listarTodos()).thenReturn(List.of(
@@ -80,7 +77,7 @@ class DashboardServiceTest {
         assertEquals(1L, response.getTotalOportunidades());
         assertEquals(2L, response.getSentimentoDistribuicao().get("POSITIVO"));
         assertEquals(1L, response.getSentimentoDistribuicao().get("NEGATIVO"));
-        verify(analiseRepository).findAllForDashboard();
+        verify(analiseRepository).findDashboardRows();
         verify(analiseRepository, never()).findAll();
         verify(transcricaoService).listarRecentesDashboard();
         verify(transcricaoService, never()).listarTodas();
@@ -91,7 +88,7 @@ class DashboardServiceTest {
     @Test
     void regularUserKeepsOwnerFilteringOnOptimizedQueries() {
         authenticate("user-7", UserRole.USER);
-        when(analiseRepository.findAllByOwnerIdForDashboard("user-7")).thenReturn(List.of());
+        when(analiseRepository.findDashboardRowsByOwnerId("user-7")).thenReturn(List.of());
         when(transcricaoRepository.countByOwnerId("user-7")).thenReturn(4L);
         when(transcricaoRepository.countByOwnerIdAndStatus("user-7", StatusTranscricao.PROCESSADA))
                 .thenReturn(3L);
@@ -103,9 +100,23 @@ class DashboardServiceTest {
 
         assertEquals(4L, response.getTotalTranscricoes());
         assertEquals(3L, response.getTranscricoesProcessadas());
-        verify(analiseRepository).findAllByOwnerIdForDashboard("user-7");
+        verify(analiseRepository).findDashboardRowsByOwnerId("user-7");
         verify(transcricaoRepository).countByOwnerId("user-7");
         verify(transcricaoRepository).countByOwnerIdAndStatus("user-7", StatusTranscricao.PROCESSADA);
+    }
+
+    private static AnaliseResultadoRepository.DashboardRow row(Sentimento sentimento) {
+        return new AnaliseResultadoRepository.DashboardRow() {
+            @Override public Sentimento getSentimentoGeral() { return sentimento; }
+            @Override public Integer getTotalPartes() { return 0; }
+            @Override public Integer getPartesAnalisadas() { return 0; }
+            @Override public Integer getPartesNegativas() { return 0; }
+            @Override public Integer getPartesPositivas() { return 0; }
+            @Override public Integer getPartesNeutras() { return 0; }
+            @Override public Integer getChurnsPotenciais() { return 0; }
+            @Override public Integer getMencoesCriticas() { return 0; }
+            @Override public Integer getAlertasConsolidados() { return 0; }
+        };
     }
 
     private void authenticate(String id, UserRole role) {

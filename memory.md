@@ -208,3 +208,7 @@ separado que chama `analysisJob.processar`.
 (`pendentes.add` + `self.processarAsync` via proxy `@Lazy`), senao a recuperacao reenfileira as mesmas 100 a cada
 3 min e duas threads colidem na mesma transcricao. (4) `LEANIA_CONTEXTO` nao e mais invalidado por analise e
 `buildContext` limita a 100 registros no banco: era o que fazia cada analise custar ~40 s numa fila grande.
+(5) Com 620 analises o dashboard estourava 180 s: carregava todas as entidades AnaliseResultado (CLOBs + 8 tabelas
+filhas) duas vezes por requisicao. Agora `AnaliseResultadoRepository` expoe projecoes (`DashboardRow` com sentimento e
+metricas; `RiscoRow`/`OportunidadeRow`/consolidados via `join a.riscos r` devolvendo o embeddable) e o dashboard
+fecha em ~1 s. Regra: nunca carregar a entidade completa em massa; projecao por tabela filha.
