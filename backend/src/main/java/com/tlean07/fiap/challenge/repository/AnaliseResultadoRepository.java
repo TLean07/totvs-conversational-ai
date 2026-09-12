@@ -23,6 +23,7 @@ public interface AnaliseResultadoRepository extends JpaRepository<AnaliseResulta
     List<AnaliseResultado> findBySentimentoGeral(Sentimento sentimento);
     List<AnaliseResultado> findAllByOrderByDataAnaliseDesc();
     List<AnaliseResultado> findAllByOwnerIdOrderByDataAnaliseDesc(String ownerId);
+    List<AnaliseResultado> findTop100ByOwnerIdOrderByDataAnaliseDesc(String ownerId);
 
     /*
      * No MongoDB estas consultas projetavam apenas alguns campos. No Oracle as listas

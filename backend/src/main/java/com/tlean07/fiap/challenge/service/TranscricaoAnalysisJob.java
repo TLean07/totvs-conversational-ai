@@ -52,8 +52,13 @@ public class TranscricaoAnalysisJob {
         this.analiseService = analiseService;
     }
 
+    /*
+     * O contexto de aprendizado da LeanIA (LEANIA_CONTEXTO) fica de fora da limpeza: recalcula-lo a cada
+     * analise recarregava todas as analises anteriores do dono numa importacao grande (custo crescente).
+     * Ele expira pelo TTL do cache (2 min), o que basta para um sinal de calibracao.
+     */
     @Async
-    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS}, allEntries = true)
     public void processar(String transcricaoId) {
         pendentes.add(transcricaoId);
         try {

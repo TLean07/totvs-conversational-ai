@@ -34,7 +34,9 @@ public class LeanIALearningService {
 
     @Cacheable(cacheNames = CacheNames.LEANIA_CONTEXTO, key = "#ownerId")
     public LeanIAContextDTO buildContext(String ownerId) {
-        List<AnaliseResultado> historico = analiseRepository.findAllByOwnerIdOrderByDataAnaliseDesc(ownerId)
+        // Limite aplicado no banco: carregar todas as analises (com 8 tabelas filhas cada) a cada
+        // nova analise era o gargalo das importacoes grandes.
+        List<AnaliseResultado> historico = analiseRepository.findTop100ByOwnerIdOrderByDataAnaliseDesc(ownerId)
                 .stream()
                 .limit(MAX_ANALYSES)
                 .toList();
