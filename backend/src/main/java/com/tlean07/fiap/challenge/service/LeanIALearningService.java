@@ -1,5 +1,7 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.Cacheable;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.LeanIAContextDTO;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
 import com.tlean07.fiap.challenge.model.AnaliseFeedback;
@@ -30,6 +32,7 @@ public class LeanIALearningService {
         this.feedbackRepository = feedbackRepository;
     }
 
+    @Cacheable(cacheNames = CacheNames.LEANIA_CONTEXTO, key = "#ownerId")
     public LeanIAContextDTO buildContext(String ownerId) {
         List<AnaliseResultado> historico = analiseRepository.findAllByOwnerIdOrderByDataAnaliseDesc(ownerId)
                 .stream()

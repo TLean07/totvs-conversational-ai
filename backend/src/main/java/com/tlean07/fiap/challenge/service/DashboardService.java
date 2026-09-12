@@ -1,5 +1,7 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.Cacheable;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.DashboardResponse;
 import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
@@ -42,6 +44,7 @@ public class DashboardService {
         this.transcricaoInsightsService = transcricaoInsightsService;
     }
 
+    @Cacheable(cacheNames = CacheNames.DASHBOARD, key = "@cacheKeys.user()")
     public DashboardResponse getDashboard() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<AnaliseResultado> analises = user.isAdmin()

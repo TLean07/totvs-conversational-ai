@@ -113,3 +113,30 @@ de validacao foram removidos ao final; o schema esta vazio.
 
 Os documentos do MongoDB Atlas nao foram migrados automaticamente. Reimporte os JSON TOTVS pelo endpoint
 `/api/transcricoes/import/totvs` ou recadastre as transcricoes manuais.
+
+### Deploys por branch (2026-09-12)
+
+| Branch | Frontend (Vercel) | Backend (Render) |
+| --- | --- | --- |
+| `main` (MongoDB) | projeto `totvs-conversational-ai` -> https://totvs-conversational-ai.vercel.app | `challenge-totvs-backend` (starter) -> https://challenge-totvs-backend.onrender.com |
+| `oracle` (Oracle FIAP) | projeto `totvs-conversational-ai-oracle` -> https://totvs-conversational-ai-oracle.vercel.app | `challenge-totvs-backend-oracle` (free, auto-deploy da branch `oracle`) -> https://challenge-totvs-backend-oracle.onrender.com |
+
+- Vercel nao esta conectada ao GitHub: o deploy e feito pela CLI. A pasta `frontend/` esta vinculada ao projeto
+  `main`; a raiz do repositorio esta vinculada ao projeto `oracle` (Root Directory `frontend` definido no projeto).
+  Ou seja: `cd frontend && vercel --prod` publica o frontend da `main`; `vercel --prod` na raiz publica o da `oracle`.
+- Render faz auto-deploy a cada push: `main` -> backend main, `oracle` -> backend oracle. Variaveis de ambiente
+  sao editadas no dashboard ou pela API; `render restart` NAO recarrega variaveis, apenas um deploy novo.
+- O plano free da Render hiberna apos inatividade; a primeira requisicao pode levar mais de 1 minuto.
+
+### Cache de leitura no backend (2026-09-12)
+
+Spring Cache + Caffeine (`config/CacheConfig.java`, `spring.cache.*` no `application.properties`).
+Caches: `dashboard`, `transcricoes`, `transcricao`, `insights`, `alertas`, `usuarios`, `leania-contexto`;
+TTL `CACHE_TTL_SECONDS` (padrao 120 s), `CACHE_MAX_ENTRIES` (padrao 1000). Toda chave inclui o usuario
+autenticado (`@cacheKeys.user()` = id:papel) porque as consultas filtram por dono.
+
+Invalidacao: `@CacheEvict(allEntries)` em criar/importar/audio/reprocessar/apagar/feedback (TranscricaoService),
+marcar alerta (AlertaService), usuarios (UserService) e no fim de `TranscricaoAnalysisJob.processar` (o status
+sai de PROCESSANDO). Medido localmente com `logging.level.org.hibernate.SQL=DEBUG`: dashboard 8 consultas na
+1a chamada e 0 nas seguintes; `paged`, `alertas/novos` e `insights` idem; apos POST/PATCH/DELETE a chamada
+seguinte volta ao banco. Anotacoes sao inertes nos testes unitarios (Mockito), nada mudou nos construtores.

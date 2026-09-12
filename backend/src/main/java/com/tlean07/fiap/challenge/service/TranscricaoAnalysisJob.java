@@ -1,5 +1,7 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.CacheEvict;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.model.Alerta;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
@@ -35,6 +37,7 @@ public class TranscricaoAnalysisJob {
     }
 
     @Async
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public void processar(String transcricaoId) {
         Transcricao transcricao = transcricaoRepository.findById(transcricaoId).orElse(null);
         if (transcricao == null) {

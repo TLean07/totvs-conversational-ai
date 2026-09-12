@@ -1,5 +1,8 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.*;
 import com.tlean07.fiap.challenge.dto.TranscricaoRequest;
 import com.tlean07.fiap.challenge.dto.TranscricaoResponse;
@@ -77,10 +80,12 @@ public class TranscricaoService {
         this.transcricaoImportService = transcricaoImportService;
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public TranscricaoResponse criarEAnalisar(TranscricaoRequest request) {
         return criarEAnalisar(request, SecurityUtils.currentUser().id());
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public TranscricaoResponse criarEAnalisar(TranscricaoRequest request, String ownerId) {
         Transcricao transcricao = Transcricao.builder()
                 .ownerId(ownerId)
@@ -108,10 +113,12 @@ public class TranscricaoService {
         return toResponse(transcricao);
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public TranscricaoImportResponse importarTotvsJson(MultipartFile file, int limit, int offset) {
         return transcricaoImportService.importar(file, SecurityUtils.currentUser().id());
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public TranscricaoResponse importarAudio(MultipartFile file, String cliente, String vendedor, String participantes) {
         String ownerId = SecurityUtils.currentUser().id();
         TranscriptionResultDTO transcription = audioTranscriptionService.transcrever(file, null);
@@ -759,6 +766,7 @@ public class TranscricaoService {
         }
     }
 
+    @Cacheable(cacheNames = CacheNames.TRANSCRICOES, key = "@cacheKeys.user() + ':todas'")
     public List<TranscricaoResponse> listarTodas() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Transcricao> transcricoes = user.isAdmin()
@@ -771,6 +779,7 @@ public class TranscricaoService {
                 .toList();
     }
 
+    @Cacheable(cacheNames = CacheNames.TRANSCRICOES, key = "@cacheKeys.user() + ':recentes'")
     public List<TranscricaoResponse> listarRecentesDashboard() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Transcricao> transcricoes = user.isAdmin()
@@ -782,6 +791,7 @@ public class TranscricaoService {
                 .toList();
     }
 
+    @Cacheable(cacheNames = CacheNames.TRANSCRICOES, key = "@cacheKeys.user() + ':pagina:' + #page + ':' + #size")
     public PageResponse<TranscricaoResponse> listarPaginado(int page, int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(50, size));
@@ -801,11 +811,13 @@ public class TranscricaoService {
                 .build();
     }
 
+    @Cacheable(cacheNames = CacheNames.TRANSCRICAO, key = "@cacheKeys.user() + ':' + #id")
     public TranscricaoResponse buscarPorId(String id) {
         Transcricao transcricao = findVisibleTranscricao(id);
         return toResponse(transcricao);
     }
 
+    @Cacheable(cacheNames = CacheNames.TRANSCRICOES, key = "@cacheKeys.user() + ':cliente:' + #cliente")
     public List<TranscricaoResponse> buscarPorCliente(String cliente) {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Transcricao> transcricoes = user.isAdmin()
@@ -818,6 +830,7 @@ public class TranscricaoService {
                 .toList();
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public void deletar(String id) {
         Transcricao transcricao = findVisibleTranscricao(id);
         limparAnaliseEAlertas(transcricao);
@@ -826,6 +839,7 @@ public class TranscricaoService {
         auditService.record("transcricao.delete", SecurityUtils.currentUser().id(), id, "success");
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public TranscricaoResponse reprocessar(String id) {
         Transcricao transcricao = findVisibleTranscricao(id);
         transcricao.setStatus(StatusTranscricao.PROCESSANDO);
@@ -836,6 +850,7 @@ public class TranscricaoService {
         return toResponse(transcricao);
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public AnaliseFeedbackResponse registrarFeedback(String id, AnaliseFeedbackRequest request) {
         Transcricao transcricao = findVisibleTranscricao(id);
         AnaliseResultado analise = transcricao.getAnaliseResultado();
@@ -865,6 +880,7 @@ public class TranscricaoService {
                 .build();
     }
 
+    @Cacheable(cacheNames = CacheNames.TRANSCRICAO, key = "@cacheKeys.user() + ':feedback:' + #id")
     public List<AnaliseFeedbackResponse> listarFeedbacks(String id) {
         Transcricao transcricao = findVisibleTranscricao(id);
         AuthenticatedUser user = SecurityUtils.currentUser();

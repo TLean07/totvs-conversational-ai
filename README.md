@@ -258,6 +258,10 @@ export AI_SERVICE_TOKEN="token-interno-com-32-caracteres-ou-mais"
 
 O usuario de aluno da FIAP permite 20 sessoes simultaneas e encerra sessoes ociosas apos 30 minutos; o pool (HikariCP) ja esta configurado para isso.
 
+O backend mantem um cache em memoria (Caffeine) das leituras de dashboard, listas, insights e alertas por usuario:
+dentro da janela `CACHE_TTL_SECONDS` (padrao 120 s) as chamadas repetidas nao tocam o Oracle, e qualquer escrita
+(nova transcricao, importacao, reprocessamento, exclusao, alerta visto, feedback) limpa o cache na hora.
+
 Execute:
 ```bash
 cd backend

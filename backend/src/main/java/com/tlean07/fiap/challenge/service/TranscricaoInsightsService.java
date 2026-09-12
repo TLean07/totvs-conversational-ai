@@ -1,5 +1,7 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.Cacheable;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.model.AnaliseResultado;
 import com.tlean07.fiap.challenge.model.Transcricao;
@@ -26,6 +28,7 @@ public class TranscricaoInsightsService {
         this.analiseRepository = analiseRepository;
     }
 
+    @Cacheable(cacheNames = CacheNames.INSIGHTS, key = "@cacheKeys.user()")
     public List<TranscricaoInsightsResponse> listarTodos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Transcricao> transcricoes = user.isAdmin()

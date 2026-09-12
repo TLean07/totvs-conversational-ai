@@ -1,5 +1,8 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.AlertaResponse;
 import com.tlean07.fiap.challenge.enums.Severidade;
 import com.tlean07.fiap.challenge.enums.StatusAlerta;
@@ -147,6 +150,7 @@ public class AlertaService {
         );
     }
 
+    @Cacheable(cacheNames = CacheNames.ALERTAS, key = "@cacheKeys.user() + ':novos'")
     public List<AlertaResponse> listarNovos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Alerta> alertas = user.isAdmin()
@@ -159,6 +163,7 @@ public class AlertaService {
                 .toList();
     }
 
+    @Cacheable(cacheNames = CacheNames.ALERTAS, key = "@cacheKeys.user() + ':dashboard'")
     public List<AlertaResponse> listarNovosDashboard() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Alerta> alertas = user.isAdmin()
@@ -171,6 +176,7 @@ public class AlertaService {
                 .toList();
     }
 
+    @Cacheable(cacheNames = CacheNames.ALERTAS, key = "@cacheKeys.user() + ':todos'")
     public List<AlertaResponse> listarTodos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Alerta> alertas = user.isAdmin()
@@ -183,18 +189,21 @@ public class AlertaService {
                 .toList();
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public AlertaResponse marcarComoVisto(String id) {
         Alerta alerta = findVisibleAlerta(id);
         alerta.setStatus(StatusAlerta.VISTO);
         return toResponse(alertaRepository.save(alerta));
     }
 
+    @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS, CacheNames.LEANIA_CONTEXTO}, allEntries = true)
     public AlertaResponse marcarComoResolvido(String id) {
         Alerta alerta = findVisibleAlerta(id);
         alerta.setStatus(StatusAlerta.RESOLVIDO);
         return toResponse(alertaRepository.save(alerta));
     }
 
+    @Cacheable(cacheNames = CacheNames.ALERTAS, key = "@cacheKeys.user() + ':contagem'")
     public long contarNovos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         return user.isAdmin()

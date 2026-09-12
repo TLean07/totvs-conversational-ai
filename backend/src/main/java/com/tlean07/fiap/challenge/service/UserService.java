@@ -1,5 +1,8 @@
 package com.tlean07.fiap.challenge.service;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import com.tlean07.fiap.challenge.config.CacheConfig.CacheNames;
 import com.tlean07.fiap.challenge.dto.CreateUserRequest;
 import com.tlean07.fiap.challenge.dto.UserResponse;
 import com.tlean07.fiap.challenge.model.AppUser;
@@ -27,12 +30,14 @@ public class UserService {
         this.auditService = auditService;
     }
 
+    @Cacheable(cacheNames = CacheNames.USUARIOS, key = "'todos'")
     public List<UserResponse> listarTodos() {
         return userRepository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @CacheEvict(cacheNames = CacheNames.USUARIOS, allEntries = true)
     public UserResponse criar(CreateUserRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         if (userRepository.existsByEmailIgnoreCase(email)) {
@@ -53,6 +58,7 @@ public class UserService {
         return toResponse(saved);
     }
 
+    @CacheEvict(cacheNames = CacheNames.USUARIOS, allEntries = true)
     public UserResponse desativar(String id) {
         String actorId = SecurityUtils.currentUser().id();
         if (actorId.equals(id)) {
@@ -66,6 +72,7 @@ public class UserService {
         return toResponse(saved);
     }
 
+    @CacheEvict(cacheNames = CacheNames.USUARIOS, allEntries = true)
     public UserResponse ativar(String id) {
         String actorId = SecurityUtils.currentUser().id();
         AppUser user = userRepository.findById(id)
