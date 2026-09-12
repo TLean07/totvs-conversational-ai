@@ -43,11 +43,9 @@ public class AnalysisRecoveryScheduler {
         }
         int reenfileiradas = 0;
         for (Transcricao t : presas) {
-            if (analysisJob.isPendente(t.getId())) {
-                continue;
+            if (analysisJob.processar(t.getId())) {
+                reenfileiradas++;
             }
-            analysisJob.processar(t.getId());
-            reenfileiradas++;
         }
         if (reenfileiradas > 0) {
             log.info("Recuperacao: {} transcricao(oes) em PROCESSANDO reenfileirada(s)", reenfileiradas);

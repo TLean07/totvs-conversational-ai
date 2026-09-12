@@ -10,6 +10,7 @@ import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Processa a analise de uma transcricao em segundo plano.
  *
+ * {@link #processar(String)} e sincrono: registra a transcricao como pendente e despacha a execucao
+ * assincrona pelo proxy do Spring. Uma transcricao ja pendente (na fila ou em execucao) nao entra de
+ * novo, o que impede duas threads de analisarem a mesma reuniao e o job de recuperacao de reenfileirar
+ * o que ainda esta esperando.
+ *
  * Resiliencia: falhas de banco (pool esgotado, sessao derrubada pela FIAP) sao tentadas de novo com
  * espera; se mesmo assim falhar, a transcricao vai para ERRO em vez de ficar em PROCESSANDO para
- * sempre. O {@link AnalysisRecoveryScheduler} reenfileira o que ficou preso em PROCESSANDO (por
- * exemplo, apos um reinicio da instancia no meio de uma importacao grande).
+ * sempre. O {@link AnalysisRecoveryScheduler} reenfileira o que ficou preso apos reinicios.
  */
 @Service
 public class TranscricaoAnalysisJob {
@@ -38,18 +43,40 @@ public class TranscricaoAnalysisJob {
     private final AnaliseResultadoRepository analiseRepository;
     private final AlertaRepository alertaRepository;
     private final AnaliseService analiseService;
+    private final TranscricaoAnalysisJob self;
 
-    /** Ids enfileirados ou em execucao, para o job de recuperacao nao duplicar trabalho. */
+    /** Ids enfileirados ou em execucao nesta instancia. */
     private final Set<String> pendentes = ConcurrentHashMap.newKeySet();
 
     public TranscricaoAnalysisJob(TranscricaoRepository transcricaoRepository,
                                   AnaliseResultadoRepository analiseRepository,
                                   AlertaRepository alertaRepository,
-                                  AnaliseService analiseService) {
+                                  AnaliseService analiseService,
+                                  @Lazy TranscricaoAnalysisJob self) {
         this.transcricaoRepository = transcricaoRepository;
         this.analiseRepository = analiseRepository;
         this.alertaRepository = alertaRepository;
         this.analiseService = analiseService;
+        this.self = self;
+    }
+
+    /** Enfileira a analise; devolve false se a transcricao ja estava pendente. */
+    public boolean processar(String transcricaoId) {
+        if (transcricaoId == null || !pendentes.add(transcricaoId)) {
+            return false;
+        }
+        try {
+            self.processarAsync(transcricaoId);
+            return true;
+        } catch (RuntimeException e) {
+            pendentes.remove(transcricaoId);
+            throw e;
+        }
+    }
+
+    /** Se a transcricao ja esta enfileirada ou em execucao nesta instancia. */
+    public boolean isPendente(String transcricaoId) {
+        return pendentes.contains(transcricaoId);
     }
 
     /*
@@ -59,8 +86,7 @@ public class TranscricaoAnalysisJob {
      */
     @Async
     @CacheEvict(cacheNames = {CacheNames.DASHBOARD, CacheNames.TRANSCRICOES, CacheNames.TRANSCRICAO, CacheNames.INSIGHTS, CacheNames.ALERTAS}, allEntries = true)
-    public void processar(String transcricaoId) {
-        pendentes.add(transcricaoId);
+    public void processarAsync(String transcricaoId) {
         try {
             executarComRetentativas(transcricaoId);
         } finally {
@@ -117,11 +143,6 @@ public class TranscricaoAnalysisJob {
         } catch (Exception e) {
             log.warn("Nao foi possivel marcar {} como ERRO: {}", transcricaoId, e.getClass().getSimpleName());
         }
-    }
-
-    /** Se a transcricao ja esta enfileirada ou em execucao nesta instancia. */
-    public boolean isPendente(String transcricaoId) {
-        return pendentes.contains(transcricaoId);
     }
 
     private void limparAnaliseAnterior(Transcricao transcricao) {

@@ -204,3 +204,7 @@ sobrepoe o default do config.py; toda reuniao real voltava 422 e o backend caia 
 250000 via HfApi.add_space_variable). (2) `@Async` chamado de dentro da propria classe nao passa pelo proxy:
 a recuperacao rodava tudo em serie na thread `scheduling-1`; por isso `AnalysisRecoveryScheduler` e um bean
 separado que chama `analysisJob.processar`.
+(3) O marcador de pendente precisa ser registrado ao ENFILEIRAR, nao ao iniciar: `processar(id)` e sincrono
+(`pendentes.add` + `self.processarAsync` via proxy `@Lazy`), senao a recuperacao reenfileira as mesmas 100 a cada
+3 min e duas threads colidem na mesma transcricao. (4) `LEANIA_CONTEXTO` nao e mais invalidado por analise e
+`buildContext` limita a 100 registros no banco: era o que fazia cada analise custar ~40 s numa fila grande.
