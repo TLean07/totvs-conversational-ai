@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/LeanIA-Adaptive%20AI-FFD21E" alt="LeanIA">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white" alt="Next.js">
-  <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white" alt="MongoDB">
+  <img src="https://img.shields.io/badge/Oracle-Database%2019c-F80000?logo=oracle&logoColor=white" alt="Oracle Database">
   <img src="https://img.shields.io/badge/Vercel-Deploy-000000?logo=vercel&logoColor=white" alt="Vercel">
   <img src="https://img.shields.io/badge/FIAP-Challenge%20TOTVS%202026-E4002B" alt="FIAP">
 </p>
@@ -61,12 +61,12 @@ O fluxo de importacao por JSON mantem o banco limpo sem perder riqueza analitica
 
 Regra principal:
 
-- **1 arquivo JSON importado = 1 unico documento principal em `transcricoes`**
-- O sistema **nao cria 1 documento por linha, parte, chunk ou conversa**
-- As partes internas sao analisadas em memoria e viram campos agregados dentro do documento unico
-- O JSON bruto completo nao e salvo quando excede o limite pratico do MongoDB; o sistema salva uma transcricao consolidada, estatisticas e trechos representativos
+- **1 arquivo JSON importado = 1 unico registro principal em `TRANSCRICOES`**
+- O sistema **nao cria 1 registro por linha, parte, chunk ou conversa**
+- As partes internas sao analisadas em memoria e viram colunas agregadas (`MET_*`) e tabelas filhas (`TRANSCRICAO_*`) do registro unico
+- O texto completo fica em coluna CLOB; o sistema tambem salva estatisticas e trechos representativos
 
-Campos consolidados adicionados ao documento e a analise:
+Campos consolidados adicionados a transcricao e a analise:
 
 | Campo | Objetivo |
 |---|---|
@@ -83,7 +83,7 @@ Campos consolidados adicionados ao documento e a analise:
 | `alertasConsolidados` | Alertas com titulo, categoria, severidade, motivo e recomendacao |
 | `itensCriticos` | Evidencias/trechos mais importantes para revisao |
 
-Com isso, o dashboard continua exibindo **Transcricoes = quantidade de documentos**, mas cards e graficos usam os dados consolidados do JSON sem multiplicar documentos no MongoDB.
+Com isso, o dashboard continua exibindo **Transcricoes = quantidade de registros**, mas cards e graficos usam os dados consolidados do JSON sem multiplicar linhas no Oracle.
 
 ---
 
@@ -99,7 +99,7 @@ Reunioes → Audios → Transcricoes + Metadados
                   [Java Spring Boot]
                    API REST + JPA
                          |
-                    [DB - MongoDB]
+                  [DB - Oracle 19c]
                    Dados Extraidos
                          |
                 [Analytics + Regras]
@@ -183,7 +183,7 @@ challenge-totvs-conversational-intelligence/
 | --- | --- |
 | **Java 17** | Linguagem principal do backend |
 | **Spring Boot 3.3** | Framework web, JPA, validacao |
-| **MongoDB Atlas** | Banco de dados NoSQL na nuvem (gratis) |
+| **Oracle Database 19c** | Banco relacional (instancia FIAP) acessado via Spring Data JPA/Hibernate |
 | **Python 3.11** | Microsservico de IA / NLP |
 | **FastAPI** | Framework web do microsservico Python |
 | **HuggingFace Transformers** | Modelo BERT multilingual para analise de sentimento |
@@ -203,7 +203,7 @@ challenge-totvs-conversational-intelligence/
 - Maven 3.9+
 - Python 3.10+
 - Node.js 18+
-- MongoDB (local ou MongoDB Atlas gratuito)
+- Acesso ao Oracle Database da FIAP (`oracle.fiap.com.br:1521/orcl`) com usuario RM
 
 **1. Clone o repositorio:**
 ```bash
@@ -237,11 +237,16 @@ Para habilitar Parakeet, configure `TRANSCRIPTION_PROVIDER=parakeet` e `PARAKEET
 
 **3. Backend (Java Spring Boot):**
 
-Configure o MongoDB em `backend/src/main/resources/application.properties`:
-```properties
-spring.data.mongodb.uri=mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/challenge-totvs
+Crie as tabelas uma unica vez no seu schema Oracle (SQL Developer ou SQLcl) executando
+`backend/src/main/resources/db/oracle/schema.sql`. O backend valida o schema na subida
+(`spring.jpa.hibernate.ddl-auto=validate`) e nunca cria ou altera tabelas sozinho.
+
+Credenciais do Oracle somente por variavel de ambiente:
+```bash
+export ORACLE_URL="jdbc:oracle:thin:@//oracle.fiap.com.br:1521/orcl"
+export ORACLE_USER="RM000000"
+export ORACLE_PASSWORD="senha-do-oracle"
 ```
-Ou via variavel de ambiente: `export MONGODB_URI=mongodb+srv://...`
 
 Variaveis de seguranca obrigatorias para o backend:
 ```bash
@@ -251,7 +256,7 @@ export APP_ADMIN_PASSWORD="senha-forte-com-12-caracteres-ou-mais"
 export AI_SERVICE_TOKEN="token-interno-com-32-caracteres-ou-mais"
 ```
 
-Para rodar local sem Atlas, basta ter o MongoDB rodando em `localhost:27017` (o padrao ja funciona).
+O usuario de aluno da FIAP permite 20 sessoes simultaneas e encerra sessoes ociosas apos 30 minutos; o pool (HikariCP) ja esta configurado para isso.
 
 Execute:
 ```bash
@@ -283,20 +288,15 @@ A aplicacao roda em 3 servicos na nuvem, todos com planos gratuitos:
  Frontend   ──REST──►   Backend Java  ──REST──►   AI Service Python
  Next.js                Spring Boot               FastAPI + BERT
                             |
-                    [MongoDB Atlas]
+                  [Oracle DB - FIAP]
 ```
 
-#### Passo 0 — MongoDB Atlas (Banco de dados gratuito)
+#### Passo 0 — Oracle Database (FIAP)
 
-1. Crie uma conta em [mongodb.com/atlas](https://www.mongodb.com/atlas)
-2. Crie um **Free Cluster** (M0 - gratuito, 512MB)
-3. Em **Database Access**, crie um usuario com senha
-4. Em **Network Access**, adicione `0.0.0.0/0` (permite acesso de qualquer IP)
-5. Em **Connect** → **Drivers**, copie a connection string:
-   ```
-   mongodb+srv://USUARIO:SENHA@cluster0.xxxxx.mongodb.net/challenge-totvs
-   ```
-6. Guarde essa URI — voce usara no Render
+1. Conecte no SQL Developer com o usuario RM do aluno em `oracle.fiap.com.br:1521` (SID/servico `ORCL`)
+2. Execute o script `backend/src/main/resources/db/oracle/schema.sql` para criar as tabelas, indices e FKs
+3. Guarde `ORACLE_URL`, `ORACLE_USER` e `ORACLE_PASSWORD` — voce usara no Render
+4. O host precisa ser alcancavel pelo provedor de deploy; se a rede da FIAP bloquear, rode o backend localmente ou via Docker Compose
 
 #### Passo 1 — AI Service no Hugging Face Spaces
 
@@ -323,7 +323,9 @@ git add . && git commit -m "Deploy AI service" && git push
 4. Adicione as **Environment Variables:**
    | Variavel | Valor |
    |---|---|
-   | `MONGODB_URI` | `mongodb+srv://USUARIO:SENHA@cluster.mongodb.net/challenge-totvs` |
+   | `ORACLE_URL` | `jdbc:oracle:thin:@//oracle.fiap.com.br:1521/orcl` |
+   | `ORACLE_USER` | Usuario RM do aluno |
+   | `ORACLE_PASSWORD` | Senha do Oracle |
    | `AI_SERVICE_URL` | `https://SEU_USUARIO-totvs-ai-service.hf.space` |
    | `CORS_ALLOWED_ORIGINS` | `https://SEU-APP.vercel.app` |
    | `AI_SERVICE_TOKEN` | Token interno forte compartilhado com o servico de IA |
@@ -505,7 +507,7 @@ O microsservico Python utiliza uma abordagem hibrida:
 
 4. **Deteccao de Riscos** — Identificacao de sinais de insatisfacao, mencoes a concorrentes e indicadores de churn, com classificacao de severidade (ALTO/MEDIO/BAIXO).
 
-5. **Analise Consolidada de JSON** - Para arquivos grandes, a LeanIA e o backend extraem metricas agregadas dos registros internos sem criar documentos extras no MongoDB. O dashboard usa esses agregados para manter numeros consolidados mesmo com apenas 1 documento por JSON.
+5. **Analise Consolidada de JSON** - Para arquivos grandes, a LeanIA e o backend extraem metricas agregadas dos registros internos sem criar linhas extras no Oracle. O dashboard usa esses agregados para manter numeros consolidados mesmo com apenas 1 registro por JSON.
 
 ---
 

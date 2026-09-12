@@ -32,8 +32,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Conecta ao Mongo externo (Atlas) usando a variavel do .env
-      - MONGODB_URI=${MONGODB_URI}
+      # Conecta ao Oracle da FIAP usando as variaveis do .env
+      - ORACLE_URL=${ORACLE_URL:-jdbc:oracle:thin:@//oracle.fiap.com.br:1521/orcl}
+      - ORACLE_USER=${ORACLE_USER}
+      - ORACLE_PASSWORD=${ORACLE_PASSWORD}
+      - ORACLE_POOL_SIZE=${ORACLE_POOL_SIZE:-5}
       # Conecta ao ai-service atraves do nome do container na rede interna (totvs-net)
       - AI_SERVICE_URL=http://ai-service:7860
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN}

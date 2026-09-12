@@ -7,7 +7,11 @@ services:
     region: oregon
     plan: free
     envVars:
-      - key: MONGODB_URI
+      - key: ORACLE_URL
+        sync: false
+      - key: ORACLE_USER
+        sync: false
+      - key: ORACLE_PASSWORD
         sync: false
       - key: AI_SERVICE_URL
         sync: false

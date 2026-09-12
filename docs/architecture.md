@@ -8,7 +8,7 @@ O projeto e dividido em tres servicos principais:
 - `backend`: API Spring Boot publicada no Render.
 - `ai-service`: LeanIA em FastAPI publicada no Hugging Face Spaces.
 
-O MongoDB armazena usuarios, transcricoes, analises, alertas, refresh tokens e feedbacks da LeanIA.
+O Oracle Database 19c (instancia da FIAP) armazena usuarios, transcricoes, analises, alertas, refresh tokens e feedbacks da LeanIA em tabelas relacionais mapeadas com Spring Data JPA/Hibernate; o script de criacao esta em `backend/src/main/resources/db/oracle/schema.sql`.
 
 ## Diagrama
 
@@ -16,7 +16,7 @@ O MongoDB armazena usuarios, transcricoes, analises, alertas, refresh tokens e f
 flowchart LR
     U["Usuario autenticado"] --> F["Frontend Next.js / Vercel"]
     F -->|"REST + Bearer token + refresh cookie"| B["Backend Spring Boot / Render"]
-    B -->|"Mongo repositories"| DB[("MongoDB Atlas")]
+    B -->|"JPA repositories"| DB[("Oracle Database 19c")]
     B -->|"POST /analisar + X-Internal-Token + X-Request-ID"| AI["LeanIA FastAPI / Hugging Face"]
     AI -->|"Transformers CPU ou fallback local"| B
     B -->|"Analise, riscos, oportunidades, alertas"| DB
@@ -30,7 +30,7 @@ flowchart LR
 1. O usuario envia e-mail e senha para `/api/auth/login`.
 2. O backend aplica rate limit, valida `Origin/Referer` e autentica o usuario ativo.
 3. O access token e retornado no corpo da resposta.
-4. O refresh token e salvo em cookie `HttpOnly`, com hash persistido no MongoDB.
+4. O refresh token e salvo em cookie `HttpOnly`, com hash persistido no Oracle.
 5. O frontend mantem o access token em memoria e renova a sessao via `/api/auth/refresh`.
 
 ### Criacao e analise de transcricao

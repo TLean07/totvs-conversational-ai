@@ -7,11 +7,14 @@ Pre-requisitos:
 - JDK 17+
 - Python 3.10+
 - Node.js 20+
-- MongoDB Atlas ou MongoDB local
+- Acesso ao Oracle Database da FIAP (oracle.fiap.com.br:1521/orcl) com o usuario RM do aluno
+- Tabelas criadas uma vez com backend/src/main/resources/db/oracle/schema.sql (SQL Developer ou SQLcl)
 - Variaveis de ambiente configuradas a partir do .env.example
 
 Variaveis minimas para ambiente local:
-- MONGODB_URI=mongodb://localhost:27017/challenge-totvs
+- ORACLE_URL=jdbc:oracle:thin:@//oracle.fiap.com.br:1521/orcl
+- ORACLE_USER=RM000000
+- ORACLE_PASSWORD=senha-do-oracle
 - APP_JWT_SECRET=uma-string-aleatoria-com-32-caracteres-ou-mais
 - APP_ADMIN_EMAIL=admin@example.com
 - APP_ADMIN_PASSWORD=uma-senha-forte-com-12-caracteres-ou-mais
@@ -43,7 +46,9 @@ OBS: Na primeira vez, o modelo BERT sera baixado (~700MB).
 Abra OUTRO terminal e execute:
 
 cd backend
-$env:MONGODB_URI="mongodb://localhost:27017/challenge-totvs"
+$env:ORACLE_URL="jdbc:oracle:thin:@//oracle.fiap.com.br:1521/orcl"
+$env:ORACLE_USER="RM000000"
+$env:ORACLE_PASSWORD="senha-do-oracle"
 $env:APP_JWT_SECRET="uma-string-aleatoria-com-32-caracteres-ou-mais"
 $env:APP_ADMIN_EMAIL="admin@example.com"
 $env:APP_ADMIN_PASSWORD="uma-senha-forte-com-12-caracteres-ou-mais"

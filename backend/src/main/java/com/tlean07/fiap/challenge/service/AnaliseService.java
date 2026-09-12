@@ -9,8 +9,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AnaliseService {
@@ -128,7 +130,7 @@ public class AnaliseService {
 
     private MetricasAgregadas resolveMetrics(Transcricao transcricao, AiAnalysisDTO dto) {
         if (transcricao.getMetricasAgregadas() != null) {
-            return transcricao.getMetricasAgregadas();
+            return copyOf(transcricao.getMetricasAgregadas());
         }
         AiAnalysisDTO.MetricasAgregadasDTO metrics = dto.getMetricasAgregadas();
         if (metrics == null) {
@@ -151,7 +153,7 @@ public class AnaliseService {
 
     private List<RiscoConsolidado> resolveConsolidatedRisks(Transcricao transcricao, AiAnalysisDTO dto) {
         if (transcricao.getRiscosConsolidados() != null && !transcricao.getRiscosConsolidados().isEmpty()) {
-            return transcricao.getRiscosConsolidados();
+            return new ArrayList<>(transcricao.getRiscosConsolidados());
         }
         return nullSafe(dto.getRiscosConsolidados()).stream()
                 .map(r -> RiscoConsolidado.builder()
@@ -161,12 +163,12 @@ public class AnaliseService {
                         .evidencias(nullSafe(r.getEvidencias()))
                         .recomendacao(defaultText(r.getRecomendacao(), "Acompanhar recorrencia e definir plano de acao."))
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private List<OportunidadeConsolidada> resolveConsolidatedOpportunities(Transcricao transcricao, AiAnalysisDTO dto) {
         if (transcricao.getOportunidadesConsolidadas() != null && !transcricao.getOportunidadesConsolidadas().isEmpty()) {
-            return transcricao.getOportunidadesConsolidadas();
+            return new ArrayList<>(transcricao.getOportunidadesConsolidadas());
         }
         return nullSafe(dto.getOportunidadesConsolidadas()).stream()
                 .map(o -> OportunidadeConsolidada.builder()
@@ -176,12 +178,12 @@ public class AnaliseService {
                         .evidencias(nullSafe(o.getEvidencias()))
                         .recomendacao(defaultText(o.getRecomendacao(), "Validar oportunidade com o time comercial."))
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private List<AlertaConsolidado> resolveConsolidatedAlerts(Transcricao transcricao, AiAnalysisDTO dto) {
         if (transcricao.getAlertasConsolidados() != null && !transcricao.getAlertasConsolidados().isEmpty()) {
-            return transcricao.getAlertasConsolidados();
+            return new ArrayList<>(transcricao.getAlertasConsolidados());
         }
         return nullSafe(dto.getAlertasConsolidados()).stream()
                 .map(a -> AlertaConsolidado.builder()
@@ -192,12 +194,12 @@ public class AnaliseService {
                         .motivo(defaultText(a.getMotivo(), "Padrao recorrente detectado na transcricao."))
                         .recomendacao(defaultText(a.getRecomendacao(), "Revisar evidencias e definir responsavel."))
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private List<ItemCritico> resolveCriticalItems(Transcricao transcricao, AiAnalysisDTO dto) {
         if (transcricao.getItensCriticos() != null && !transcricao.getItensCriticos().isEmpty()) {
-            return transcricao.getItensCriticos();
+            return new ArrayList<>(transcricao.getItensCriticos());
         }
         return nullSafe(dto.getItensCriticos()).stream()
                 .map(i -> ItemCritico.builder()
@@ -206,11 +208,31 @@ public class AnaliseService {
                         .trecho(defaultText(i.getTrecho(), "Trecho nao informado"))
                         .severidade(parseEnum(Severidade.class, i.getSeveridade(), Severidade.MEDIO))
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private int valueOrZero(Integer value) {
         return value == null ? 0 : Math.max(0, value);
+    }
+
+    /**
+     * As colecoes e o componente embutido vindos de uma Transcricao carregada pelo Hibernate
+     * nao podem ser reaproveitados por referencia em outra entidade (HHH "shared references").
+     */
+    private MetricasAgregadas copyOf(MetricasAgregadas m) {
+        return MetricasAgregadas.builder()
+                .totalPartes(m.getTotalPartes())
+                .partesAnalisadas(m.getPartesAnalisadas())
+                .partesNegativas(m.getPartesNegativas())
+                .partesNeutras(m.getPartesNeutras())
+                .partesPositivas(m.getPartesPositivas())
+                .riscosDetectados(m.getRiscosDetectados())
+                .oportunidadesDetectadas(m.getOportunidadesDetectadas())
+                .churnsPotenciais(m.getChurnsPotenciais())
+                .mencoesCriticas(m.getMencoesCriticas())
+                .alertasConsolidados(m.getAlertasConsolidados())
+                .chunksProcessados(m.getChunksProcessados())
+                .build();
     }
 
     public AnaliseResponse toResponse(AnaliseResultado a) {

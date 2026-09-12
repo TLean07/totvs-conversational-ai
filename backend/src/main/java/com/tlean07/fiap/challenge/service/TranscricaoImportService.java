@@ -8,7 +8,7 @@ import com.tlean07.fiap.challenge.model.Transcricao;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -178,7 +178,7 @@ public class TranscricaoImportService {
             result.imported++;
             result.items.add(item(index, meetingId, saved.getId(), "IMPORTED", null, warnings));
             log.info("[TranscriptionImport] imported meetingId={}", meetingId);
-        } catch (DuplicateKeyException e) {
+        } catch (DataIntegrityViolationException e) {
             result.skipped++;
             result.items.add(item(index, meetingId, null, "SKIPPED_DUPLICATE", "ID_MEETING_ALREADY_EXISTS", warnings));
             log.info("[TranscriptionImport] skippedDuplicate meetingId={}", meetingId);

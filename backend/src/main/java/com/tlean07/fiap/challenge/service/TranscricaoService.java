@@ -905,6 +905,9 @@ public class TranscricaoService {
             alertaRepository.deleteByAnaliseId(analise.getId());
             analiseRepository.delete(analise);
         });
+        // A entidade em memoria ainda aponta para a analise removida; no JPA o merge seguinte
+        // tentaria recarrega-la (JpaObjectRetrievalFailureException). No banco a FK ja e SET NULL.
+        transcricao.setAnaliseResultado(null);
     }
 
     public TranscricaoResponse toResponse(Transcricao t) {
