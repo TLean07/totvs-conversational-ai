@@ -154,8 +154,8 @@ public class AlertaService {
     public List<AlertaResponse> listarNovos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Alerta> alertas = user.isAdmin()
-                ? alertaRepository.findByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta.NOVO)
-                : alertaRepository.findByOwnerIdAndStatusOrderByPrioridadeAscDataCriacaoDesc(user.id(), StatusAlerta.NOVO);
+                ? alertaRepository.findTop300ByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta.NOVO)
+                : alertaRepository.findTop300ByOwnerIdAndStatusOrderByPrioridadeAscDataCriacaoDesc(user.id(), StatusAlerta.NOVO);
 
         return alertas
                 .stream()
@@ -180,8 +180,8 @@ public class AlertaService {
     public List<AlertaResponse> listarTodos() {
         AuthenticatedUser user = SecurityUtils.currentUser();
         List<Alerta> alertas = user.isAdmin()
-                ? alertaRepository.findAll()
-                : alertaRepository.findByOwnerId(user.id());
+                ? alertaRepository.findTop300ByOrderByDataCriacaoDesc()
+                : alertaRepository.findTop300ByOwnerIdOrderByDataCriacaoDesc(user.id());
 
         return alertas
                 .stream()

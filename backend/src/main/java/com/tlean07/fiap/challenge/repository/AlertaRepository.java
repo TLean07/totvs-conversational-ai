@@ -16,6 +16,11 @@ public interface AlertaRepository extends JpaRepository<Alerta, String> {
     List<Alerta> findByPrioridade(Severidade prioridade);
     List<Alerta> findByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta status);
     List<Alerta> findTop10ByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta status);
+    /* Listas do site limitadas: centenas de alertas com 3 CLOBs cada custavam ~20 s na CPU do plano free. */
+    List<Alerta> findTop300ByStatusOrderByPrioridadeAscDataCriacaoDesc(StatusAlerta status);
+    List<Alerta> findTop300ByOrderByDataCriacaoDesc();
+    List<Alerta> findTop300ByOwnerIdOrderByDataCriacaoDesc(String ownerId);
+    List<Alerta> findTop300ByOwnerIdAndStatusOrderByPrioridadeAscDataCriacaoDesc(String ownerId, StatusAlerta status);
     List<Alerta> findByAnaliseId(String analiseId);
 
     @Transactional

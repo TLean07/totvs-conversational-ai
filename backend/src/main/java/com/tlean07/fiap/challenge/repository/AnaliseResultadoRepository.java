@@ -72,6 +72,38 @@ public interface AnaliseResultadoRepository extends JpaRepository<AnaliseResulta
     @Query(DASHBOARD_SELECT + " where a.ownerId = :ownerId")
     List<DashboardRow> findDashboardRowsByOwnerId(@Param("ownerId") String ownerId);
 
+    /** Contagens agregadas no banco para o dashboard: nenhuma linha de detalhe e nenhum CLOB trafegam. */
+    interface ContagemRow {
+        String getChave();
+
+        Long getTotal();
+    }
+
+    @Query("select r.categoria as chave, count(r) as total from AnaliseResultado a join a.riscosConsolidados r group by r.categoria")
+    List<ContagemRow> contarRiscosConsolidadosPorCategoria();
+
+    @Query("select r.categoria as chave, count(r) as total from AnaliseResultado a join a.riscosConsolidados r where a.ownerId = :ownerId group by r.categoria")
+    List<ContagemRow> contarRiscosConsolidadosPorCategoria(@Param("ownerId") String ownerId);
+
+    /** Riscos brutos so das analises sem lista consolidada (mesma regra de preferencia do dashboard). */
+    @Query("select cast(r.tipo as string) as chave, count(r) as total from AnaliseResultado a join a.riscos r where a.riscosConsolidados is empty group by r.tipo")
+    List<ContagemRow> contarRiscosSemConsolidadoPorTipo();
+
+    @Query("select cast(r.tipo as string) as chave, count(r) as total from AnaliseResultado a join a.riscos r where a.riscosConsolidados is empty and a.ownerId = :ownerId group by r.tipo")
+    List<ContagemRow> contarRiscosSemConsolidadoPorTipo(@Param("ownerId") String ownerId);
+
+    @Query("select o.categoria as chave, count(o) as total from AnaliseResultado a join a.oportunidadesConsolidadas o group by o.categoria")
+    List<ContagemRow> contarOportunidadesConsolidadasPorCategoria();
+
+    @Query("select o.categoria as chave, count(o) as total from AnaliseResultado a join a.oportunidadesConsolidadas o where a.ownerId = :ownerId group by o.categoria")
+    List<ContagemRow> contarOportunidadesConsolidadasPorCategoria(@Param("ownerId") String ownerId);
+
+    @Query("select cast(o.tipo as string) as chave, count(o) as total from AnaliseResultado a join a.oportunidades o where a.oportunidadesConsolidadas is empty group by o.tipo")
+    List<ContagemRow> contarOportunidadesSemConsolidadoPorTipo();
+
+    @Query("select cast(o.tipo as string) as chave, count(o) as total from AnaliseResultado a join a.oportunidades o where a.oportunidadesConsolidadas is empty and a.ownerId = :ownerId group by o.tipo")
+    List<ContagemRow> contarOportunidadesSemConsolidadoPorTipo(@Param("ownerId") String ownerId);
+
     interface RiscoRow {
         String getTranscricaoId();
 

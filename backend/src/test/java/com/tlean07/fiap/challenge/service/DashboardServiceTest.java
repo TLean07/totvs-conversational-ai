@@ -1,12 +1,9 @@
 package com.tlean07.fiap.challenge.service;
 
 import com.tlean07.fiap.challenge.dto.DashboardResponse;
-import com.tlean07.fiap.challenge.dto.TranscricaoInsightsResponse;
 import com.tlean07.fiap.challenge.enums.Sentimento;
 import com.tlean07.fiap.challenge.enums.StatusTranscricao;
 import com.tlean07.fiap.challenge.enums.UserRole;
-import com.tlean07.fiap.challenge.model.OportunidadeConsolidada;
-import com.tlean07.fiap.challenge.model.RiscoConsolidado;
 import com.tlean07.fiap.challenge.repository.AlertaRepository;
 import com.tlean07.fiap.challenge.repository.AnaliseResultadoRepository;
 import com.tlean07.fiap.challenge.repository.TranscricaoRepository;
@@ -40,8 +37,6 @@ class DashboardServiceTest {
     private AlertaService alertaService;
     @Mock
     private TranscricaoService transcricaoService;
-    @Mock
-    private TranscricaoInsightsService transcricaoInsightsService;
 
     @InjectMocks
     private DashboardService dashboardService;
@@ -58,14 +53,10 @@ class DashboardServiceTest {
                 row(Sentimento.POSITIVO), row(Sentimento.NEGATIVO), row(Sentimento.POSITIVO)));
         when(transcricaoRepository.count()).thenReturn(12L);
         when(transcricaoRepository.countByStatus(StatusTranscricao.PROCESSADA)).thenReturn(9L);
-        when(transcricaoInsightsService.listarTodos()).thenReturn(List.of(
-                TranscricaoInsightsResponse.builder()
-                        .riscosConsolidados(List.of(
-                                RiscoConsolidado.builder().categoria("Churn").build(),
-                                RiscoConsolidado.builder().categoria("Concorrencia").build()))
-                        .oportunidadesConsolidadas(List.of(
-                                OportunidadeConsolidada.builder().categoria("Upsell").build()))
-                        .build()));
+        when(analiseRepository.contarRiscosConsolidadosPorCategoria()).thenReturn(List.of(
+                contagem("Churn", 1L), contagem("Concorrencia", 1L)));
+        when(analiseRepository.contarOportunidadesConsolidadasPorCategoria()).thenReturn(List.of(
+                contagem("Upsell", 1L)));
         when(alertaService.listarNovosDashboard()).thenReturn(List.of());
         when(transcricaoService.listarRecentesDashboard()).thenReturn(List.of());
 
@@ -92,7 +83,6 @@ class DashboardServiceTest {
         when(transcricaoRepository.countByOwnerId("user-7")).thenReturn(4L);
         when(transcricaoRepository.countByOwnerIdAndStatus("user-7", StatusTranscricao.PROCESSADA))
                 .thenReturn(3L);
-        when(transcricaoInsightsService.listarTodos()).thenReturn(List.of());
         when(alertaService.listarNovosDashboard()).thenReturn(List.of());
         when(transcricaoService.listarRecentesDashboard()).thenReturn(List.of());
 
@@ -103,6 +93,13 @@ class DashboardServiceTest {
         verify(analiseRepository).findDashboardRowsByOwnerId("user-7");
         verify(transcricaoRepository).countByOwnerId("user-7");
         verify(transcricaoRepository).countByOwnerIdAndStatus("user-7", StatusTranscricao.PROCESSADA);
+    }
+
+    private static AnaliseResultadoRepository.ContagemRow contagem(String chave, long total) {
+        return new AnaliseResultadoRepository.ContagemRow() {
+            @Override public String getChave() { return chave; }
+            @Override public Long getTotal() { return total; }
+        };
     }
 
     private static AnaliseResultadoRepository.DashboardRow row(Sentimento sentimento) {

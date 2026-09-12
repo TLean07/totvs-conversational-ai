@@ -212,3 +212,8 @@ separado que chama `analysisJob.processar`.
 filhas) duas vezes por requisicao. Agora `AnaliseResultadoRepository` expoe projecoes (`DashboardRow` com sentimento e
 metricas; `RiscoRow`/`OportunidadeRow`/consolidados via `join a.riscos r` devolvendo o embeddable) e o dashboard
 fecha em ~1 s. Regra: nunca carregar a entidade completa em massa; projecao por tabela filha.
+(6) Na Render free (0,1 vCPU) ate as projecoes eram lentas: insights com 2.300 linhas e CLOBs = 90 s, dashboard = 120 s,
+alertas (912 x 3 CLOB) = 20 s; localmente 1-2 s. Solucao: dashboard so com agregacoes (`ContagemRow` via group by, sem
+CLOB), admins compartilham a chave de cache "ADMIN", TTL 10 min (toda escrita invalida) e `CacheWarmer` recalcula
+dashboard+insights como admin sintetico a cada 9,5 min e na subida; listas de alertas limitadas a 300.
+`/api/transcricoes/insights` (paginas /riscos e /oportunidades) continua pesado quando o cache cai por uma analise nova.

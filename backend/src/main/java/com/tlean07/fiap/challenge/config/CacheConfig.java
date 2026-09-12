@@ -38,12 +38,18 @@ public class CacheConfig {
         }
     }
 
-    /** Usado nas expressoes SpEL das anotacoes: {@code key = "@cacheKeys.user()"}. */
+    /**
+     * Usado nas expressoes SpEL das anotacoes: {@code key = "@cacheKeys.user()"}.
+     * Administradores enxergam os mesmos dados, entao compartilham uma unica chave: o aquecedor
+     * ({@link CacheWarmer}) preenche essa entrada e todos os admins a aproveitam.
+     */
     @Component("cacheKeys")
     public static class CacheKeys {
+        public static final String ADMIN_KEY = "ADMIN";
+
         public String user() {
             AuthenticatedUser user = SecurityUtils.currentUser();
-            return user.id() + ":" + user.role();
+            return user.isAdmin() ? ADMIN_KEY : user.id() + ":" + user.role();
         }
     }
 }
