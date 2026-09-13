@@ -1,0 +1,17 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev20c class="oracle.dbtools.crest.model.design.storage.oracle.v20c.TableProxyOraclev20c" name="APP_USERS" directorySegmentName="seg_0" id="F62AAA67-73DF-485B-8B2A-460EAD2B70ED">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<temporaryChanged>false</temporaryChanged>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="PK_APP_USERS" id="A1D562B7-5930-44D6-9295-6A08BA301FAE">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+</TableProxyOraclev20c>

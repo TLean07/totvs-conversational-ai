@@ -1,0 +1,122 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="B8CB3295-7E78-4354-8AC2-D110CD5E3089" name="ANALISE_RISCOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Riscos detectados na reuniao (churn, concorrencia, insatisfacao, perda de confianca)]]></commentInRDBMS>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ANALISE_ID" id="1B97414E-F3A8-4681-A5A6-338FB8645196">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Referencia a ANALISES.ID (dono da lista)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>F043B306-0B95-43B5-97FC-174D8A1F6FBF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="091444D4-2868-4C37-A0B3-76B5E7FE02C5" referredColumn="E3EF0091-FD26-4834-9FF4-3E5318B0AD5E"/>
+</associations>
+</Column>
+<Column name="POSICAO" id="D943C80A-3677-4810-AE1B-CB16765314F8">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Posicao do item na lista (0..n); preserva a ordem gerada pela LeanIA]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>A8A9069E-6479-42C6-9976-19961E50AABC</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TIPO" id="E3AF7EE9-FFEF-4349-9CED-E63C80A926A6">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[CHURN, CONCORRENCIA, INSATISFACAO ou PERDA_CONFIANCA]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>044E7CEF-02F2-4929-B600-D89BB6AF51DF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="DESCRICAO" id="49341076-5907-4F3F-AD17-C50A31F3F7AD">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Descricao do risco com o trecho que o evidencia]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>2A23D69E-46BF-4610-AAA6-E11B9AE1D5AA</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="SEVERIDADE" id="5EB56641-9938-42FF-9ED6-222CADEF73CC">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Severidade: ALTO, MEDIO ou BAIXO]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>4AF9C762-8E3E-4F2E-9274-308246621341</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CONCORRENTE_MENCIONADO" id="CF1C9468-C8D3-4970-BFB5-DF7C3C05BCCA">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Concorrente citado quando TIPO = CONCORRENCIA (SAP, Senior, Omie, Bling...)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>51992D8D-8DAC-4FDF-9364-C89F2234E067</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="5B20762C-FBCB-4594-8E5C-660DCD0375A2" name="PK_ANALISE_RISCOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="D943C80A-3677-4810-AE1B-CB16765314F8"/>
+<colUsage columnID="1B97414E-F3A8-4681-A5A6-338FB8645196"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="DEE9C1F4-4440-4E53-B8F7-1E0DA99FD125" name="FK_ANALISE_RISCOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="1B97414E-F3A8-4681-A5A6-338FB8645196"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+<tableCheckConstraints itemClass="oracle.dbtools.crest.model.design.constraint.TableLevelConstraint">
+<tableCheckConstraint name="CK_ANALISE_RISCOS_TIPO" directorySegmentName="seg_0" id="98EB65FC-6F85-4648-A6E1-EF86603B9A72">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[TIPO IN ('CHURN','CONCORRENCIA','INSATISFACAO','PERDA_CONFIANCA')]]></rule>
+</tableCheckConstraint>
+<tableCheckConstraint name="CK_ANALISE_RISCOS_SEVERIDADE" directorySegmentName="seg_0" id="3B093553-2FFB-46D9-9DB6-C79D5EF2627D">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[SEVERIDADE IN ('ALTO','MEDIO','BAIXO')]]></rule>
+</tableCheckConstraint>
+</tableCheckConstraints>
+</Table>

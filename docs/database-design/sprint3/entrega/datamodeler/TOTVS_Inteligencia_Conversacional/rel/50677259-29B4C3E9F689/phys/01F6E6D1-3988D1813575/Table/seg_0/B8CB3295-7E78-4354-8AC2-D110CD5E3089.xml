@@ -1,0 +1,17 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev20c class="oracle.dbtools.crest.model.design.storage.oracle.v20c.TableProxyOraclev20c" name="ANALISE_RISCOS" directorySegmentName="seg_0" id="B8CB3295-7E78-4354-8AC2-D110CD5E3089">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<temporaryChanged>false</temporaryChanged>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="PK_ANALISE_RISCOS" id="5B20762C-FBCB-4594-8E5C-660DCD0375A2">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+</TableProxyOraclev20c>

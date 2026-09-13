@@ -1,0 +1,17 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<TableProxyOraclev20c class="oracle.dbtools.crest.model.design.storage.oracle.v20c.TableProxyOraclev20c" name="TRANSCRICAO_ALERTAS_CONS" directorySegmentName="seg_0" id="B093C47D-0363-4B18-8A1F-D990557F2852">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<logging>YES</logging>
+<partitionedRowMovement>DISABLE</partitionedRowMovement>
+<temporaryChanged>false</temporaryChanged>
+<primaryKeys>
+<PrimaryKey class="oracle.dbtools.crest.model.design.storage.oracle.v10g.PKProxyOraclev10g" name="PK_TRANSC_ALERTAS_CONS" id="891B32FE-6AB1-4712-B562-2904D5D7D64F">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexSort>SORTED</indexSort>
+</PrimaryKey>
+</primaryKeys>
+</TableProxyOraclev20c>

@@ -1,0 +1,128 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="E966E7CF-3231-4DF4-9677-2F223CB20B65" name="ANALISE_OPORTUNIDADES">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Oportunidades de venda detectadas na reuniao (upsell, cross-sell, novo produto)]]></commentInRDBMS>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ANALISE_ID" id="7FEDDC2C-92D2-4AE3-A7AE-316DC58B071C">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Referencia a ANALISES.ID (dono da lista)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>F043B306-0B95-43B5-97FC-174D8A1F6FBF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="36356C55-D330-4238-BC50-68F3BCBD4880" referredColumn="E3EF0091-FD26-4834-9FF4-3E5318B0AD5E"/>
+</associations>
+</Column>
+<Column name="POSICAO" id="CC8A1EE6-467D-461E-B624-6965F15A5AB5">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Posicao do item na lista (0..n); preserva a ordem gerada pela LeanIA]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>A8A9069E-6479-42C6-9976-19961E50AABC</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TIPO" id="7240F478-40D1-40DF-A645-9E7AA275CCB4">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[UPSELL, CROSS_SELL ou NOVO_PRODUTO]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>044E7CEF-02F2-4929-B600-D89BB6AF51DF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="DESCRICAO" id="986B1D15-C9A8-46F3-B609-0B14948F2E58">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Descricao da oportunidade em linguagem de negocio]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>2A23D69E-46BF-4610-AAA6-E11B9AE1D5AA</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="PRODUTO_RELACIONADO" id="7AC80BF3-45C6-4F92-85B8-F53BEC2F3704">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Produto/modulo TOTVS relacionado (ou A definir)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>51992D8D-8DAC-4FDF-9364-C89F2234E067</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="SCORE" id="1BB57D2D-EED9-45CD-8869-B2F53FD6758F">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Probabilidade estimada de fechamento (0 a 1)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT021</logicalDatatype>
+<domain>794BEEFE-0B2C-43DA-9EBC-3E1BA77E952B</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="VALOR_ESTIMADO" id="272F5D30-757A-4E06-81FD-31BD0F68177F">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Valor estimado mencionado (ex.: R$ 50.000,00) ou Nao estimado]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>BEDE758C-03EC-4781-A7BA-B3D36609D186</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="64555481-17A1-4537-A735-8759AAE251F4" name="PK_ANALISE_OPORTUNIDADES">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="CC8A1EE6-467D-461E-B624-6965F15A5AB5"/>
+<colUsage columnID="7FEDDC2C-92D2-4AE3-A7AE-316DC58B071C"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="DE541FC0-261E-4B03-89A5-CAF0C9F9725E" name="FK_ANALISE_OPORTUNIDADES">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="7FEDDC2C-92D2-4AE3-A7AE-316DC58B071C"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+<tableCheckConstraints itemClass="oracle.dbtools.crest.model.design.constraint.TableLevelConstraint">
+<tableCheckConstraint name="CK_ANALISE_OPORTUNIDADES_TIPO" directorySegmentName="seg_0" id="B1870EAE-2CDA-42C1-ABEB-685A6E5E3087">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[TIPO IN ('UPSELL','CROSS_SELL','NOVO_PRODUTO')]]></rule>
+</tableCheckConstraint>
+</tableCheckConstraints>
+</Table>

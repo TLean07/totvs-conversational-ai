@@ -1,0 +1,140 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="6EDBE879-46FD-452D-8760-2DE43126FCFC" name="ANALISE_ALERTAS_CONS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Alertas consolidados gerados pela analise (origem da copia em TRANSCRICAO_ALERTAS_CONS e dos ALERTAS do tipo CONSOLIDADO_*)]]></commentInRDBMS>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ANALISE_ID" id="CDDD3D7D-2252-4B7D-8B2A-0659A2F74110">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Referencia a ANALISES.ID (dono da lista)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>F043B306-0B95-43B5-97FC-174D8A1F6FBF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="C94F49F7-1BA7-4EE0-B48A-D4222AC4A6CA" referredColumn="E3EF0091-FD26-4834-9FF4-3E5318B0AD5E"/>
+</associations>
+</Column>
+<Column name="POSICAO" id="6F47ABCD-BEBF-420F-83F7-0F47ABA87F39">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Posicao do item na lista (0..n); preserva a ordem gerada pela LeanIA]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>A8A9069E-6479-42C6-9976-19961E50AABC</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TITULO" id="05AA957C-8FF0-44FC-9483-A80724F89212">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Titulo curto do alerta]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>66039D18-2856-4D60-B316-4F8937677362</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CATEGORIA" id="63782880-DC53-46FA-8805-3740E656EB04">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Categoria do alerta]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>BEDE758C-03EC-4781-A7BA-B3D36609D186</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="SEVERIDADE" id="BDC63F96-C0C7-4350-938D-2DC932DE661C">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Severidade: ALTO, MEDIO ou BAIXO]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>4AF9C762-8E3E-4F2E-9274-308246621341</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="OCORRENCIAS" id="DA457F67-2436-484B-A792-7E330B17779F">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Quantidade de ocorrencias]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>A8A9069E-6479-42C6-9976-19961E50AABC</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="MOTIVO" id="CF233DE4-FB89-42A4-AF3B-E6F988D602B9">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Motivo do alerta]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>2A23D69E-46BF-4610-AAA6-E11B9AE1D5AA</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="RECOMENDACAO" id="B7988A64-2E4E-46D2-BD3C-A985A68B1550">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Acao recomendada]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>2A23D69E-46BF-4610-AAA6-E11B9AE1D5AA</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="E2C7BB5C-AF9F-4976-9E1B-AB37D899BCEC" name="PK_ANALISE_ALERTAS_CONS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="6F47ABCD-BEBF-420F-83F7-0F47ABA87F39"/>
+<colUsage columnID="CDDD3D7D-2252-4B7D-8B2A-0659A2F74110"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="06A593CC-86DA-4991-825A-F7547AB6DC7E" name="FK_ANALISE_ALERTAS_CONS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="CDDD3D7D-2252-4B7D-8B2A-0659A2F74110"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+<tableCheckConstraints itemClass="oracle.dbtools.crest.model.design.constraint.TableLevelConstraint">
+<tableCheckConstraint name="CK_ANALISE_ALERTAS_CONS_SEVERI" directorySegmentName="seg_0" id="06A9F7A6-A346-41ED-9789-DE43642EB728">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[SEVERIDADE IN ('ALTO','MEDIO','BAIXO')]]></rule>
+</tableCheckConstraint>
+</tableCheckConstraints>
+</Table>

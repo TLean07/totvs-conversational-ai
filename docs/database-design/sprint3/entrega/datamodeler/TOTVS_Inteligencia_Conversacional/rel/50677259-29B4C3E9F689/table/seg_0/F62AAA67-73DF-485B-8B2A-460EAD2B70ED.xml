@@ -1,0 +1,129 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="F62AAA67-73DF-485B-8B2A-460EAD2B70ED" name="APP_USERS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Usuarios que acessam a plataforma (login por e-mail e senha com hash BCrypt)]]></commentInRDBMS>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ID" id="088E2D6D-BFE8-42B0-8CEF-9DA5D207FF5E">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Identificador UUID gerado pela aplicacao (chave primaria)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>F043B306-0B95-43B5-97FC-174D8A1F6FBF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="EMAIL" id="253B111D-4038-49FD-BC38-F656A4671AB7">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[E-mail de login; unico no sistema (UK_APP_USERS_EMAIL)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>56F49737-BA13-4CCD-876D-93271CFC04D0</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="USER_NAME" id="64966500-E3A7-46A4-A57C-650A812BE8A8">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Nome de exibicao do usuario]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>BEDE758C-03EC-4781-A7BA-B3D36609D186</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="PASSWORD_HASH" id="1F56FA0C-17E8-4E06-830D-C49957E3D2FF">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Hash BCrypt da senha; a senha em claro nunca e armazenada]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>BEDE758C-03EC-4781-A7BA-B3D36609D186</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="USER_ROLE" id="E49D3270-2FF4-4473-B288-AE0FD745B5C6">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Perfil de acesso: ADMIN (ve tudo) ou USER (ve apenas o que criou)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>044E7CEF-02F2-4929-B600-D89BB6AF51DF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="IS_ACTIVE" id="FC5EBDB3-8B4F-4F60-936E-84B4086B7E55">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[1 = usuario ativo (pode logar); 0 = desativado]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>8456D217-8344-4FAB-8E53-9BC0D6613FA1</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CREATED_AT" id="EEFE0EC7-F0B0-47BA-B5C3-010427F48D08">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Data/hora de criacao do usuario]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>1638CA83-4483-4404-BEF0-EE77D1636ECF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="A1D562B7-5930-44D6-9295-6A08BA301FAE" name="PK_APP_USERS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="088E2D6D-BFE8-42B0-8CEF-9DA5D207FF5E"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="5F3BB2C4-4FC6-4B9D-8134-DFA8EA5F97FA" name="UK_APP_USERS_EMAIL">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexState>Unique Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="253B111D-4038-49FD-BC38-F656A4671AB7"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+<tableCheckConstraints itemClass="oracle.dbtools.crest.model.design.constraint.TableLevelConstraint">
+<tableCheckConstraint name="CK_APP_USERS_USER_ROLE" directorySegmentName="seg_0" id="77E95558-55AF-402B-96A2-5EF96B71DC8D">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[USER_ROLE IN ('ADMIN','USER')]]></rule>
+</tableCheckConstraint>
+<tableCheckConstraint name="CK_APP_USERS_IS_ACTIVE" directorySegmentName="seg_0" id="D380AB97-33DB-4BAA-8915-66A13D913806">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[IS_ACTIVE IN (0,1)]]></rule>
+</tableCheckConstraint>
+</tableCheckConstraints>
+</Table>

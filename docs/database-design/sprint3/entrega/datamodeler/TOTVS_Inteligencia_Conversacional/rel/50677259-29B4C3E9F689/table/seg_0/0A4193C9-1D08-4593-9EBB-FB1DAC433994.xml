@@ -1,0 +1,116 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="0A4193C9-1D08-4593-9EBB-FB1DAC433994" name="TRANSCRICAO_ITENS_CRITICOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Trechos mais importantes da reuniao para revisao humana (evidencias de risco ou oportunidade)]]></commentInRDBMS>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="TRANSCRICAO_ID" id="75E5D911-1ED4-45EE-B49D-AB32528AF2EA">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Referencia a TRANSCRICOES.ID (dono da lista)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>F043B306-0B95-43B5-97FC-174D8A1F6FBF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="37A6A619-E627-43D4-A37A-375DD70E5FFF" referredColumn="5B053FF3-7A6E-41EA-B485-F570427C8669"/>
+</associations>
+</Column>
+<Column name="POSICAO" id="91247B10-ED8B-4049-AEAD-9DC6A77AF876">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Posicao do item na lista (0..n); preserva a ordem gerada pela LeanIA]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>A8A9069E-6479-42C6-9976-19961E50AABC</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TIPO" id="F4F2E303-DF82-472E-94AB-798404EC3820">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Tipo do item: risco ou oportunidade]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>D539DEA7-814C-4B5D-8B33-13B94AF42888</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="CATEGORIA" id="9F837D93-954E-4E66-AC43-C56127329FCF">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Categoria do item (Churn, Concorrencia, Upsell...)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>BEDE758C-03EC-4781-A7BA-B3D36609D186</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TRECHO" id="F06BD1E9-3E5A-4C46-88D6-881982F228CA">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Trecho literal da transcricao (ate 300 caracteres)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT028</logicalDatatype>
+<domain>2A23D69E-46BF-4610-AAA6-E11B9AE1D5AA</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="SEVERIDADE" id="E42C02A9-FAA9-4B79-A1EB-DBED718D8F7A">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Severidade: ALTO, MEDIO ou BAIXO]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>4AF9C762-8E3E-4F2E-9274-308246621341</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="E3560488-DAB3-45CE-89E0-FF9C5B04F4A8" name="PK_TRANSC_ITENS_CRITICOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="91247B10-ED8B-4049-AEAD-9DC6A77AF876"/>
+<colUsage columnID="75E5D911-1ED4-45EE-B49D-AB32528AF2EA"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="A95D5592-C64D-4CE1-89BF-536576889379" name="FK_TRANSC_ITENS_CRITICOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="75E5D911-1ED4-45EE-B49D-AB32528AF2EA"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+<tableCheckConstraints itemClass="oracle.dbtools.crest.model.design.constraint.TableLevelConstraint">
+<tableCheckConstraint name="CK_TRANSCRICAO_ITENS_CRITICOS_" directorySegmentName="seg_0" id="5CEB58B3-1BE4-47F3-B3D4-0A01F765F0EF">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[SEVERIDADE IN ('ALTO','MEDIO','BAIXO')]]></rule>
+</tableCheckConstraint>
+</tableCheckConstraints>
+</Table>

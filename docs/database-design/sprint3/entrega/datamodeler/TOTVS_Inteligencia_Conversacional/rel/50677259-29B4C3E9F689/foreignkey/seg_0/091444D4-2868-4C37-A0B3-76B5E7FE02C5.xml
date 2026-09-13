@@ -1,0 +1,16 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<FKIndexAssociation class="oracle.dbtools.crest.model.design.relational.FKIndexAssociation" directorySegmentName="seg_0" id="091444D4-2868-4C37-A0B3-76B5E7FE02C5" containerWithKeyObject="B8CB3295-7E78-4354-8AC2-D110CD5E3089" localFKIndex="DEE9C1F4-4440-4E53-B8F7-1E0DA99FD125" name="FK_ANALISE_RISCOS">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<referredTableLongName>ANALISES</referredTableLongName>
+<deleteRule>CASCADE</deleteRule>
+<referredTableID>4D8E2367-0636-4E66-9DE0-AEAA16D0F69B</referredTableID>
+<keyObject>BF28EB1C-2BF4-41EF-88DD-A5338E8BF5FF</keyObject>
+<referredKeyID>BF28EB1C-2BF4-41EF-88DD-A5338E8BF5FF</referredKeyID>
+<mandatory>true</mandatory>
+<refColNames>ID</refColNames>
+<transferable>true</transferable>
+<rely>false</rely>
+<columnDependencyConstraintGenerateInDDL>true</columnDependencyConstraintGenerateInDDL>
+</FKIndexAssociation>

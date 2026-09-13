@@ -1,0 +1,130 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" directorySegmentName="seg_0" id="E8F62DC0-350C-4381-A691-BE9182B76393" name="TRANSCRICAO_STATUS_HIST">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Historico das mudancas de STATUS da transcricao (PENDENTE > PROCESSANDO > PROCESSADA/ERRO). Alimentado automaticamente pelo trigger TRG_TRANSCRICOES_STATUS_HIST]]></commentInRDBMS>
+<allowColumnReorder>false</allowColumnReorder>
+<existDependencyGenerateInDDl>true</existDependencyGenerateInDDl>
+<columns itemClass="oracle.dbtools.crest.model.design.relational.Column">
+<Column name="ID" id="15F7AA85-6C3E-4723-9518-17CB4D31C45F">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Identificador numerico gerado por IDENTITY (chave primaria)]]></commentInRDBMS>
+<autoIncrementColumn>true</autoIncrementColumn>
+<identityColumn>true</identityColumn>
+<autoIncrementGenerateTrigger>false</autoIncrementGenerateTrigger>
+<use>0</use>
+<logicalDatatype>LOGDT019</logicalDatatype>
+<domain>F719E339-D4E6-4682-904A-89557B27908D</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="TRANSCRICAO_ID" id="9050D3CD-FF19-4BAE-99CC-880D71110348">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Transcricao que mudou de status (TRANSCRICOES.ID)]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>F043B306-0B95-43B5-97FC-174D8A1F6FBF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+<associations>
+<colAssociation fkAssociation="6671757A-AEDC-4CC6-9984-F359BA361A15" referredColumn="5B053FF3-7A6E-41EA-B485-F570427C8669"/>
+</associations>
+</Column>
+<Column name="STATUS_ANTERIOR" id="036804C6-1326-410B-BA03-78AD0365CFD4">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Status antes da mudanca; NULL no registro de criacao]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>044E7CEF-02F2-4929-B600-D89BB6AF51DF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="STATUS_NOVO" id="52DF1D45-2FE4-4D46-B112-D4CE17FC4495">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Status depois da mudanca]]></commentInRDBMS>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>044E7CEF-02F2-4929-B600-D89BB6AF51DF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="ALTERADO_EM" id="03CA17E9-F026-40F2-B9C3-6607527C7760">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Data/hora da mudanca]]></commentInRDBMS>
+<defaultValue>SYSTIMESTAMP</defaultValue>
+<use>0</use>
+<logicalDatatype>LOGDT015</logicalDatatype>
+<domain>1638CA83-4483-4404-BEF0-EE77D1636ECF</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="ALTERADO_POR" id="1DF10B03-6F28-4D47-B48B-992BCECD1604">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Usuario Oracle da sessao que fez a mudanca]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<defaultValue>USER</defaultValue>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>D539DEA7-814C-4B5D-8B33-13B94AF42888</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+<Column name="OBSERVACAO" id="7105B999-ABAA-4535-9AAE-E3AC9A3F404D">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<commentInRDBMS><![CDATA[Observacao livre (motivo do erro, reprocessamento, etc.)]]></commentInRDBMS>
+<nullsAllowed>true</nullsAllowed>
+<use>0</use>
+<logicalDatatype>LOGDT024</logicalDatatype>
+<domain>66039D18-2856-4D60-B316-4F8937677362</domain>
+<ownDataTypeParameters>,,</ownDataTypeParameters>
+<autoIncrementCycle>false</autoIncrementCycle>
+</Column>
+</columns>
+<indexes itemClass="oracle.dbtools.crest.model.design.relational.Index">
+<ind_PK_UK id="DF23386C-CFE0-4A41-839A-4EDCCF00C229" name="PK_TRANSC_STATUS_HIST">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<pk>true</pk>
+<indexState>Primary Constraint</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="15F7AA85-6C3E-4723-9518-17CB4D31C45F"/>
+</indexColumnUsage>
+</ind_PK_UK>
+<ind_PK_UK id="3A4F77FE-6FC3-4D0D-A143-4A7A72463B07" name="FK_TRANSC_STATUS_HIST">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<indexState>Foreign Key</indexState>
+<isSurrogateKey>false</isSurrogateKey>
+<indexColumnUsage>
+<colUsage columnID="9050D3CD-FF19-4BAE-99CC-880D71110348"/>
+</indexColumnUsage>
+</ind_PK_UK>
+</indexes>
+<tableCheckConstraints itemClass="oracle.dbtools.crest.model.design.constraint.TableLevelConstraint">
+<tableCheckConstraint name="CK_TRANSCRICAO_STATUS_HIST_STA" directorySegmentName="seg_0" id="750687C5-A7F4-4B4E-BC55-55A5A642E30A">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<rule><![CDATA[STATUS_NOVO IN ('PENDENTE','PROCESSANDO','PROCESSADA','ERRO')]]></rule>
+</tableCheckConstraint>
+</tableCheckConstraints>
+</Table>

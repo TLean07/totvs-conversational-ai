@@ -231,3 +231,22 @@ passa `oracle.jdbc.defaultLobPrefetchSize=1 MB` e `defaultRowPrefetch=100` ao dr
 `spring.datasource.hikari.data-source-properties[chave]=valor`; conferido no log DEBUG do Hikari). Producao apos tudo:
 pagina de 10 sem cache 4 s (era 17 s), com cache 0,3 s; detalhe 1,3-6,7 s sem cache; dashboard/insights/alertas < 1 s
 com o cache aquecido. Medir sempre uns 3 min depois do deploy: o CacheWarmer disputa a 0,1 vCPU (login sobe para 8 s).
+
+## Database Design - Sprint 3 (2026-09-13)
+
+Entrega gerada por `docs/database-design/sprint3/gerador/` (fonte unica: `modelo.py` = 20 tabelas com comentario em toda
+coluna). `python build.py` nao existe ainda: os passos estao nos modulos `ddl.py`, `dml.py`, `diagrama.py` (PNG via PIL),
+`datamodeler.py` (design .dmd + pasta, formato copiado do design GS de `Documents/GitHub/DatabaseDesing`), `documento.py`
+(HTML -> PDF pelo Edge headless) e `migracao003.py`. Saida em `saida/`, pacote final em `entrega/` e no ZIP.
+
+Objetos novos alem do schema do app: `SEQ_TRANSCRICAO_PROTOCOLO` + `TRANSCRICOES.NUM_PROTOCOLO` (DEFAULT da sequence, UNIQUE),
+`TRANSCRICAO_STATUS_HIST` e `ALERTA_STATUS_HIST` (IDENTITY) com triggers `TRG_*_STATUS_HIST`. O app nao mapeia nada disso
+(`ddl-auto=validate` ignora colunas/tabelas extras). `schema.sql` e `drop.sql` do backend agora sao GERADOS pelo modelo.
+A migracao `003_sprint3_database_design.sql` (testada no Docker sobre o schema antigo) ainda NAO foi aplicada no Oracle da
+FIAP: o classificador bloqueou o `@script` pelo MCP; o usuario aplica com `sql -name FIAP @...003.sql` ou no SQL Developer.
+
+Licoes do Data Modeler 24.3 (design gerado a mao): coluna sem `<domain>` aparece como UNKNOWN -> gerar `domains/<design>_Domains.xml`
+e referenciar com `<use>0</use>`; `use` 1 nao resolve. Caixa do diagrama: cabecalho ~22 px, linha 14 px, secoes de chaves abaixo
+(PK/UK/FK) tambem 14 px; os `bounds` sao respeitados literalmente. `Arquivo > Imprimir Diagrama > Para Arquivo de Imagem`
+exporta no zoom atual: usar `Exibir > Tamanho Default` antes. Automacao: AppActivate + SendKeys/mouse_event via PowerShell.
+Validacao dos scripts: `gvenzl/oracle-free:23-slim-faststart` no Docker + `docker exec sqlplus` (o SQLcl local travou contra localhost).

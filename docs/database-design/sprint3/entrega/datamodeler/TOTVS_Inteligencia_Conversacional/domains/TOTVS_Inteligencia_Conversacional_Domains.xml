@@ -1,0 +1,169 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<DomainFile class="oracle.dbtools.crest.model.design.DomainFileWrapper" fileName="TOTVS_Inteligencia_Conversacional_Domains">
+<domains>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_36_CHAR" id="F043B306-0B95-43B5-97FC-174D8A1F6FBF">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>36 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_320_CHAR" id="56F49737-BA13-4CCD-876D-93271CFC04D0">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>320 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_200_CHAR" id="BEDE758C-03EC-4781-A7BA-B3D36609D186">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>200 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_20_CHAR" id="044E7CEF-02F2-4929-B600-D89BB6AF51DF">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>20 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="NUMERIC_1_0_0" id="8456D217-8344-4FAB-8E53-9BC0D6613FA1">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypePrecision>1</dataTypePrecision>
+<dataTypeScale>0</dataTypeScale>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT019</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="Timestamp_6_0_0" id="1638CA83-4483-4404-BEF0-EE77D1636ECF">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypePrecision>6</dataTypePrecision>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT015</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_64_CHAR" id="9E5FEDE2-3993-4AA8-AB38-7A2646089785">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>64 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="NUMERIC_10_0_0" id="A8A9069E-6479-42C6-9976-19961E50AABC">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypePrecision>10</dataTypePrecision>
+<dataTypeScale>0</dataTypeScale>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT019</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="CLOB_0_0_0" id="2A23D69E-46BF-4610-AAA6-E11B9AE1D5AA">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT028</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_1000_CHAR" id="958C42FA-0324-486D-B783-F0F04933BFA8">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>1000 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_30_CHAR" id="C5FFE72F-2BBF-471F-9EE8-93017E79E0A1">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>30 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_100_CHAR" id="D539DEA7-814C-4B5D-8B33-13B94AF42888">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>100 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_50_CHAR" id="64778F5E-A5EF-4F37-AD15-CE8D12450633">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>50 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_10_CHAR" id="4AF9C762-8E3E-4F2E-9274-308246621341">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>10 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="FLOAT_53_0_0" id="794BEEFE-0B2C-43DA-9EBC-3E1BA77E952B">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypePrecision>53</dataTypePrecision>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT021</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_500_CHAR" id="66039D18-2856-4D60-B316-4F8937677362">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>500 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="NUMERIC_19_0_0" id="F719E339-D4E6-4682-904A-89557B27908D">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypePrecision>19</dataTypePrecision>
+<dataTypeScale>0</dataTypeScale>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT019</logicalDatatype>
+</Domain>
+<Domain class="oracle.dbtools.crest.model.design.Domain" name="VARCHAR_0_0_300_CHAR" id="51992D8D-8DAC-4FDF-9364-C89F2234E067">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<avTSortOrder>0</avTSortOrder>
+<dataTypeSize>300 CHAR</dataTypeSize>
+<fileName>TOTVS_Inteligencia_Conversacional_Domains</fileName>
+<logicalDatatype>LOGDT024</logicalDatatype>
+</Domain>
+</domains>
+</DomainFile>

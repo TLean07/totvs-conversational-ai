@@ -1,0 +1,8 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<OSDM_Design class="oracle.dbtools.crest.model.design.Design" name="TOTVS_Inteligencia_Conversacional" id="9B5FDED9-D85C-4F4B-A51A-7BD2A6BA2D53" version="3.5">
+<createdBy>Company 404</createdBy>
+<createdTime>2026-09-13 17:44:25 UTC</createdTime>
+<ownerDesignName>TOTVS_Inteligencia_Conversacional</ownerDesignName>
+<capitalNames>false</capitalNames>
+<designId>9B5FDED9-D85C-4F4B-A51A-7BD2A6BA2D53</designId>
+</OSDM_Design>
