@@ -1,0 +1,4 @@
+assets/
+*.pdf
+*.html
+__pycache__/
