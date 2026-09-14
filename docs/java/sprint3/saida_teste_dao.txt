@@ -1,0 +1,41 @@
+=== TOTVS Inteligencia Conversacional - Teste do CRUD (JDBC / Oracle) ===
+
+Conexao: jdbc:oracle:thin:@//oracle.fiap.com.br:1521/orcl como RM561344
+SELECT 1 FROM DUAL -> OK
+
+-- CREATE
+   usuario inserido: Usuario{Teste Java Sprint 3 <teste.java.1789351735500@company404.com.br> USER}
+   transcricao inserida: ca99120f-35d4-4495-af47-858eafee4003 (PENDENTE)
+   analise inserida: Analise{NEGATIVO | produtos=2 | oportunidades=0 | riscos=3 | scoreRisco=14,5}
+   alertas inseridos: 5
+     - [BAIXO] RISCO_INSATISFACAO - RISCO_INSATISFACAO (NOVO)
+     - [MEDIO] RISCO_CONCORRENCIA - RISCO_CONCORRENCIA (NOVO)
+     - [ALTO] RISCO_CHURN - RISCO_CHURN (NOVO)
+     - [ALTO] CHURN_IMINENTE - Churn iminente (NOVO)
+     - [MEDIO] CONCORRENTE_DETECTADO - CONCORRENTE_DETECTADO (NOVO)
+   feedback inserido: Feedback{util: Risco de churn confirmado com o cliente.}
+
+-- READ
+   buscarPorId(transcricao): Transcricao{Clinica Vida Plena (teste Java) | Rafael Moura | PROCESSADA | [LOCUTOR 2]: Estamos ha tres semanas com o chamado do RM abe...}
+   buscarPorTranscricao(analise): Analise{NEGATIVO | produtos=2 | oportunidades=0 | riscos=3 | scoreRisco=14,5}
+     - RISCO INSATISFACAO: Insatisfacao relatada pelo cliente | Evidencia: "" | Severidade: BAIXO
+     - RISCO CONCORRENCIA: Concorrente em negociacao com o cliente | Evidencia: "" | Severidade: MEDIO | Concorrente: Senior
+     - RISCO CHURN: Cliente verbalizou cancelamento ou troca de fornecedor | Evidencia: "" | Severidade: ALTO
+   listarPorCliente('Vida Plena'): 1 registro(s)
+   buscarPorEmail(usuario): Teste Java Sprint 3
+   listarPorTranscricao(feedback): 1 registro(s)
+   total de transcricoes no banco: 624
+
+-- UPDATE
+   transcricao atualizada: Clinica Vida Plena (teste Java, atualizada) / NPS 9
+   alerta atualizado: RESOLVIDO (esperado RESOLVIDO)
+   feedback atualizado: Feedback{precisa ajuste: Severidade deveria ser MEDIO.}
+   usuario atualizado: Teste Java Sprint 3 (atualizado)
+   status final da transcricao: PROCESSADA (esperado PROCESSADA)
+
+-- DELETE
+   transcricao excluida; ainda existe? false
+   analise ainda existe? false
+   usuario excluido; ainda existe? false
+
+=== CRUD concluido com sucesso ===

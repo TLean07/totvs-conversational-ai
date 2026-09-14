@@ -1,0 +1,6 @@
+entrega/
+*.zip
+*.html
+__pycache__/
+projeto-java/target/
+projeto-java/out/

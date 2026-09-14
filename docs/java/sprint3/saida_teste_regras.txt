@@ -1,0 +1,62 @@
+=== TOTVS Inteligencia Conversacional - Teste das regras de negocio ===
+
+-- Transcricao: validacao e ciclo de status
+   [OK]     transcricao sem cliente e texto curto e rejeitada
+   [OK]     status inicial PENDENTE
+   [OK]     PENDENTE -> PROCESSANDO
+   [OK]     nao pode iniciar duas vezes
+
+-- AnalisadorTranscricao
+   Analise{NEGATIVO | produtos=2 | oportunidades=0 | riscos=3 | scoreRisco=14,5}
+   - RISCO INSATISFACAO: Insatisfacao relatada pelo cliente | Evidencia: "entendo a frustracao, vou escalar hoje" | Severidade: BAIXO
+   - RISCO CONCORRENCIA: Concorrente em negociacao com o cliente | Evidencia: "a senior ja nos apresentou uma proposta e a diretoria esta pensando em trocar" | Severidade: MEDIO | Concorrente: Senior
+   - RISCO CHURN: Cliente verbalizou cancelamento ou troca de fornecedor | Evidencia: "se nao resolver ate o fim do mes, vamos cancelar o contrato" | Severidade: ALTO
+   [OK]     sentimento NEGATIVO na reuniao de churn
+   [OK]     risco de CHURN detectado
+   [OK]     concorrente Senior identificado
+   [OK]     TOTVS RM identificado como produto atual
+   [OK]     proxima acao e plano de retencao
+   Analise{POSITIVO | produtos=2 | oportunidades=3 | riscos=0 | scoreRisco=0,0}
+   - OPORTUNIDADE UPSELL: Cliente sinaliza intencao de compra: precisamos de uma proposta ate o fim do mes | Evidencia: "precisamos de uma proposta ate o fim do mes" | Produto: TOTVS Fluig | Score: 85% | Valor: Nao estimado
+   - OPORTUNIDADE UPSELL: Cliente sinaliza intencao de compra: o orcamento previsto para automacao e de uns r$ 60 mil | Evidencia: "o orcamento previsto para automacao e de uns r$ 60 mil" | Produto: TOTVS Fluig | Score: 85% | Valor: R$ 60 mil
+   - OPORTUNIDADE UPSELL: Cliente demonstra interesse: gostei | Evidencia: "gostei" | Produto: TOTVS Fluig | Score: 60% | Valor: Nao estimado
+   [OK]     oportunidade alta para o Fluig
+   [OK]     budget R$ 60.000,00 extraido
+   [OK]     persona de decisor identificada
+   [OK]     confianca no vendedor maior que 0,5
+   Resumo: Cliente utiliza TOTVS Protheus. Sentimento positivo. Alta probabilidade de venda (TOTVS Fluig). Alta probabilidade de venda (TOTVS Fluig). Possivel probabilidade de venda (TOTVS Fluig). Interlocutor: Socio/Executivo (decisor final). Budget mencionado: R$ 60.000,00. Proxima acao sugerida: Enviar proposta com o budget mencionado (R$ 60.000,00) nos proximos dias.
+   [OK]     reuniao sem sinais fica NEUTRA
+   [OK]     PROCESSANDO -> PROCESSADA com analise vinculada
+
+-- GeradorAlertas e ciclo do alerta
+   - [ALTO] CHURN_IMINENTE - Churn iminente (NOVO)
+   - [BAIXO] RISCO_INSATISFACAO - RISCO_INSATISFACAO (NOVO)
+   - [MEDIO] RISCO_CONCORRENCIA - RISCO_CONCORRENCIA (NOVO)
+   - [ALTO] RISCO_CHURN - RISCO_CHURN (NOVO)
+   - [MEDIO] CONCORRENTE_DETECTADO - CONCORRENTE_DETECTADO (NOVO)
+   [OK]     alerta CHURN_IMINENTE gerado (churn + concorrente)
+   [OK]     alerta de churn tem prioridade ALTO
+   [OK]     resolver alerta NOVO direto e rejeitado
+   [OK]     NOVO -> VISTO -> RESOLVIDO
+   [OK]     oportunidade alta gera alerta OPORTUNIDADE_ALTA
+
+-- PriorizadorContas
+   Clinica Vida Plena           score  18,5  3 risco(s), NPS detrator (3), reuniao recente
+   Colegio Nova Geracao         score   0,0  1 oportunidade(s)
+   Metalurgica Andrade          score   0,0  3 oportunidade(s)
+   [OK]     conta com churn e NPS detrator fica em primeiro
+   [OK]     conta com oportunidade fica por ultimo
+
+-- CalculadoraIndicadores
+   Indicadores{locutores=3, turnos=5, palavras=59, vendedor=41%, cliente=59%, perguntasVendedor=0, perguntasCliente=0, escuta=Equilibrado}
+   [OK]     tres locutores reconhecidos
+   [OK]     participacoes somam 100%
+
+-- Usuario: controle de acesso
+   [OK]     vendedor acessa a propria reuniao
+   [OK]     vendedor nao acessa reuniao de outro usuario
+   [OK]     administradora acessa qualquer reuniao
+   [OK]     usuario inativo nao acessa nada
+   [OK]     usuario com e-mail invalido e rejeitado
+
+=== Resultado: 29 verificacoes OK, 0 falha(s) ===
