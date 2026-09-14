@@ -1,10 +1,10 @@
-Company 404 - TOTVS Inteligencia Conversacional - Database Design - Sprint 3
+Company 404 - TOTVS Inteligência Conversacional - Database Design - Sprint 3
 
-Company404_DatabaseDesign_Sprint3.pdf  -> documento (apresentacao + modelo relacional do Data Modeler)
-01_DDL_COMPANY404_TOTVS.sql            -> estrutura do banco (rodar primeiro)
-02_DML_COMPANY404_TOTVS.sql            -> carga, UPDATE e DELETE (rodar depois do DDL)
+Company404_DatabaseDesign_Sprint3.pdf  -> documento (apresentação + modelo relacional do Data Modeler)
+01_DDL_COMPANY404_TOTVS.sql            -> estrutura do banco (executar primeiro)
+02_DML_COMPANY404_TOTVS.sql            -> carga, UPDATE e DELETE (executar depois do DDL)
 datamodeler/TOTVS_Inteligencia_Conversacional.dmd -> design do Oracle SQL Developer Data Modeler (Arquivo > Abrir)
-diagramas/                             -> imagens em alta resolucao do diagrama completo e das subviews
+diagramas/                             -> imagens em alta resolução do diagrama completo e das subviews
 
 Integrantes: Bruno Gama Masseiras RM562526 | Kauai Rosa de Assis Rocha RM563256 | Lucas Gilmar Pedro da Silva RM566231
              Leandro Afonso Silva Santos Junior RM561344 | Murilo da Silva Basto RM565445

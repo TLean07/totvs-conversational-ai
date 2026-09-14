@@ -8,14 +8,14 @@ from modelo import tabela, fk_identificadora, fk_obrigatoria
 
 FONTE = "C:/Windows/Fonts/arial.ttf"
 FONTE_B = "C:/Windows/Fonts/arialbd.ttf"
-COR_BORDA = (90, 90, 120)
-COR_CABECALHO = (221, 228, 247)
-COR_CORPO = (250, 250, 255)
-COR_TITULO = (20, 40, 120)
-COR_TIPO = (0, 110, 60)
-COR_TEXTO = (25, 25, 25)
-COR_NN = (200, 30, 30)
-COR_LINHA = (40, 40, 40)
+COR_BORDA = (0, 0, 0)
+COR_CABECALHO = (225, 225, 225)
+COR_CORPO = (255, 255, 255)
+COR_TITULO = (0, 0, 0)
+COR_TIPO = (70, 70, 70)
+COR_TEXTO = (0, 0, 0)
+COR_NN = (0, 0, 0)
+COR_LINHA = (0, 0, 0)
 
 
 def _fontes(escala=1.0):
@@ -132,18 +132,18 @@ def _desenha_conector(d, con, dx=0, dy=0, fonte_rotulo=None):
         else:
             pos = (x0 + 8, (y0 + y1) / 2 - 7)
         d.rectangle([pos[0] - 2, pos[1] - 1, pos[0] + tw + 2, pos[1] + 13], fill=(255, 255, 255))
-        d.text(pos, fk["nome"], font=fonte_rotulo, fill=(90, 90, 90))
+        d.text(pos, fk["nome"], font=fonte_rotulo, fill=(60, 60, 60))
 
 
 def _legenda(d, x, y, fontes):
     fb, fn, fnb = fontes
-    d.rectangle([x, y, x + 470, y + 118], fill=(255, 255, 250), outline=COR_BORDA, width=1)
-    d.text((x + 10, y + 6), "Legenda (notacao do Data Modeler / IE)", font=fb, fill=COR_TITULO)
+    d.rectangle([x, y, x + 470, y + 118], fill=(255, 255, 255), outline=COR_BORDA, width=1)
+    d.text((x + 10, y + 6), "Legenda (notação do Data Modeler / IE)", font=fb, fill=COR_TITULO)
     itens = [
-        ("P", "chave primaria    F  chave estrangeira    U  unica    *  NOT NULL"),
-        ("", "linha continua = relacionamento identificador (FK faz parte da PK)"),
-        ("", "linha tracejada = relacionamento nao identificador"),
-        ("", "pe de galinha = lado N (muitos)   |  barra = lado 1 obrigatorio   o = lado 1 opcional"),
+        ("P", "chave primária    F  chave estrangeira    U  única    *  NOT NULL"),
+        ("", "linha contínua = relacionamento identificador (FK faz parte da PK)"),
+        ("", "linha tracejada = relacionamento não identificador"),
+        ("", "pé de galinha = lado N (muitos)   |  barra = lado 1 obrigatório   o = lado 1 opcional"),
     ]
     yy = y + 30
     for m, txt in itens:
