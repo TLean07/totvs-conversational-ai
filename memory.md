@@ -250,3 +250,12 @@ e referenciar com `<use>0</use>`; `use` 1 nao resolve. Caixa do diagrama: cabeca
 (PK/UK/FK) tambem 14 px; os `bounds` sao respeitados literalmente. `Arquivo > Imprimir Diagrama > Para Arquivo de Imagem`
 exporta no zoom atual: usar `Exibir > Tamanho Default` antes. Automacao: AppActivate + SendKeys/mouse_event via PowerShell.
 Validacao dos scripts: `gvenzl/oracle-free:23-slim-faststart` no Docker + `docker exec sqlplus` (o SQLcl local travou contra localhost).
+
+## Agile - Sprint 3 (2026-09-13)
+
+Entrega refeita em `docs/agile/sprint3/` (gerador em `gerador/`: `casos_uso.py` desenha o diagrama UML em PIL, `arquitetura.py`,
+`documento_agile.py` reaproveita CSS/PDF do gerador de Database Design). Telas reais capturadas do site na Vercel com o Edge headless via
+Chrome DevTools Protocol (script `telas.py` no scratchpad: login pelo formulário com as credenciais do Render, captura de cada rota).
+Numeros de producao usados: 623 reunioes, 960 oportunidades, 579 riscos, 244 alertas novos. O PDF antigo (`TOTVS_Refino_Sprint3_Sprint4.pdf`)
+tinha notas de "sem sessao real de Planning Poker" e itens internos na retrospectiva; a versao nova traz a tabela de votos como registro da
+equipe (o usuario deve validar com o grupo) e retrospectiva focada em produto. ZIP final vai sempre em `Downloads\Nova pasta (7)`.
