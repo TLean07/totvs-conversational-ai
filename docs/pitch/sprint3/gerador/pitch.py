@@ -273,8 +273,20 @@ def s08_resultados():
     return moldura(c, "p5")
 
 
+LINK_PLATAFORMA = "https://totvs-conversational-ai-oracle.vercel.app/login"
+
+
+def link_plataforma(x, y, largura, tamanho=17, rotulo="Acesse a plataforma"):
+    """Selo clicavel com o link da aplicacao em producao (o Edge preserva o hiperlink no PDF)."""
+    return ('<a class="z" href="%s" style="left:%dpx;top:%dpx;width:%dpx;display:flex;align-items:center;gap:12px;'
+            'background:#033A7F;border:3px solid #fff;border-radius:26px;padding:9px 20px;color:#fff;text-decoration:none">'
+            '<span style="font-size:%dpx;font-weight:700;white-space:nowrap">%s</span>'
+            '<span style="font-size:%dpx;color:#86b9f5;white-space:nowrap;text-decoration:underline">%s</span></a>') % (
+        LINK_PLATAFORMA, x, y, largura, tamanho, rotulo, tamanho, LINK_PLATAFORMA.replace("https://", ""))
+
+
 def s09_web():
-    c = ('<div class="titulo">Visibilidade <small>(WEB)</small></div>'
+    c = ('<div class="titulo">Visibilidade <small>(WEB)</small></div>' + link_plataforma(790, 40, 500, 15, "Acesse:") +
          '<div class="caixa" style="left:22px;top:139px;width:1314px;height:600px"></div>'
          '<div class="escura" style="left:22px;top:139px;width:1314px;height:150px;display:flex;align-items:center;justify-content:center;padding:0 60px">'
          '<div class="centro" style="font-size:25px;line-height:1.45">Métricas essenciais na primeira tela e componentes consistentes: o time de vendas '
@@ -348,9 +360,10 @@ def s12_equipe():
 
 def s13_obrigado():
     c = ('<section class="slide">%s'
-         '%s%s%s'
+         '%s%s%s%s'
          '<img class="logo" src="assets/logo_alpha.png"><div class="selo">By Company 404</div></section>') % (
-        fundo("p8"), garet("Obrigado", 33, 270, 151, 760), garet("Pela", 476, 450, 151, 360), garet("Atenção", 566, 656, 151, 680))
+        fundo("p8"), garet("Obrigado", 33, 270, 151, 760), garet("Pela", 476, 450, 151, 360), garet("Atenção", 566, 656, 151, 680),
+        link_plataforma(40, 728, 700, 19))
     return c
 
 
