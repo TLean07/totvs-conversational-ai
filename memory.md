@@ -259,3 +259,12 @@ Chrome DevTools Protocol (script `telas.py` no scratchpad: login pelo formulári
 Numeros de producao usados: 623 reunioes, 960 oportunidades, 579 riscos, 244 alertas novos. O PDF antigo (`TOTVS_Refino_Sprint3_Sprint4.pdf`)
 tinha notas de "sem sessao real de Planning Poker" e itens internos na retrospectiva; a versao nova traz a tabela de votos como registro da
 equipe (o usuario deve validar com o grupo) e retrospectiva focada em produto. ZIP final vai sempre em `Downloads\Nova pasta (7)`.
+
+## DDD Java - Sprint 3 (2026-09-13)
+
+Projeto Java puro em `docs/java/sprint3/projeto-java` (Maven; compilar com `backend/mvnw -f docs/java/sprint3/projeto-java/pom.xml package`,
+nao ha mvn global). Pacotes model/service/connection/dao/exception/test. `ConnectionFactory` no repositorio tem o placeholder `SENHA_DO_RM`;
+o empacotamento (`entrega/`, ZIP em Downloads) injeta a senha real porque a rubrica exige usuario e senha no codigo. `TesteDAO` cria e apaga
+um usuario e uma reuniao de teste no Oracle da FIAP (meeting id `JAVA-TESTE-<timestamp>`); as saidas de console ficam em `saida_teste_*.txt`
+e entram no PDF. Diagrama de classes desenhado por `gerador/diagrama_classes.py` (PIL); PDF por `gerador/documento_java.py` reaproveitando o
+estilo do Database Design. O DAO nao usa NUM_PROTOCOLO nem as tabelas de historico porque a migracao 003 ainda nao foi aplicada na FIAP.
